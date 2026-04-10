@@ -32,6 +32,13 @@ export function NavBar() {
               {tool.name}
             </NavLink>
           ))}
+          <span className="mx-4 h-4 w-px bg-slate-200 inline-block" />
+          <a
+            href="/#about"
+            className="text-sm text-slate-600 hover:text-slate-900 transition-colors no-underline"
+          >
+            About
+          </a>
         </nav>
 
         <button
@@ -60,6 +67,13 @@ export function NavBar() {
                 {tool.name}
               </NavLink>
             ))}
+            <a
+              href="/#about"
+              onClick={() => setOpen(false)}
+              className="text-sm text-slate-500"
+            >
+              About
+            </a>
           </nav>
         </div>
       )}

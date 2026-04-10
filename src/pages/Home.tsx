@@ -74,8 +74,43 @@ export function Home() {
         })()}
       </div>
 
-      <footer className="mt-20 pt-8 border-t border-slate-200">
-        <p className="text-sm text-slate-400">Neil Minty</p>
+      <section id="about" className="border-t border-slate-200 mt-16 pt-16">
+        <h2 className="text-2xl font-semibold text-slate-900">About</h2>
+        <p className="text-base text-slate-700 leading-relaxed max-w-2xl mt-4">
+          Most brands don't have a growth problem. They have an economics problem.
+        </p>
+        <p className="text-base text-slate-700 leading-relaxed max-w-2xl mt-4">
+          I work with founder-led DTC brands between £2M and £50M where scale has exposed structural weaknesses that marketing alone can't fix. Returns, retention, acquisition costs, and margin leakage get treated as marketing variables. They're structural. My work focuses on fixing the structure.
+        </p>
+        <p className="text-base text-slate-700 leading-relaxed max-w-2xl mt-4">
+          Fifteen years owning P&Ls from £10M to £100M+. I embed as a fractional or interim operator to stabilise performance, rebuild acquisition economics, and implement scalable DTC infrastructure. The engagements have included reversing a −10% DTC trajectory at a premium sports eyewear brand, growing a subscription food business through US and German market launches, and taking a photography archive from £10M to £22M in direct revenue.
+        </p>
+        <p className="text-base text-slate-700 leading-relaxed max-w-2xl mt-4">
+          The tools on this site exist because the same diagnostic questions come up in every engagement. They're free to use.
+        </p>
+        <div className="mt-8">
+          <p className="text-base text-slate-700 leading-relaxed max-w-2xl">
+            If you're running a DTC brand and unit economics are the constraint, get in touch. I'll tell you within one conversation whether I can help.
+          </p>
+          <a
+            href="mailto:neil@personaify.io"
+            className="inline-block mt-3 text-base font-medium text-slate-900 no-underline hover:underline"
+          >
+            neil@personaify.io
+          </a>
+        </div>
+      </section>
+
+      <footer className="mt-16 py-8 border-t border-slate-200">
+        <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-between">
+          <p className="text-sm text-slate-400">© Neil Minty {new Date().getFullYear()}</p>
+          <a
+            href="/#about"
+            className="text-sm text-slate-400 hover:text-slate-600 no-underline hover:underline transition-colors"
+          >
+            About
+          </a>
+        </div>
       </footer>
     </div>
   );
