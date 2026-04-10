@@ -36,8 +36,11 @@ export function calculatePromotion(inputs: PromotionInputs): PromotionResults {
   // grossMarginPercent is assumed to already reflect the business's normal returns cost.
   const returnsImpactPerOrder = promotionalAOV * (returnsRateIncrease / 100) * grossMarginDecimal;
 
-  // Subscription margin multiplier — subscribed customers locked to discounted price have lower LTV
-  const subscriptionMarginMultiplier = 1 - (subscriptionPercent / 100) * 0.15;
+  // Subscription margin multiplier — subscribed customers locked to the discounted price have
+  // lower long-term revenue. 0.15 = 15% LTV haircut applied proportionally to subscription mix.
+  // E.g. 100% subscription → multiplier = 0.85; 50% → 0.925.
+  const SUBSCRIPTION_LTV_HAIRCUT = 0.15;
+  const subscriptionMarginMultiplier = 1 - (subscriptionPercent / 100) * SUBSCRIPTION_LTV_HAIRCUT;
   const adjustedPromotionalMarginPerOrder = (promotionalMarginPerOrder - returnsImpactPerOrder) * subscriptionMarginMultiplier;
 
   const baselineProfit = baselineOrdersForPeriod * fullPriceMarginPerOrder;
@@ -101,11 +104,22 @@ export function calculatePromotion(inputs: PromotionInputs): PromotionResults {
       : 0;
   const marketingSpendImpactOnBreakEven = breakEvenUpliftPercent - breakEvenWithoutMarketing;
 
-  // Biggest lever
+  // Biggest lever thresholds:
+  //   DISCOUNT_DEPTH_THRESHOLD (25%) + MARGIN_REDUCTION_THRESHOLD (40%) — discount is dominant
+  //     when depth is material AND it's compressing margin by more than 40%
+  //   RETURNS_UPLIFT_THRESHOLD (5%) — returns uplift above 5pp is a meaningful drag
+  //   MARKETING_SPEND_THRESHOLD (10%) — marketing spend > 10% of baseline profit is significant
+  //   FULFILMENT_COST_THRESHOLD (15%) — fulfilment > 15% of promo AOV means ops cost dominates
+  const DISCOUNT_DEPTH_THRESHOLD = 25;
+  const MARGIN_REDUCTION_THRESHOLD = 40;
+  const RETURNS_UPLIFT_THRESHOLD = 5;
+  const MARKETING_SPEND_THRESHOLD = 0.1;
+  const FULFILMENT_COST_THRESHOLD = 0.15;
+
   let biggestLever: PromotionResults['biggestLever'];
   let biggestLeverRecommendation: string;
 
-  if (discountDepth > 25 && marginReductionPercent > 40) {
+  if (discountDepth > DISCOUNT_DEPTH_THRESHOLD && marginReductionPercent > MARGIN_REDUCTION_THRESHOLD) {
     biggestLever = 'discountDepth';
     const reducedDiscount = discountDepth - 5;
     const reducedPromoAOV = aov * (1 - reducedDiscount / 100);
@@ -121,13 +135,13 @@ export function calculatePromotion(inputs: PromotionInputs): PromotionResults {
         ? ((reducedBreakEvenOrders - baselineOrdersForPeriod) / baselineOrdersForPeriod) * 100
         : 0;
     biggestLeverRecommendation = `Discount depth is the dominant driver of your break-even threshold. Reducing from ${discountDepth}% to ${reducedDiscount}% would lower required uplift from ${breakEvenUpliftPercent.toFixed(1)}% to ${reducedBreakEvenUplift.toFixed(1)}%.`;
-  } else if (returnsRateIncrease > 5) {
+  } else if (returnsRateIncrease > RETURNS_UPLIFT_THRESHOLD) {
     biggestLever = 'returnsRate';
     biggestLeverRecommendation = `Returns uplift on promotional orders is adding ${returnsImpactOnBreakEven.toFixed(1)}% to your break-even threshold. Tactics that reduce promotional returns — size guidance, product exclusions, minimum order values — would have material impact.`;
-  } else if (incrementalMarketingSpend > baselineProfit * 0.1) {
+  } else if (incrementalMarketingSpend > baselineProfit * MARKETING_SPEND_THRESHOLD) {
     biggestLever = 'marketingSpend';
     biggestLeverRecommendation = `Your media spend to promote this offer adds ${marketingSpendImpactOnBreakEven.toFixed(1)}% to the break-even threshold. This promotion needs to be largely self-serving through organic reach or existing CRM to be viable.`;
-  } else if (fulfilmentCostPerOrder > promotionalAOV * 0.15) {
+  } else if (fulfilmentCostPerOrder > promotionalAOV * FULFILMENT_COST_THRESHOLD) {
     biggestLever = 'fulfilmentCost';
     biggestLeverRecommendation = `Fulfilment cost represents more than 15% of your promotional AOV. Volume-driven promotions amplify this — each incremental order contributes less margin than it appears.`;
   } else {

@@ -1,7 +1,13 @@
 import { useEffect } from 'react';
 
 export function About() {
-  useEffect(() => { document.title = 'About — Neil Minty'; }, []);
+  useEffect(() => {
+    document.title = 'About — Neil Minty';
+    const tag = document.querySelector('meta[name="description"]') as HTMLMetaElement | null;
+    const prev = tag?.content;
+    if (tag) tag.content = 'Neil Minty — fractional growth and ecommerce operator working with founder-led DTC brands between £2M and £50M.';
+    return () => { if (tag && prev !== undefined) tag.content = prev; };
+  }, []);
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-16">
@@ -27,7 +33,7 @@ export function About() {
           I work with founder-led DTC brands between £2M and £50M where scale has exposed structural weaknesses that marketing alone can't fix. Returns, retention, acquisition costs, and margin leakage get treated as marketing variables. They're structural. My work focuses on fixing the structure.
         </p>
         <p className="text-base text-slate-700 leading-relaxed mt-4">
-          Fifteen years owning P&Ls from £10M to £100M+. I embed as a fractional or interim operator to stabilise performance, rebuild acquisition economics, and implement scalable DTC infrastructure. The engagements have included reversing a −10% DTC trajectory at a premium sports eyewear brand, growing a subscription food business through US and German market launches, and taking a photography archive from £10M to £22M in direct revenue.
+          Fifteen years owning P&Ls from £10M to £100M+. I embed as a fractional or interim operator to stabilise performance, rebuild acquisition economics, and implement scalable DTC infrastructure. Proof of work includes scaling digital revenue 100%+ across multiple businesses with board-level P&L accountability, rebuilding underperforming growth engines starting from a unit economics diagnosis rather than and supporting 200% revenue growth at a DTC consumables brand during my tenure.
         </p>
         <p className="text-base text-slate-700 leading-relaxed mt-4">
           The tools on this site exist because the same diagnostic questions come up in every engagement. They're free to use.

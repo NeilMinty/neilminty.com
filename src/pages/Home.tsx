@@ -3,7 +3,13 @@ import { Link } from 'react-router-dom';
 import { TOOLS } from '@/lib/tools';
 
 export function Home() {
-  useEffect(() => { document.title = 'Neil Minty — DTC Operator Tools'; }, []);
+  useEffect(() => {
+    document.title = 'Neil Minty — DTC Operator Tools';
+    const tag = document.querySelector('meta[name="description"]') as HTMLMetaElement | null;
+    const prev = tag?.content;
+    if (tag) tag.content = 'Free DTC operator tools for founders and growth operators. No login, no data upload, no spreadsheet.';
+    return () => { if (tag && prev !== undefined) tag.content = prev; };
+  }, []);
   return (
     <div className="max-w-5xl mx-auto px-6 py-16">
       <div className="flex flex-col md:flex-row gap-10 mb-12 pt-4">

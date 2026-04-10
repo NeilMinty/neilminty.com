@@ -16,7 +16,8 @@ interface FormState {
   grossMarginPercent: string;
   baselineWeeklyOrders: string;
   discountDepth: string;
-  durationWeeks: string;
+  durationValue: string;
+  durationUnit: 'weeks' | 'days';
   fulfilmentCostPerOrder: string;
   deliveryChargePerOrder: string;
   freeDeliveryPercent: string;
@@ -31,7 +32,8 @@ const DEFAULT_FORM: FormState = {
   grossMarginPercent: '',
   baselineWeeklyOrders: '',
   discountDepth: '',
-  durationWeeks: '',
+  durationValue: '',
+  durationUnit: 'weeks',
   fulfilmentCostPerOrder: '',
   deliveryChargePerOrder: '',
   freeDeliveryPercent: '',
@@ -48,7 +50,7 @@ function toInputs(form: FormState): PromotionInputs {
     grossMarginPercent: p(form.grossMarginPercent),
     baselineWeeklyOrders: p(form.baselineWeeklyOrders),
     discountDepth: p(form.discountDepth),
-    promotionDurationDays: p(form.durationWeeks) * 7,
+    promotionDurationDays: form.durationUnit === 'weeks' ? p(form.durationValue) * 7 : p(form.durationValue),
     fulfilmentCostPerOrder: p(form.fulfilmentCostPerOrder),
     deliveryChargePerOrder: p(form.deliveryChargePerOrder),
     freeDeliveryPercent: p(form.freeDeliveryPercent),
@@ -316,13 +318,26 @@ function InputView({
             suffix="%"
             placeholder="0"
           />
-          <InputField
-            label="Duration"
-            value={form.durationWeeks}
-            onChange={set('durationWeeks')}
-            suffix="weeks"
-            placeholder="1"
-          />
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-slate-700">Duration</label>
+            <div className="flex items-stretch border border-slate-200 rounded bg-white focus-within:border-slate-400 transition-colors">
+              <input
+                type="number"
+                value={form.durationValue}
+                onChange={(e) => setForm((prev) => ({ ...prev, durationValue: e.target.value }))}
+                placeholder="1"
+                className="flex-1 px-3 py-2 text-sm text-slate-900 bg-transparent outline-none min-w-0"
+              />
+              <select
+                value={form.durationUnit}
+                onChange={(e) => setForm((prev) => ({ ...prev, durationUnit: e.target.value as 'weeks' | 'days' }))}
+                className="px-2 py-2 text-sm text-slate-500 bg-slate-50 border-l border-slate-200 rounded-r outline-none cursor-pointer hover:text-slate-700 transition-colors"
+              >
+                <option value="weeks">weeks</option>
+                <option value="days">days</option>
+              </select>
+            </div>
+          </div>
           <InputField
             label="Fulfilment Cost"
             value={form.fulfilmentCostPerOrder}
@@ -436,10 +451,15 @@ export function Promotions() {
 
   const handleCalculate = () => {
     const errs: string[] = [];
-    if (!parseFloat(form.aov)) errs.push('AOV is required');
-    if (!parseFloat(form.grossMarginPercent)) errs.push('Gross margin is required');
-    if (!parseFloat(form.baselineWeeklyOrders)) errs.push('Baseline order volume is required');
-    if (!parseFloat(form.durationWeeks)) errs.push('Duration is required');
+    const p = (s: string) => parseFloat(s);
+    if (!(p(form.aov) > 0)) errs.push('AOV must be greater than 0');
+    if (!(p(form.grossMarginPercent) > 0) || p(form.grossMarginPercent) > 100) errs.push('Gross margin must be between 1 and 100%');
+    if (!(p(form.baselineWeeklyOrders) > 0)) errs.push('Baseline order volume must be greater than 0');
+    if (!(p(form.durationValue) > 0)) errs.push('Duration must be greater than 0');
+    if (!isNaN(p(form.discountDepth)) && (p(form.discountDepth) < 0 || p(form.discountDepth) > 100)) errs.push('Discount depth must be between 0 and 100%');
+    if (!isNaN(p(form.freeDeliveryPercent)) && (p(form.freeDeliveryPercent) < 0 || p(form.freeDeliveryPercent) > 100)) errs.push('Free delivery % must be between 0 and 100');
+    if (!isNaN(p(form.returnsRateIncrease)) && p(form.returnsRateIncrease) < 0) errs.push('Returns rate increase must be 0 or above');
+    if (!isNaN(p(form.subscriptionPercent)) && (p(form.subscriptionPercent) < 0 || p(form.subscriptionPercent) > 100)) errs.push('Subscription % must be between 0 and 100');
     if (errs.length > 0) {
       setErrors(errs);
       return;
@@ -452,8 +472,9 @@ export function Promotions() {
 
   return (
     <ToolLayout
-      title="Promotions Profitability Calculator"
+      title="Promotions Profitability Calculator — Neil Minty"
       description="Before you run a promotion, know whether it can earn its margin. Enter your baseline and promotion parameters to find the break-even volume uplift required and whether it's realistic."
+      metaDescription="Before you run a promotion, know if it can earn its margin. Calculates break-even volume uplift and whether it's realistic."
     >
       {pageState.view === 'input' ? (
         <InputView

@@ -335,13 +335,14 @@ export function ReturnsCost() {
 
   const handleCalculate = () => {
     const errs: string[] = [];
-    const p = (s: string) => parseFloat(s) || 0;
+    const p = (s: string) => parseFloat(s);
+    const n = (s: string) => parseFloat(s) || 0;
 
-    if (!p(form.annualRevenue)) errs.push('Annual revenue is required');
-    if (!p(form.aov)) errs.push('AOV is required');
-    if (!p(form.returnsRate)) errs.push('Returns rate is required');
+    if (!(p(form.annualRevenue) > 0)) errs.push('Annual revenue must be greater than 0');
+    if (!(p(form.aov) > 0)) errs.push('AOV must be greater than 0');
+    if (!(p(form.returnsRate) > 0) || p(form.returnsRate) > 100) errs.push('Returns rate must be between 1 and 100%');
 
-    const resellSum = p(form.resaleDiscountedPct) + p(form.writeoffPct);
+    const resellSum = n(form.resaleDiscountedPct) + n(form.writeoffPct);
     if (resellSum > 100) {
       errs.push(
         `Discounted resell + write-off must not exceed 100% (currently ${resellSum.toFixed(0)}%)`
@@ -360,8 +361,9 @@ export function ReturnsCost() {
 
   return (
     <ToolLayout
-      title="Returns Cost Calculator"
+      title="Returns Cost Calculator — Neil Minty"
       description="Most brands know their returns rate. Few know what returns are actually costing them. Enter your returns profile to see the true cost per return and where the money is going."
+      metaDescription="Your returns rate is a headline. This is what it's actually costing you — hard cost, margin leakage, and operational drag combined."
     >
       {pageState.view === 'input' ? (
         <InputView

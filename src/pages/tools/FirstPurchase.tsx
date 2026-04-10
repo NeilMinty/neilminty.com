@@ -28,6 +28,7 @@ function emptyRow(): ProductFormRow {
 // ─── INPUT GRID ───────────────────────────────────────────────────────────────
 
 const GRID_COLS = '1fr 5rem 6.5rem 6rem 6.5rem 5.5rem 5.5rem 2rem';
+const GRID_COL_COUNT = GRID_COLS.split(' ').length;
 
 const COLUMN_HEADERS = [
   { label: 'Product name', align: 'left' as const },
@@ -39,6 +40,10 @@ const COLUMN_HEADERS = [
   { label: 'LTV 180d', align: 'right' as const },
   { label: '', align: 'right' as const },
 ];
+
+if (COLUMN_HEADERS.length !== GRID_COL_COUNT) {
+  throw new Error(`COLUMN_HEADERS length (${COLUMN_HEADERS.length}) must match GRID_COLS column count (${GRID_COL_COUNT})`);
+}
 
 function CellInput({
   value,
@@ -53,7 +58,7 @@ function CellInput({
   placeholder?: string;
   prefix?: string;
   suffix?: string;
-  type?: string;
+  type?: 'number' | 'text' | 'email';
 }) {
   return (
     <div className="relative flex items-center">
@@ -593,8 +598,9 @@ export function FirstPurchase() {
 
   return (
     <ToolLayout
-      title="First Purchase Predictor"
+      title="First Purchase Predictor — Neil Minty"
       description="Which product a customer buys first predicts whether they come back. Enter up to ten products to surface which drive repeat buyers and which produce one-time purchasers."
+      metaDescription="Which product should you acquire customers on? Ranks your catalogue by retention strength, adjusted for volume and discount dependency."
     >
       {view === 'input' ? (
         <div className="space-y-6">

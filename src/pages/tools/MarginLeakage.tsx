@@ -370,16 +370,18 @@ export function MarginLeakage() {
 
   const handleCalculate = () => {
     const errs: string[] = [];
-    const p = (s: string) => parseFloat(s) || 0;
+    const p = (s: string) => parseFloat(s);
+    const n = (s: string) => parseFloat(s) || 0;
 
-    if (!p(form.annualRevenue)) errs.push('Annual revenue is required');
-    if (!p(form.aov)) errs.push('AOV is required');
-    if (!p(form.grossMarginPercent)) errs.push('Gross margin is required');
+    if (!(p(form.annualRevenue) > 0)) errs.push('Annual revenue must be greater than 0');
+    if (!(p(form.aov) > 0)) errs.push('AOV must be greater than 0');
+    if (!(p(form.grossMarginPercent) > 0) || p(form.grossMarginPercent) > 100) errs.push('Gross margin must be between 1 and 100%');
+    if (!isNaN(p(form.returnsRate)) && (p(form.returnsRate) < 0 || p(form.returnsRate) > 100)) errs.push('Returns rate must be between 0 and 100%');
 
     const resellSum =
-      p(form.fullPriceResellPercent) +
-      p(form.discountedResellPercent) +
-      p(form.writeOffPercent);
+      n(form.fullPriceResellPercent) +
+      n(form.discountedResellPercent) +
+      n(form.writeOffPercent);
     if (resellSum > 100) {
       errs.push(
         `Full price resell + discounted resell + write-off must not exceed 100% (currently ${resellSum.toFixed(0)}%)`
@@ -398,8 +400,9 @@ export function MarginLeakage() {
 
   return (
     <ToolLayout
-      title="Margin Leakage Calculator"
+      title="Margin Leakage Calculator — Neil Minty"
       description="Where is your margin actually going? Enter your revenue, returns, discounting, and delivery parameters to see total leakage by source and the single biggest lever to pull."
+      metaDescription="Where is your contribution margin going? Breaks erosion into returns, discounting, and delivery — ranked by size."
     >
       {pageState.view === 'input' ? (
         <InputView

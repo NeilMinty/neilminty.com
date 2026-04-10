@@ -273,12 +273,12 @@ export function PaybackPeriod() {
 
   const handleCalculate = () => {
     const errs: string[] = [];
-    const p = (s: string) => parseFloat(s) || 0;
+    const p = (s: string) => parseFloat(s);
 
-    if (!p(form.blendedCAC)) errs.push('Blended CAC is required');
-    if (!p(form.aov)) errs.push('AOV is required');
-    if (!p(form.grossMarginPercent)) errs.push('Gross margin is required');
-    if (!p(form.avgOrderFrequencyMonths)) errs.push('Order frequency is required');
+    if (!(p(form.blendedCAC) > 0)) errs.push('Blended CAC must be greater than 0');
+    if (!(p(form.aov) > 0)) errs.push('AOV must be greater than 0');
+    if (!(p(form.grossMarginPercent) > 0) || p(form.grossMarginPercent) > 100) errs.push('Gross margin must be between 1 and 100%');
+    if (!(p(form.avgOrderFrequencyMonths) > 0)) errs.push('Order frequency must be greater than 0');
 
     if (errs.length > 0) {
       setErrors(errs);
@@ -292,8 +292,9 @@ export function PaybackPeriod() {
 
   return (
     <ToolLayout
-      title="Payback Period Calculator"
+      title="Payback Period Calculator — Neil Minty"
       description="CAC is only half the equation. Enter your unit economics to find out how long it takes to recover acquisition cost, and whether your LTV makes the model work."
+      metaDescription="How long until you recover CAC? Runs payback period and LTV:CAC at 12 and 24 months against your unit economics."
     >
       {pageState.view === 'input' ? (
         <InputView
