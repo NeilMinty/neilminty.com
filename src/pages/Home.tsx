@@ -16,7 +16,7 @@ export function Home() {
         <img
           src="/images/neil-minty.jpg"
           alt="Neil Minty"
-          className="w-full h-[300px] md:h-auto md:w-[280px] md:flex-shrink-0 rounded-lg object-cover object-top self-start"
+          className="max-h-64 w-full object-cover object-top md:max-h-none md:w-[280px] md:h-auto md:flex-shrink-0 rounded-lg self-start"
         />
         <div className="flex flex-col justify-center">
           <h1 className="text-3xl font-semibold text-slate-900 tracking-tight mb-4">
