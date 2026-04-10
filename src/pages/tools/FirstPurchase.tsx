@@ -613,15 +613,13 @@ function QuickEstimate() {
   return (
     <div className="mt-16 pt-10 border-t border-slate-200">
       <div className="mb-6">
-        <h2 className="text-lg font-semibold text-slate-900 tracking-tight mb-1">Quick Estimate</h2>
-        <p className="text-sm text-slate-500 leading-relaxed">
+        <h2 className="text-2xl font-semibold text-slate-900 tracking-tight mb-2">Quick Estimate</h2>
+        <p className="text-slate-500 leading-relaxed">
           Don't have full LTV or acquisition mix data yet? Enter repeat rate and order volume to get a volume-weighted retention ranking.
         </p>
       </div>
 
       <div className="space-y-3">
-        <SectionLabel>Products</SectionLabel>
-
         <div className="hidden sm:grid gap-3 mb-1" style={{ gridTemplateColumns: '1fr 7.5rem 7.5rem 2rem' }}>
           <span className="text-xs uppercase tracking-widest text-slate-400 font-semibold">Product name</span>
           <span className="text-xs uppercase tracking-widest text-slate-400 font-semibold text-right flex items-center justify-end gap-1">
@@ -782,7 +780,6 @@ export function FirstPurchase() {
       {view === 'input' ? (
         <div className="space-y-6">
           <div>
-            <SectionLabel>Products</SectionLabel>
             <InputForm rows={rows} onChange={setRows} />
           </div>
 
