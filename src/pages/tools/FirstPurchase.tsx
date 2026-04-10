@@ -63,7 +63,7 @@ function CellInput({
   return (
     <div className="relative flex items-center">
       {prefix && (
-        <span className="absolute left-2 text-xs text-slate-400 font-mono pointer-events-none select-none">
+        <span className="absolute left-2 text-xs text-slate-400 pointer-events-none select-none">
           {prefix}
         </span>
       )}
@@ -79,7 +79,7 @@ function CellInput({
         )}
       />
       {suffix && (
-        <span className="absolute right-2 text-xs text-slate-400 font-mono pointer-events-none select-none">
+        <span className="absolute right-2 text-xs text-slate-400 pointer-events-none select-none">
           {suffix}
         </span>
       )}
@@ -114,7 +114,7 @@ function InputForm({ rows, onChange }: InputFormProps) {
   }, [rows, onChange]);
 
   const fieldLabel = (text: string) => (
-    <p className="text-[10px] uppercase tracking-wide text-slate-400 font-semibold mb-1">{text}</p>
+    <p className="text-xs uppercase tracking-widest text-slate-400 font-semibold mb-1">{text}</p>
   );
 
   return (
@@ -152,7 +152,7 @@ function InputForm({ rows, onChange }: InputFormProps) {
       <div className="hidden sm:block overflow-x-auto">
         <div className="grid gap-2 mb-2" style={{ gridTemplateColumns: GRID_COLS, minWidth: '640px' }}>
           {COLUMN_HEADERS.map((h, i) => (
-            <span key={i} className={cn('text-[10px] uppercase tracking-wide text-slate-400 font-semibold', h.align === 'right' ? 'text-right' : 'text-left')}>
+            <span key={i} className={cn('text-xs uppercase tracking-widest text-slate-400 font-semibold', h.align === 'right' ? 'text-right' : 'text-left')}>
               {h.label}
             </span>
           ))}
@@ -205,7 +205,7 @@ function ZBadge({
   return (
     <span
       className={cn(
-        'inline-block border rounded text-[9px] font-mono px-1 leading-4 shrink-0',
+        'inline-block border rounded text-xs px-1 leading-4 shrink-0',
         Z_BADGE_STYLES[classification]
       )}
     >
@@ -237,7 +237,7 @@ function TierBadge({ tier }: { tier: RetentionTier }) {
   return (
     <span
       className={cn(
-        'inline-block border rounded text-[10px] px-1.5 py-0.5 whitespace-nowrap',
+        'inline-block border rounded text-xs px-1.5 py-0.5 whitespace-nowrap',
         config.className
       )}
     >
@@ -266,14 +266,14 @@ function AcqQualityCell({
     <div className="space-y-0.5">
       <span
         className={cn(
-          'inline-block border rounded text-[10px] px-1.5 py-0.5 whitespace-nowrap',
+          'inline-block border rounded text-xs px-1.5 py-0.5 whitespace-nowrap',
           badgeClass
         )}
       >
         {fullPricePct.toFixed(0)}% full price
       </span>
       {discountDepth > 30 && (
-        <p className="text-[10px] text-slate-400 font-mono">
+        <p className="text-xs text-slate-400">
           avg −{discountDepth.toFixed(0)}% off
         </p>
       )}
@@ -284,7 +284,7 @@ function AcqQualityCell({
 // ─── LTV MOMENTUM CELL ────────────────────────────────────────────────────────
 
 function MomentumCell({ ratio }: { ratio: number }) {
-  if (ratio <= 0) return <span className="font-mono text-slate-400">—</span>;
+  if (ratio <= 0) return <span className="text-slate-400">—</span>;
   const colorClass =
     ratio >= 2.0
       ? 'text-slate-900 font-semibold'
@@ -292,7 +292,7 @@ function MomentumCell({ ratio }: { ratio: number }) {
         ? 'text-amber-600'
         : 'text-slate-700';
   return (
-    <span className={cn('font-mono tabular-nums', colorClass)}>{ratio.toFixed(1)}×</span>
+    <span className={cn('tabular-nums', colorClass)}>{ratio.toFixed(1)}×</span>
   );
 }
 
@@ -361,7 +361,7 @@ function ResultsTable({ products }: { products: ProductAnalysis[] }) {
     return (
       <th
         className={cn(
-          'py-2.5 px-3 text-[10px] uppercase tracking-wide font-semibold cursor-pointer select-none whitespace-nowrap transition-colors',
+          'py-2.5 px-3 text-xs uppercase tracking-widest font-semibold cursor-pointer select-none whitespace-nowrap transition-colors',
           align === 'right' ? 'text-right' : 'text-left',
           active ? 'text-slate-700' : 'text-slate-400 hover:text-slate-600'
         )}
@@ -400,7 +400,7 @@ function ResultsTable({ products }: { products: ProductAnalysis[] }) {
               <SortHead label="LTV 180d" sortKey="avgSpend180d" />
               <SortHead label="LTV momentum" sortKey="ltvMomentum" />
               <SortHead label="Acquisition quality" sortKey="fullPricePct" align="left" />
-              <th className="py-2.5 px-3 text-[10px] uppercase tracking-wide font-semibold text-slate-400 text-left whitespace-nowrap">
+              <th className="py-2.5 px-3 text-xs uppercase tracking-widest font-semibold text-slate-400 text-left whitespace-nowrap">
                 Retention tier
               </th>
             </tr>
@@ -414,27 +414,27 @@ function ResultsTable({ products }: { products: ProductAnalysis[] }) {
                       {p.name}
                     </span>
                     {p.lowConfidence && (
-                      <span className="inline-block border border-slate-200 rounded bg-slate-100 text-slate-400 text-[9px] px-1.5 py-0 whitespace-nowrap">
+                      <span className="inline-block border border-slate-200 rounded bg-slate-100 text-slate-400 text-xs px-1.5 py-0 whitespace-nowrap">
                         Low confidence
                       </span>
                     )}
                   </div>
                 </td>
-                <td className="py-3 px-3 text-right font-mono tabular-nums text-slate-700">
+                <td className="py-3 px-3 text-right tabular-nums text-slate-700">
                   {p.firstPurchaseVolume.toLocaleString()}
                 </td>
                 <td className="py-3 px-3 text-right">
                   <div className="flex items-center justify-end gap-1.5">
-                    <span className="font-mono tabular-nums text-slate-700">
+                    <span className="tabular-nums text-slate-700">
                       {p.repeatRate90d.toFixed(1)}%
                     </span>
                     <ZBadge zScore={p.zScore} classification={p.zClassification} />
                   </div>
                 </td>
-                <td className="py-3 px-3 text-right font-mono tabular-nums text-slate-700">
+                <td className="py-3 px-3 text-right tabular-nums text-slate-700">
                   {formatCurrency(p.avgSpend90d)}
                 </td>
-                <td className="py-3 px-3 text-right font-mono tabular-nums text-slate-700">
+                <td className="py-3 px-3 text-right tabular-nums text-slate-700">
                   {formatCurrency(p.avgSpend180d)}
                 </td>
                 <td className="py-3 px-3 text-right">
@@ -455,7 +455,7 @@ function ResultsTable({ products }: { products: ProductAnalysis[] }) {
         </table>
       </div>
       {hasLowConfidence && (
-        <p className="text-[11px] text-slate-400 px-3 py-2 border-t border-slate-100">
+        <p className="text-xs text-slate-400 px-3 py-2 border-t border-slate-100">
           Products with fewer than {LOW_CONFIDENCE_THRESHOLD} first purchase customers are
           flagged — repeat rates at this volume are unreliable for decision-making.
         </p>
@@ -498,7 +498,7 @@ function InsightCallout({
       <p className="text-sm text-slate-700">
         <span className="font-medium">{highestRetention.name}</span> produces your strongest
         long-term customers but only{' '}
-        <span className="font-mono font-medium">{highestRetention.firstPurchaseVolume}</span>{' '}
+        <span className="font-medium tabular-nums">{highestRetention.firstPurchaseVolume}</span>{' '}
         customers have started there. It may be under-promoted in acquisition — worth testing
         as a hero product.
       </p>
@@ -527,7 +527,7 @@ function InsightCallout({
 
   const retentionCaveat =
     highestRetention.fullPricePct < 50 ? (
-      <p className="text-[11px] text-slate-400 mt-2">
+      <p className="text-xs text-slate-400 mt-2">
         Note: {highestRetention.fullPricePct.toFixed(0)}% of{' '}
         <span className="font-medium text-slate-600">{highestRetention.name}</span>&apos;s
         first purchases were discounted. Validate whether retention holds for full-price
@@ -537,7 +537,7 @@ function InsightCallout({
 
   const volumeCaveat =
     highestVolume.fullPricePct < 50 && highestVolume.id !== highestRetention.id ? (
-      <p className="text-[11px] text-slate-400 mt-2">
+      <p className="text-xs text-slate-400 mt-2">
         <span className="font-medium text-slate-600">{highestVolume.name}</span> is your
         highest volume first purchase product but{' '}
         {(100 - highestVolume.fullPricePct).toFixed(0)}% of those customers were acquired on
@@ -623,17 +623,17 @@ function QuickEstimate() {
         <SectionLabel>Products</SectionLabel>
 
         <div className="hidden sm:grid gap-3 mb-1" style={{ gridTemplateColumns: '1fr 7.5rem 7.5rem 2rem' }}>
-          <span className="text-[10px] uppercase tracking-wide text-slate-400 font-semibold">Product name</span>
-          <span className="text-[10px] uppercase tracking-wide text-slate-400 font-semibold text-right flex items-center justify-end gap-1">
+          <span className="text-xs uppercase tracking-widest text-slate-400 font-semibold">Product name</span>
+          <span className="text-xs uppercase tracking-widest text-slate-400 font-semibold text-right flex items-center justify-end gap-1">
             90d repeat %
             <span
-              className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-slate-200 text-slate-500 text-[9px] cursor-help leading-none"
+              className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-slate-200 text-slate-500 text-xs cursor-help leading-none"
               title="Of customers who bought this product, what % bought again within 90 days"
             >
               ?
             </span>
           </span>
-          <span className="text-[10px] uppercase tracking-wide text-slate-400 font-semibold text-right">Volume</span>
+          <span className="text-xs uppercase tracking-widest text-slate-400 font-semibold text-right">Volume</span>
           <span />
         </div>
 
@@ -643,7 +643,7 @@ function QuickEstimate() {
             <div key={row.id} className="border border-slate-200 rounded-lg p-3 space-y-2.5 bg-white">
               <div className="flex gap-2 items-start">
                 <div className="flex-1">
-                  <p className="text-[10px] uppercase tracking-wide text-slate-400 font-semibold mb-1">Product name</p>
+                  <p className="text-xs uppercase tracking-widest text-slate-400 font-semibold mb-1">Product name</p>
                   <CellInput type="text" value={row.name} onChange={(v) => updateRow(row.id, 'name', v)} placeholder={`Product ${idx + 1}`} />
                 </div>
                 <button onClick={() => removeRow(row.id)} disabled={rows.length <= 1} className="mt-5 h-7 w-7 flex items-center justify-center rounded text-slate-400 hover:text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" aria-label="Remove product">
@@ -652,11 +652,11 @@ function QuickEstimate() {
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <p className="text-[10px] uppercase tracking-wide text-slate-400 font-semibold mb-1">90d repeat %</p>
+                  <p className="text-xs uppercase tracking-widest text-slate-400 font-semibold mb-1">90d repeat %</p>
                   <CellInput value={row.repeatRate} onChange={(v) => updateRow(row.id, 'repeatRate', v)} suffix="%" placeholder="0" />
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase tracking-wide text-slate-400 font-semibold mb-1">Volume</p>
+                  <p className="text-xs uppercase tracking-widest text-slate-400 font-semibold mb-1">Volume</p>
                   <CellInput value={row.volume} onChange={(v) => updateRow(row.id, 'volume', v)} placeholder="0" />
                 </div>
               </div>
@@ -730,17 +730,17 @@ function QuickEstimate() {
                 <table className="w-full text-sm">
                   <thead className="bg-white border-b border-slate-200">
                     <tr>
-                      <th className="py-2.5 px-4 text-left text-[10px] uppercase tracking-wide font-semibold text-slate-400 w-8">#</th>
-                      <th className="py-2.5 px-4 text-left text-[10px] uppercase tracking-wide font-semibold text-slate-400">Product</th>
-                      <th className="py-2.5 px-4 text-right text-[10px] uppercase tracking-wide font-semibold text-slate-400">Retention score</th>
+                      <th className="py-2.5 px-4 text-left text-xs uppercase tracking-widest font-semibold text-slate-400 w-8">#</th>
+                      <th className="py-2.5 px-4 text-left text-xs uppercase tracking-widest font-semibold text-slate-400">Product</th>
+                      <th className="py-2.5 px-4 text-right text-xs uppercase tracking-widest font-semibold text-slate-400">Retention score</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {results.map((r, i) => (
                       <tr key={r.name} className="bg-white">
-                        <td className="py-3 px-4 text-slate-400 font-mono tabular-nums">{i + 1}</td>
+                        <td className="py-3 px-4 text-slate-400 tabular-nums">{i + 1}</td>
                         <td className="py-3 px-4 font-medium text-slate-900">{r.name}</td>
-                        <td className="py-3 px-4 text-right font-mono tabular-nums text-slate-700">{r.score.toFixed(1)}</td>
+                        <td className="py-3 px-4 text-right tabular-nums text-slate-700">{r.score.toFixed(1)}</td>
                       </tr>
                     ))}
                   </tbody>
