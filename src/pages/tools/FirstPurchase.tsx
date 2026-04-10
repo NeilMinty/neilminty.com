@@ -113,80 +113,61 @@ function InputForm({ rows, onChange }: InputFormProps) {
     onChange([...rows, emptyRow()]);
   }, [rows, onChange]);
 
+  const fieldLabel = (text: string) => (
+    <p className="text-[10px] uppercase tracking-wide text-slate-400 font-semibold mb-1">{text}</p>
+  );
+
   return (
     <div>
-      <div className="overflow-x-auto">
-        <div
-          className="hidden sm:grid gap-2 mb-2"
-          style={{ gridTemplateColumns: GRID_COLS, minWidth: '640px' }}
-        >
+      {/* ── Mobile card layout ── */}
+      <div className="sm:hidden space-y-3">
+        {rows.map((row, idx) => (
+          <div key={row.id} className="border border-slate-200 rounded-lg p-3 space-y-2.5 bg-white">
+            <div className="flex gap-2 items-start">
+              <div className="flex-1">
+                {fieldLabel('Product name')}
+                <CellInput type="text" value={row.name} onChange={(v) => update(row.id, 'name', v)} placeholder={`Product ${idx + 1}`} />
+              </div>
+              <button onClick={() => remove(row.id)} disabled={rows.length <= 1} className="mt-5 h-7 w-7 flex items-center justify-center rounded text-slate-400 hover:text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" aria-label="Remove product">
+                <X size={14} />
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>{fieldLabel('Volume')}<CellInput value={row.firstPurchaseVolume} onChange={(v) => update(row.id, 'firstPurchaseVolume', v)} placeholder="0" /></div>
+              <div>{fieldLabel('90d repeat %')}<CellInput value={row.repeatRate90d} onChange={(v) => update(row.id, 'repeatRate90d', v)} suffix="%" placeholder="0" /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>{fieldLabel('Full price %')}<CellInput value={row.fullPricePct} onChange={(v) => update(row.id, 'fullPricePct', v)} suffix="%" placeholder="100" /></div>
+              <div>{fieldLabel('Disc. depth %')}<CellInput value={row.discountDepth} onChange={(v) => update(row.id, 'discountDepth', v)} suffix="%" placeholder="—" /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>{fieldLabel('LTV 90d')}<CellInput value={row.avgSpend90d} onChange={(v) => update(row.id, 'avgSpend90d', v)} prefix="£" placeholder="0" /></div>
+              <div>{fieldLabel('LTV 180d')}<CellInput value={row.avgSpend180d} onChange={(v) => update(row.id, 'avgSpend180d', v)} prefix="£" placeholder="0" /></div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Desktop grid layout ── */}
+      <div className="hidden sm:block overflow-x-auto">
+        <div className="grid gap-2 mb-2" style={{ gridTemplateColumns: GRID_COLS, minWidth: '640px' }}>
           {COLUMN_HEADERS.map((h, i) => (
-            <span
-              key={i}
-              className={cn(
-                'text-[10px] uppercase tracking-wide text-slate-400 font-semibold',
-                h.align === 'right' ? 'text-right' : 'text-left'
-              )}
-            >
+            <span key={i} className={cn('text-[10px] uppercase tracking-wide text-slate-400 font-semibold', h.align === 'right' ? 'text-right' : 'text-left')}>
               {h.label}
             </span>
           ))}
         </div>
-
         <div className="space-y-2" style={{ minWidth: '640px' }}>
           {rows.map((row, idx) => (
-            <div
-              key={row.id}
-              className="grid gap-2 items-center"
-              style={{ gridTemplateColumns: GRID_COLS }}
-            >
-              <CellInput
-                type="text"
-                value={row.name}
-                onChange={(v) => update(row.id, 'name', v)}
-                placeholder={`Product ${idx + 1}`}
-              />
-              <CellInput
-                value={row.firstPurchaseVolume}
-                onChange={(v) => update(row.id, 'firstPurchaseVolume', v)}
-                placeholder="0"
-              />
-              <CellInput
-                value={row.repeatRate90d}
-                onChange={(v) => update(row.id, 'repeatRate90d', v)}
-                suffix="%"
-                placeholder="0"
-              />
-              <CellInput
-                value={row.fullPricePct}
-                onChange={(v) => update(row.id, 'fullPricePct', v)}
-                suffix="%"
-                placeholder="100"
-              />
-              <CellInput
-                value={row.discountDepth}
-                onChange={(v) => update(row.id, 'discountDepth', v)}
-                suffix="%"
-                placeholder="—"
-              />
-              <CellInput
-                value={row.avgSpend90d}
-                onChange={(v) => update(row.id, 'avgSpend90d', v)}
-                prefix="£"
-                placeholder="0"
-              />
-              <CellInput
-                value={row.avgSpend180d}
-                onChange={(v) => update(row.id, 'avgSpend180d', v)}
-                prefix="£"
-                placeholder="0"
-              />
-              <button
-                onClick={() => remove(row.id)}
-                disabled={rows.length <= 1}
-                className="h-7 w-7 flex items-center justify-center rounded text-slate-400 hover:text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                aria-label="Remove product"
-              >
+            <div key={row.id} className="grid gap-2 items-center" style={{ gridTemplateColumns: GRID_COLS }}>
+              <CellInput type="text" value={row.name} onChange={(v) => update(row.id, 'name', v)} placeholder={`Product ${idx + 1}`} />
+              <CellInput value={row.firstPurchaseVolume} onChange={(v) => update(row.id, 'firstPurchaseVolume', v)} placeholder="0" />
+              <CellInput value={row.repeatRate90d} onChange={(v) => update(row.id, 'repeatRate90d', v)} suffix="%" placeholder="0" />
+              <CellInput value={row.fullPricePct} onChange={(v) => update(row.id, 'fullPricePct', v)} suffix="%" placeholder="100" />
+              <CellInput value={row.discountDepth} onChange={(v) => update(row.id, 'discountDepth', v)} suffix="%" placeholder="—" />
+              <CellInput value={row.avgSpend90d} onChange={(v) => update(row.id, 'avgSpend90d', v)} prefix="£" placeholder="0" />
+              <CellInput value={row.avgSpend180d} onChange={(v) => update(row.id, 'avgSpend180d', v)} prefix="£" placeholder="0" />
+              <button onClick={() => remove(row.id)} disabled={rows.length <= 1} className="h-7 w-7 flex items-center justify-center rounded text-slate-400 hover:text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" aria-label="Remove product">
                 <X size={14} />
               </button>
             </div>
@@ -195,16 +176,10 @@ function InputForm({ rows, onChange }: InputFormProps) {
       </div>
 
       <div className="mt-3">
-        <button
-          onClick={add}
-          disabled={rows.length >= MAX_PRODUCTS}
-          className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-        >
+        <button onClick={add} disabled={rows.length >= MAX_PRODUCTS} className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
           <Plus size={14} />
           Add product
-          {rows.length >= MAX_PRODUCTS && (
-            <span className="text-slate-400">(max {MAX_PRODUCTS})</span>
-          )}
+          {rows.length >= MAX_PRODUCTS && <span className="text-slate-400">(max {MAX_PRODUCTS})</span>}
         </button>
       </div>
     </div>
@@ -580,6 +555,208 @@ function InsightCallout({
   );
 }
 
+// ─── QUICK ESTIMATE ───────────────────────────────────────────────────────────
+
+const MAX_QUICK_PRODUCTS = 5;
+
+interface QuickRow {
+  id: string;
+  name: string;
+  repeatRate: string;
+  volume: string;
+}
+
+interface QuickResult {
+  name: string;
+  score: number;
+}
+
+function quickEmptyRow(): QuickRow {
+  return { id: crypto.randomUUID(), name: '', repeatRate: '', volume: '' };
+}
+
+function QuickEstimate() {
+  const [rows, setRows] = useState<QuickRow[]>(() => Array.from({ length: 3 }, quickEmptyRow));
+  const [results, setResults] = useState<QuickResult[] | null>(null);
+
+  const updateRow = (id: string, field: keyof Omit<QuickRow, 'id'>, value: string) => {
+    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, [field]: value } : r)));
+    setResults(null);
+  };
+
+  const addRow = () => {
+    if (rows.length >= MAX_QUICK_PRODUCTS) return;
+    setRows((prev) => [...prev, quickEmptyRow()]);
+  };
+
+  const removeRow = (id: string) => {
+    if (rows.length <= 1) return;
+    setRows((prev) => prev.filter((r) => r.id !== id));
+    setResults(null);
+  };
+
+  const calculate = () => {
+    const valid = rows
+      .filter((r) => r.name.trim() && parseFloat(r.volume) > 0)
+      .map((r) => {
+        const rate = parseFloat(r.repeatRate) || 0;
+        const vol = parseFloat(r.volume);
+        const score = vol >= 1 ? rate * (vol / (vol + 100)) : 0;
+        return { name: r.name.trim(), score };
+      })
+      .sort((a, b) => b.score - a.score);
+    setResults(valid);
+  };
+
+  const canCalculate = rows.some((r) => r.name.trim() && parseFloat(r.volume) > 0);
+
+  return (
+    <div className="mt-16 pt-10 border-t border-slate-200">
+      <div className="mb-6">
+        <h2 className="text-lg font-semibold text-slate-900 tracking-tight mb-1">Quick Estimate</h2>
+        <p className="text-sm text-slate-500 leading-relaxed">
+          Don't have full LTV or acquisition mix data yet? Enter repeat rate and order volume to get a volume-weighted retention ranking.
+        </p>
+      </div>
+
+      <div className="space-y-3">
+        <SectionLabel>Products</SectionLabel>
+
+        <div className="hidden sm:grid gap-3 mb-1" style={{ gridTemplateColumns: '1fr 7.5rem 7.5rem 2rem' }}>
+          <span className="text-[10px] uppercase tracking-wide text-slate-400 font-semibold">Product name</span>
+          <span className="text-[10px] uppercase tracking-wide text-slate-400 font-semibold text-right flex items-center justify-end gap-1">
+            90d repeat %
+            <span
+              className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-slate-200 text-slate-500 text-[9px] cursor-help leading-none"
+              title="Of customers who bought this product, what % bought again within 90 days"
+            >
+              ?
+            </span>
+          </span>
+          <span className="text-[10px] uppercase tracking-wide text-slate-400 font-semibold text-right">Orders</span>
+          <span />
+        </div>
+
+        {/* Mobile card layout */}
+        <div className="sm:hidden space-y-3">
+          {rows.map((row, idx) => (
+            <div key={row.id} className="border border-slate-200 rounded-lg p-3 space-y-2.5 bg-white">
+              <div className="flex gap-2 items-start">
+                <div className="flex-1">
+                  <p className="text-[10px] uppercase tracking-wide text-slate-400 font-semibold mb-1">Product name</p>
+                  <CellInput type="text" value={row.name} onChange={(v) => updateRow(row.id, 'name', v)} placeholder={`Product ${idx + 1}`} />
+                </div>
+                <button onClick={() => removeRow(row.id)} disabled={rows.length <= 1} className="mt-5 h-7 w-7 flex items-center justify-center rounded text-slate-400 hover:text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" aria-label="Remove product">
+                  <X size={14} />
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <p className="text-[10px] uppercase tracking-wide text-slate-400 font-semibold mb-1">90d repeat %</p>
+                  <CellInput value={row.repeatRate} onChange={(v) => updateRow(row.id, 'repeatRate', v)} suffix="%" placeholder="0" />
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-wide text-slate-400 font-semibold mb-1">Orders</p>
+                  <CellInput value={row.volume} onChange={(v) => updateRow(row.id, 'volume', v)} placeholder="0" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop grid layout */}
+        <div className="hidden sm:block space-y-2">
+          {rows.map((row, idx) => (
+            <div key={row.id} className="grid gap-3 items-center" style={{ gridTemplateColumns: '1fr 7.5rem 7.5rem 2rem' }}>
+              <CellInput
+                type="text"
+                value={row.name}
+                onChange={(v) => updateRow(row.id, 'name', v)}
+                placeholder={`Product ${idx + 1}`}
+              />
+              <CellInput
+                value={row.repeatRate}
+                onChange={(v) => updateRow(row.id, 'repeatRate', v)}
+                suffix="%"
+                placeholder="0"
+              />
+              <CellInput
+                value={row.volume}
+                onChange={(v) => updateRow(row.id, 'volume', v)}
+                placeholder="0"
+              />
+              <button
+                onClick={() => removeRow(row.id)}
+                disabled={rows.length <= 1}
+                className="h-7 w-7 flex items-center justify-center rounded text-slate-400 hover:text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                aria-label="Remove product"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex items-center justify-between pt-1">
+          <button
+            onClick={addRow}
+            disabled={rows.length >= MAX_QUICK_PRODUCTS}
+            className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            <Plus size={14} />
+            Add product
+            {rows.length >= MAX_QUICK_PRODUCTS && (
+              <span className="text-slate-400">(max {MAX_QUICK_PRODUCTS})</span>
+            )}
+          </button>
+          <button
+            onClick={calculate}
+            disabled={!canCalculate}
+            className="bg-slate-900 text-white px-5 py-2 rounded text-sm font-medium hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            Rank products
+          </button>
+        </div>
+      </div>
+
+      {results !== null && (
+        <div className="mt-8 space-y-3">
+          <SectionLabel>Ranking</SectionLabel>
+          {results.length === 0 ? (
+            <p className="text-sm text-slate-400">Enter at least one product with a name and volume.</p>
+          ) : (
+            <>
+              <div className="border border-slate-200 rounded-lg overflow-hidden shadow-card">
+                <table className="w-full text-sm">
+                  <thead className="bg-white border-b border-slate-200">
+                    <tr>
+                      <th className="py-2.5 px-4 text-left text-[10px] uppercase tracking-wide font-semibold text-slate-400 w-8">#</th>
+                      <th className="py-2.5 px-4 text-left text-[10px] uppercase tracking-wide font-semibold text-slate-400">Product</th>
+                      <th className="py-2.5 px-4 text-right text-[10px] uppercase tracking-wide font-semibold text-slate-400">Retention score</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {results.map((r, i) => (
+                      <tr key={r.name} className="bg-white">
+                        <td className="py-3 px-4 text-slate-400 font-mono tabular-nums">{i + 1}</td>
+                        <td className="py-3 px-4 font-medium text-slate-900">{r.name}</td>
+                        <td className="py-3 px-4 text-right font-mono tabular-nums text-slate-700">{r.score.toFixed(1)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="text-xs text-slate-400">
+                Adding first-purchase mix data gives a more accurate signal. Use the full calculator above.
+              </p>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── PAGE ─────────────────────────────────────────────────────────────────────
 
 export function FirstPurchase() {
@@ -693,6 +870,7 @@ export function FirstPurchase() {
           </div>
         </div>
       )}
+      <QuickEstimate />
     </ToolLayout>
   );
 }
