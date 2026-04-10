@@ -6,16 +6,26 @@ export function Home() {
   useEffect(() => { document.title = 'Neil Minty — DTC Operator Tools'; }, []);
   return (
     <div className="max-w-5xl mx-auto px-6 py-16">
-      <div className="max-w-2xl mb-12 pt-4">
-        <h1 className="text-3xl font-semibold text-slate-900 tracking-tight mb-4">
-          DTC operator tools
-        </h1>
-        <p className="text-slate-600 leading-relaxed text-lg">
-          Fifteen years of DTC operator work distilled into five calculators. No login, no data upload, no spreadsheet. Enter your numbers, get the answer.
-        </p>
-        <p className="text-slate-500 leading-relaxed mt-3">
-          Built for founders and operators who already know the question. These tools just run the maths.
-        </p>
+      <div className="flex flex-col md:flex-row gap-10 mb-12 pt-4">
+        <img
+          src="/images/neil-minty.jpg"
+          alt="Neil Minty"
+          className="w-full md:w-[280px] md:flex-shrink-0 rounded-lg object-cover self-start"
+        />
+        <div className="flex flex-col justify-center">
+          <h1 className="text-3xl font-semibold text-slate-900 tracking-tight mb-4">
+            DTC operator tools
+          </h1>
+          <p className="text-slate-600 leading-relaxed text-lg">
+            Fifteen years of DTC operator work distilled into five calculators. No login, no data upload, no spreadsheet. Enter your numbers, get the answer.
+          </p>
+          <p className="text-slate-500 leading-relaxed mt-3">
+            Built for founders and operators who already know the question. These tools just run the maths.
+          </p>
+          <p className="text-sm text-slate-500 mt-4">
+            Neil Minty — fractional growth and ecommerce operator.
+          </p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
