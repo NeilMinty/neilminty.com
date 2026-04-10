@@ -472,7 +472,7 @@ export function Promotions() {
 
   return (
     <ToolLayout
-      title="Promotions Profitability Calculator — Neil Minty"
+      title="Promotions Profitability Calculator"
       description="Before you run a promotion, know whether it can earn its margin. Enter your baseline and promotion parameters to find the break-even volume uplift required and whether it's realistic."
       metaDescription="Before you run a promotion, know if it can earn its margin. Calculates break-even volume uplift and whether it's realistic."
     >

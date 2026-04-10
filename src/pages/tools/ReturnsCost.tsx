@@ -361,7 +361,7 @@ export function ReturnsCost() {
 
   return (
     <ToolLayout
-      title="Returns Cost Calculator — Neil Minty"
+      title="Returns Cost Calculator"
       description="Most brands know their returns rate. Few know what returns are actually costing them. Enter your returns profile to see the true cost per return and where the money is going."
       metaDescription="Your returns rate is a headline. This is what it's actually costing you — hard cost, margin leakage, and operational drag combined."
     >

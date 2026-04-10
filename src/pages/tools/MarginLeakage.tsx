@@ -400,7 +400,7 @@ export function MarginLeakage() {
 
   return (
     <ToolLayout
-      title="Margin Leakage Calculator — Neil Minty"
+      title="Margin Leakage Calculator"
       description="Where is your margin actually going? Enter your revenue, returns, discounting, and delivery parameters to see total leakage by source and the single biggest lever to pull."
       metaDescription="Where is your contribution margin going? Breaks erosion into returns, discounting, and delivery — ranked by size."
     >

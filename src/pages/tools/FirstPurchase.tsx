@@ -598,7 +598,7 @@ export function FirstPurchase() {
 
   return (
     <ToolLayout
-      title="First Purchase Predictor — Neil Minty"
+      title="First Purchase Predictor"
       description="Which product a customer buys first predicts whether they come back. Enter up to ten products to surface which drive repeat buyers and which produce one-time purchasers."
       metaDescription="Which product should you acquire customers on? Ranks your catalogue by retention strength, adjusted for volume and discount dependency."
     >
