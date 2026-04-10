@@ -441,3 +441,76 @@ describe("random mock data stress tests", () => {
     }
   });
 });
+
+// ─── Human-operator edge cases ───────────────────────────────────────────────
+
+describe("edge cases — input parsing and clamping", () => {
+  it("fullPricePct > 100 is clamped to 100", () => {
+    const r = computeAnalysis([row({ fullPricePct: "150" })]);
+    expect(r.products[0].fullPricePct).toBe(100);
+  });
+
+  it("fullPricePct negative is clamped to 0", () => {
+    const r = computeAnalysis([row({ fullPricePct: "-10" })]);
+    expect(r.products[0].fullPricePct).toBe(0);
+  });
+
+  it("fullPricePct = 0: weightedScore is 0 (fully discounted acquisition)", () => {
+    const r = computeAnalysis([row({ fullPricePct: "0", repeatRate90d: "60", firstPurchaseVolume: "100" })]);
+    expect(r.products[0].weightedScore).toBe(0);
+  });
+
+  it("discountDepth non-numeric string: parses to 0", () => {
+    const r = computeAnalysis([row({ discountDepth: "abc" })]);
+    expect(r.products[0].discountDepth).toBe(0);
+  });
+
+  it("repeatRate90d = 0: weightedScore = 0, retention tier still assigned", () => {
+    const r = computeAnalysis([row({ repeatRate90d: "0" })]);
+    expect(r.products[0].weightedScore).toBe(0);
+    expect(r.products[0].retentionTier).toBe("verified");
+  });
+
+  it("repeatRate90d = 100: maximum rate, still in valid range", () => {
+    const r = computeAnalysis([row({ repeatRate90d: "100" })]);
+    expect(r.products[0].repeatRate90d).toBe(100);
+  });
+
+  it("firstPurchaseVolume = 1: lowConfidence = true, weightedScore = 0", () => {
+    // 1 × (1 − 1/√1) × fp = 1 × 0 × fp = 0
+    const r = computeAnalysis([row({ firstPurchaseVolume: "1", repeatRate90d: "60" })]);
+    expect(r.products[0].lowConfidence).toBe(true);
+    expect(r.products[0].weightedScore).toBe(0);
+  });
+
+  it("mix of valid and empty rows: only valid rows appear in output", () => {
+    const r = computeAnalysis([
+      row({ name: "Valid A", firstPurchaseVolume: "100" }),
+      row({ name: "", firstPurchaseVolume: "200" }),
+      row({ name: "Valid B", firstPurchaseVolume: "0" }),
+      row({ name: "Valid C", firstPurchaseVolume: "50" }),
+    ]);
+    expect(r.products).toHaveLength(2);
+    expect(r.products.map(p => p.name)).toEqual(expect.arrayContaining(["Valid A", "Valid C"]));
+  });
+
+  it("10 products (maximum): all tiers covered, no crash", () => {
+    const rows = Array.from({ length: 10 }, (_, i) =>
+      row({ name: `P${i}`, firstPurchaseVolume: String((i + 1) * 10), repeatRate90d: String(i * 10) })
+    );
+    const r = computeAnalysis(rows);
+    expect(r.products).toHaveLength(10);
+    expect(r.highestVolumeProduct).not.toBeNull();
+    expect(r.highestRetentionProduct).not.toBeNull();
+  });
+
+  it("name with only whitespace is treated as blank (filtered out)", () => {
+    const r = computeAnalysis([row({ name: "   " })]);
+    expect(r.products).toHaveLength(0);
+  });
+
+  it("avgSpend180d < avgSpend90d: ltvMomentum < 1 (regression scenario)", () => {
+    const r = computeAnalysis([row({ avgSpend90d: "200", avgSpend180d: "150" })]);
+    expect(r.products[0].ltvMomentum).toBeCloseTo(0.75);
+  });
+});

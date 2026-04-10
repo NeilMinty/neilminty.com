@@ -127,6 +127,102 @@ describe('paybackVerdict', () => {
   });
 });
 
+// ─── Human-operator edge cases ───────────────────────────────────────────────
+
+describe('edge cases — zero and extreme inputs', () => {
+  it('blendedCAC = 0: instant payback (0 months), all LTV:CAC ratios are 0', () => {
+    const r = calculatePayback(base({ blendedCAC: 0 }));
+    expect(r.monthsToPayback).toBe(0);
+    expect(r.ltvCacRatio12).toBe(0);
+    expect(r.ltvCacRatio24).toBe(0);
+    expect(r.paybackVerdict).toBe('strong');
+  });
+
+  it('avgOrderFrequencyMonths = 0: guard prevents division by zero, payback = Infinity', () => {
+    const r = calculatePayback(base({ avgOrderFrequencyMonths: 0 }));
+    expect(r.monthsToPayback).toBe(Infinity);
+  });
+
+  it('aov = 0: zero margin per order, payback = Infinity', () => {
+    const r = calculatePayback(base({ aov: 0 }));
+    expect(r.marginPerOrder).toBe(0);
+    expect(r.monthsToPayback).toBe(Infinity);
+  });
+
+  it('grossMarginPercent = 100: full price recovery', () => {
+    const r = calculatePayback(base({ grossMarginPercent: 100 }));
+    expect(r.marginPerOrder).toBeCloseTo(80); // aov = 80
+    expect(isFinite(r.monthsToPayback)).toBe(true);
+  });
+
+  it('repeatPurchaseRate = 100: maximum retention, LTV grows steeply', () => {
+    const r = calculatePayback(base({ repeatPurchaseRate: 100 }));
+    expect(r.ltv24Month).toBeGreaterThan(r.ltv12Month);
+    expect(r.ltv12Month).toBeGreaterThan(r.marginPerOrder);
+  });
+
+  it('very high CAC (£1,000,000): still produces finite values', () => {
+    const r = calculatePayback(base({ blendedCAC: 1_000_000 }));
+    expect(isFinite(r.monthsToPayback)).toBe(true);
+    expect(r.paybackVerdict).toBe('unviable');
+  });
+
+  it('grossMarginPercent > 100 is clamped to 100', () => {
+    // clamp: Math.max(0, Math.min(1, 150/100)) = 1
+    const r = calculatePayback(base({ grossMarginPercent: 150 }));
+    expect(r.marginPerOrder).toBeCloseTo(80); // 80 × 1.0
+  });
+
+  it('grossMarginPercent < 0 is clamped to 0', () => {
+    const r = calculatePayback(base({ grossMarginPercent: -20 }));
+    expect(r.marginPerOrder).toBe(0);
+    expect(r.monthsToPayback).toBe(Infinity);
+  });
+
+  it('repeatPurchaseRate > 100 is clamped to 100', () => {
+    const rNormal = calculatePayback(base({ repeatPurchaseRate: 100 }));
+    const rOver = calculatePayback(base({ repeatPurchaseRate: 150 }));
+    expect(rOver.ltv12Month).toBeCloseTo(rNormal.ltv12Month);
+  });
+
+  it('all inputs zero: no NaN, no crash', () => {
+    const r = calculatePayback({
+      blendedCAC: 0, aov: 0, grossMarginPercent: 0,
+      repeatPurchaseRate: 0, avgOrderFrequencyMonths: 0,
+    });
+    Object.values(r).forEach(v => {
+      if (typeof v === 'number') expect(isNaN(v)).toBe(false);
+    });
+  });
+
+  it('freq < 1 order/month (slow buyer, e.g. every 18 months): LTV still computes', () => {
+    // avgOrderFrequencyMonths = 18 → freq = 12/18 ≈ 0.667 orders/year
+    const r = calculatePayback(base({ avgOrderFrequencyMonths: 18 }));
+    expect(isFinite(r.monthsToPayback)).toBe(true);
+    expect(r.ltv12Month).toBeGreaterThan(0);
+  });
+
+  it('ordersToPayback = Infinity when grossMarginPercent is 0', () => {
+    const r = calculatePayback(base({ grossMarginPercent: 0 }));
+    expect(r.ordersToPayback).toBe(Infinity);
+  });
+
+  it('no NaN in any numeric output across common operator scenarios', () => {
+    const scenarios = [
+      base(),
+      base({ blendedCAC: 120, aov: 90, grossMarginPercent: 45, repeatPurchaseRate: 40, avgOrderFrequencyMonths: 3 }),
+      base({ blendedCAC: 200, grossMarginPercent: 60, repeatPurchaseRate: 0 }),
+      base({ blendedCAC: 75, aov: 120, grossMarginPercent: 65, repeatPurchaseRate: 55, avgOrderFrequencyMonths: 6 }),
+    ];
+    scenarios.forEach(inputs => {
+      const r = calculatePayback(inputs);
+      Object.values(r).forEach(v => {
+        if (typeof v === 'number') expect(isNaN(v)).toBe(false);
+      });
+    });
+  });
+});
+
 // ─── LTV:CAC ratio thresholds ─────────────────────────────────────────────────
 
 describe('ltvCacRatio thresholds', () => {

@@ -234,3 +234,94 @@ describe('calculatePromotion', () => {
     expect(r2.baselineProfit).toBeCloseTo(r1.baselineProfit * 2);
   });
 });
+
+// ─── Human-operator edge cases ───────────────────────────────────────────────
+
+describe('edge cases — zero and extreme inputs', () => {
+  it('grossMarginPercent = 0 with fulfilment > 0: fullPriceMarginPerOrder ≤ 0 → marginReductionPercent = 0', () => {
+    // Covers the fullPriceMarginPerOrder > 0 false branch
+    const r = calculatePromotion(base({ grossMarginPercent: 0, fulfilmentCostPerOrder: 5 }));
+    expect(r.fullPriceMarginPerOrder).toBeLessThanOrEqual(0);
+    expect(r.marginReductionPercent).toBe(0);
+  });
+
+  it('discountDepth = 100%: promotional margin is zero, break-even is Infinity', () => {
+    // promoAOV = 0, promoMargin = 0, adjustedMargin = 0 → breakEven = Infinity
+    const r = calculatePromotion(base({ discountDepth: 100, fulfilmentCostPerOrder: 0 }));
+    expect(r.promotionalMarginPerOrder).toBeCloseTo(0);
+    expect(r.breakEvenUpliftPercent).toBe(Infinity);
+  });
+
+  it('baselineWeeklyOrders = 0: breakEven and profitable uplift are 0 (no baseline period)', () => {
+    const r = calculatePromotion(base({ baselineWeeklyOrders: 0 }));
+    expect(r.baselineProfit).toBe(0);
+    expect(r.breakEvenUpliftPercent).toBe(0);
+    expect(r.profitableUpliftPercent).toBe(0);
+  });
+
+  it('all inputs zero: no crash, no NaN', () => {
+    const r = calculatePromotion({
+      aov: 0, grossMarginPercent: 0, baselineWeeklyOrders: 0,
+      discountDepth: 0, promotionDurationDays: 0, fulfilmentCostPerOrder: 0,
+      deliveryChargePerOrder: 0, freeDeliveryPercent: 0, incrementalMarketingSpend: 0,
+      returnsRateIncrease: 0, subscriptionPercent: 0, isOverstockClearance: false,
+    });
+    expect(r.breakEvenUpliftPercent).toBe(0);
+    Object.values(r).forEach(v => {
+      if (typeof v === 'number') expect(isNaN(v)).toBe(false);
+    });
+  });
+
+  it('profitableOrders = Infinity when adjusted margin ≤ 0', () => {
+    const r = calculatePromotion(base({ grossMarginPercent: 10, discountDepth: 90, fulfilmentCostPerOrder: 5 }));
+    expect(r.profitableUpliftPercent).toBe(Infinity);
+  });
+
+  it('very high marketing spend produces unrealistic classification', () => {
+    const r = calculatePromotion(base({ incrementalMarketingSpend: 500_000 }));
+    expect(r.profitabilityClassification).toBe('unrealistic');
+  });
+
+  it('freeDeliveryPercent = 100: effective delivery revenue = 0', () => {
+    const r = calculatePromotion(base({ deliveryChargePerOrder: 10, freeDeliveryPercent: 100 }));
+    // effectiveDeliveryRevenue = 10 × 0 = 0 → same as no delivery charge
+    const rNoDelivery = calculatePromotion(base({ deliveryChargePerOrder: 0, freeDeliveryPercent: 0 }));
+    expect(r.fullPriceMarginPerOrder).toBeCloseTo(rNoDelivery.fullPriceMarginPerOrder);
+  });
+
+  it('very long promotion (365 days): scales correctly', () => {
+    const r = calculatePromotion(base({ promotionDurationDays: 365 }));
+    expect(isFinite(r.baselineProfit)).toBe(true);
+    expect(isFinite(r.breakEvenUpliftPercent)).toBe(true);
+  });
+
+  it('discountDepth lever: reducedAdjustedMargin ≤ 0 → reducedBreakEvenOrders = Infinity', () => {
+    // discount=95%, margin=10%, fulfilment=5: fullPriceMargin=5, promoMargin=-4.5 → reduction=190%>40%
+    // reducedDiscount=90%: reducedPromoAOV=10, reducedMargin=10×0.1-5=-4 ≤ 0 → Infinity
+    const r = calculatePromotion(base({ discountDepth: 95, grossMarginPercent: 10, fulfilmentCostPerOrder: 5 }));
+    expect(r.biggestLever).toBe('discountDepth');
+    expect(r.biggestLeverRecommendation).toContain('Infinity');
+  });
+
+  it('discountDepth > 25 but marginReduction ≤ 40: does NOT pick discountDepth lever', () => {
+    // grossMargin=80%, discount=30%: promo margin = 70×0.8=56, full=80×0.8=64
+    // marginReduction = (64-56)/64 × 100 = 12.5% ≤ 40% → discountDepth lever NOT triggered
+    const r = calculatePromotion(base({ grossMarginPercent: 80, discountDepth: 30 }));
+    expect(r.biggestLever).not.toBe('discountDepth');
+  });
+
+  it('no NaN in any numeric output across common operator scenarios', () => {
+    const scenarios = [
+      base(),
+      base({ discountDepth: 50, returnsRateIncrease: 20, subscriptionPercent: 30 }),
+      base({ grossMarginPercent: 25, discountDepth: 35, fulfilmentCostPerOrder: 8 }),
+      base({ isOverstockClearance: true, incrementalMarketingSpend: 5000 }),
+    ];
+    scenarios.forEach(inputs => {
+      const r = calculatePromotion(inputs);
+      Object.values(r).forEach(v => {
+        if (typeof v === 'number') expect(isNaN(v)).toBe(false);
+      });
+    });
+  });
+});

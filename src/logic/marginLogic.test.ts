@@ -325,3 +325,119 @@ describe('unit economics', () => {
     expect(r.trueMarginPerOrder).toBeCloseTo(50);
   });
 });
+
+// ─── Human-operator edge cases ───────────────────────────────────────────────
+
+describe('edge cases — zero and extreme inputs', () => {
+  it('annualRevenue = 0: all percentage fields are 0, no NaN', () => {
+    const r = calculateLeakage(base({ annualRevenue: 0 }));
+    expect(r.returnsLeakagePct).toBe(0);
+    expect(r.discountErosionPct).toBe(0);
+    expect(r.deliverySubsidyPct).toBe(0);
+    expect(r.contributionMarginPct).toBe(0);
+    Object.values(r).forEach(v => {
+      if (typeof v === 'number') expect(isNaN(v)).toBe(false);
+    });
+  });
+
+  it('aov = 0: totalOrders = 0, delivery subsidy is zero, no NaN', () => {
+    // Returns leakage uses revenue × rate (not order count) so can still be non-zero.
+    // Delivery subsidy uses order count so is zero when aov=0.
+    const r = calculateLeakage(base({ aov: 0 }));
+    expect(r.deliverySubsidy).toBe(0);
+    expect(r.deliverySubsidyPct).toBe(0);
+    Object.values(r).forEach(v => {
+      if (typeof v === 'number') expect(isNaN(v)).toBe(false);
+    });
+  });
+
+  it('grossMarginPercent = 0: contributionMargin is negative (leakage exceeds zero gross)', () => {
+    const r = calculateLeakage(base({ grossMarginPercent: 0 }));
+    expect(r.contributionMargin).toBeLessThanOrEqual(0);
+    expect(r.contributionMarginClass).toBe('critical');
+  });
+
+  it('returnsRate = 100%: all orders returned, high leakage', () => {
+    const r = calculateLeakage(base({ returnsRate: 100 }));
+    expect(r.returnsLeakage).toBeGreaterThan(0);
+    expect(r.returnsLeakagePct).toBeGreaterThan(0);
+  });
+
+  it('deliveryCharge > deliveryCost: no negative paid subsidy (overcharging), only free portion', () => {
+    const r = calculateLeakage(base({
+      deliveryCost: 3,
+      deliveryCharge: 10,
+      freeDeliveryPercent: 20,
+      aov: 100,
+      annualRevenue: 1_000_000,
+    }));
+    // Paid delivery is over-recovering — subsidy from that portion should be 0
+    // freeDelivery subsidy = 10,000 × 0.2 × 3 = 6,000
+    expect(r.deliverySubsidy).toBeCloseTo(6_000);
+    expect(r.deliverySubsidy).toBeGreaterThanOrEqual(0);
+  });
+
+  it('freeDeliveryPercent = 100: entire delivery cost is subsidised', () => {
+    const r = calculateLeakage(base({
+      freeDeliveryPercent: 100,
+      deliveryCost: 5,
+      deliveryCharge: 5,
+      aov: 100,
+      annualRevenue: 1_000_000,
+    }));
+    // All 10,000 orders are free → subsidy = 10,000 × 5 = 50,000
+    expect(r.deliverySubsidy).toBeCloseTo(50_000);
+  });
+
+  it('all inputs zero: no NaN, no crash, totalLeakage = 0', () => {
+    const r = calculateLeakage({
+      annualRevenue: 0,
+      aov: 0,
+      grossMarginPercent: 0,
+      returnsRate: 0,
+      fullPriceResellPercent: 0,
+      discountedResellPercent: 0,
+      writeOffPercent: 0,
+      resaleDiscountPercent: 0,
+      returnProcessingCost: 0,
+      promotedOrdersPercent: 0,
+      discountDepth: 0,
+      deliveryCost: 0,
+      deliveryCharge: 0,
+      freeDeliveryPercent: 0,
+    });
+    expect(r.totalLeakage).toBe(0);
+    expect(r.contributionMargin).toBe(0);
+    Object.values(r).forEach(v => {
+      if (typeof v === 'number') {
+        expect(isNaN(v)).toBe(false);
+        expect(isFinite(v) || v === 0).toBe(true);
+      }
+    });
+  });
+
+  it('very high revenue (£10M): scales without overflow', () => {
+    const r = calculateLeakage(base({ annualRevenue: 10_000_000 }));
+    expect(r.totalLeakage).toBeGreaterThan(0);
+    expect(isFinite(r.totalLeakage)).toBe(true);
+  });
+
+  it('negative contributionMargin is classified as critical', () => {
+    const r = calculateLeakage(base({
+      grossMarginPercent: 5,
+      returnsRate: 30,
+      promotedOrdersPercent: 50,
+      discountDepth: 30,
+      freeDeliveryPercent: 80,
+      deliveryCost: 10,
+      deliveryCharge: 0,
+    }));
+    expect(r.contributionMarginPct).toBeLessThan(15);
+    expect(r.contributionMarginClass).toBe('critical');
+  });
+
+  it('leakageRanked pcts are always non-negative', () => {
+    const r = calculateLeakage(base());
+    r.leakageRanked.forEach(entry => expect(entry.pct).toBeGreaterThanOrEqual(0));
+  });
+});

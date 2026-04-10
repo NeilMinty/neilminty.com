@@ -151,3 +151,80 @@ describe('total and true cost', () => {
     expect(r2.trueReturnsCost).toBeCloseTo(r1.trueReturnsCost);
   });
 });
+
+// ─── Human-operator edge cases ───────────────────────────────────────────────
+
+describe('edge cases — zero and extreme inputs', () => {
+  it('returnsRate = 100%: all orders returned, maximum leakage', () => {
+    const r = calculateReturnsCost(base({ returnsRate: 100 }));
+    // All 10,000 orders returned
+    expect(r.annualReturns).toBeCloseTo(10_000);
+    expect(r.hardReturnsCost).toBeGreaterThan(0);
+    expect(r.totalReturnsCost).toBeGreaterThan(0);
+  });
+
+  it('grossMargin = 0%: discountedMarginLoss and writeoffMarginLoss are both 0', () => {
+    const r = calculateReturnsCost(base({ grossMargin: 0 }));
+    expect(r.discountedMarginLoss).toBe(0);
+    expect(r.writeoffMarginLoss).toBe(0);
+    expect(r.marginLeakage).toBe(0);
+  });
+
+  it('annualRevenue = 0: all values are 0, no NaN', () => {
+    const r = calculateReturnsCost(base({ annualRevenue: 0 }));
+    expect(r.annualReturns).toBe(0);
+    expect(r.totalReturnsCost).toBe(0);
+    expect(r.trueReturnsCost).toBe(0);
+    Object.values(r).forEach(v => expect(isNaN(v as number)).toBe(false));
+  });
+
+  it('aov = 0: no orders, no returns, operationalDrag may still exist', () => {
+    const r = calculateReturnsCost(base({ aov: 0 }));
+    expect(r.annualReturns).toBe(0);
+    expect(r.hardReturnsCost).toBe(0);
+    expect(r.trueReturnsCost).toBe(0);
+  });
+
+  it('writeoffPct + resaleDiscountedPct > 100: computes without crashing', () => {
+    // Operator data entry error — percentages overclaimed. Should not crash.
+    const r = calculateReturnsCost(base({ writeoffPct: 70, resaleDiscountedPct: 70 }));
+    expect(r.totalReturnsCost).toBeGreaterThan(0);
+    expect(isNaN(r.totalReturnsCost)).toBe(false);
+  });
+
+  it('costPerReturn > aov: trueReturnsCost can exceed aov', () => {
+    const r = calculateReturnsCost(base({ costPerReturn: 200, aov: 100 }));
+    expect(r.trueReturnsCost).toBeGreaterThan(100);
+    expect(isFinite(r.trueReturnsCost)).toBe(true);
+  });
+
+  it('all inputs zero: no crash, all outputs 0', () => {
+    const r = calculateReturnsCost({
+      annualRevenue: 0, aov: 0, returnsRate: 0, grossMargin: 0,
+      costPerReturn: 0, resaleDiscountedPct: 0, writeoffPct: 0,
+      avgDiscountPct: 0, fulfilmentCostPct: 0, returnsDragPct: 0,
+    });
+    expect(r.totalReturnsCost).toBe(0);
+    expect(r.trueReturnsCost).toBe(0);
+    Object.values(r).forEach(v => expect(isNaN(v as number)).toBe(false));
+  });
+
+  it('very high returns rate (50%): totalReturnsCost is still finite', () => {
+    const r = calculateReturnsCost(base({ returnsRate: 50 }));
+    expect(isFinite(r.totalReturnsCost)).toBe(true);
+    expect(isFinite(r.trueReturnsCost)).toBe(true);
+  });
+
+  it('no NaN in any numeric output across common operator scenarios', () => {
+    const scenarios = [
+      base(),
+      base({ returnsRate: 35, grossMargin: 40, costPerReturn: 8 }),
+      base({ writeoffPct: 50, resaleDiscountedPct: 40, avgDiscountPct: 30 }),
+      base({ annualRevenue: 500_000, aov: 60, returnsRate: 15 }),
+    ];
+    scenarios.forEach(inputs => {
+      const r = calculateReturnsCost(inputs);
+      Object.values(r).forEach(v => expect(isNaN(v as number)).toBe(false));
+    });
+  });
+});
