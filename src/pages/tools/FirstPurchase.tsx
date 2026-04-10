@@ -633,7 +633,7 @@ function QuickEstimate() {
               ?
             </span>
           </span>
-          <span className="text-[10px] uppercase tracking-wide text-slate-400 font-semibold text-right">Orders</span>
+          <span className="text-[10px] uppercase tracking-wide text-slate-400 font-semibold text-right">Volume</span>
           <span />
         </div>
 
@@ -656,7 +656,7 @@ function QuickEstimate() {
                   <CellInput value={row.repeatRate} onChange={(v) => updateRow(row.id, 'repeatRate', v)} suffix="%" placeholder="0" />
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase tracking-wide text-slate-400 font-semibold mb-1">Orders</p>
+                  <p className="text-[10px] uppercase tracking-wide text-slate-400 font-semibold mb-1">Volume</p>
                   <CellInput value={row.volume} onChange={(v) => updateRow(row.id, 'volume', v)} placeholder="0" />
                 </div>
               </div>
