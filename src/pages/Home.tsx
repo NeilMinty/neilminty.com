@@ -56,7 +56,17 @@ export function Home() {
         ))}
       </div>
 
-      <footer className="mt-16 py-8 border-t border-slate-200">
+      <div className="mt-16 pt-12 border-t border-slate-200 text-center">
+        <p className="text-slate-600 mb-4">Running a DTC brand and unit economics are the constraint?</p>
+        <a
+          href="mailto:neil@personaify.io"
+          className="inline-block px-6 py-3 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-700 transition-colors"
+        >
+          Get in touch
+        </a>
+      </div>
+
+      <footer className="mt-12 py-8 border-t border-slate-200">
         <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-between">
           <p className="text-sm text-slate-400">© Neil Minty {new Date().getFullYear()}</p>
           <Link
