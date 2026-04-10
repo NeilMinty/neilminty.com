@@ -579,7 +579,7 @@ function InsightCallout({
 
 export function FirstPurchase() {
   const [view, setView] = useState<'input' | 'results'>('input');
-  const [rows, setRows] = useState<ProductFormRow[]>(() => [emptyRow()]);
+  const [rows, setRows] = useState<ProductFormRow[]>(() => Array.from({ length: 5 }, emptyRow));
 
   const analysis = useMemo(() => computeAnalysis(rows), [rows]);
   const { products, highestVolumeProduct, highestRetentionProduct, retentionGap } = analysis;
