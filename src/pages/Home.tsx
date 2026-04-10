@@ -16,7 +16,7 @@ export function Home() {
         <img
           src="/images/neil-minty.jpg"
           alt="Neil Minty"
-          className="max-h-64 w-full object-cover object-top md:max-h-none md:w-[280px] md:h-auto md:flex-shrink-0 rounded-lg self-start"
+          className="h-64 w-full object-cover object-top md:h-auto md:w-[280px] md:flex-shrink-0 rounded-lg self-start"
         />
         <div className="flex flex-col justify-center">
           <h1 className="text-3xl font-semibold text-slate-900 tracking-tight mb-4">
@@ -39,7 +39,7 @@ export function Home() {
           <Link
             key={tool.path}
             to={tool.path}
-            className={`group flex flex-col justify-between h-full bg-white border border-slate-200 rounded-lg px-6 py-5 hover:border-slate-300 transition-colors shadow-card sm:col-span-2${index === TOOLS.length - 1 ? ' sm:col-start-1' : ''}`}
+            className={`group flex flex-col justify-between bg-white border border-slate-200 rounded-lg px-6 py-5 hover:border-slate-300 transition-colors shadow-card sm:col-span-2${index === TOOLS.length - 1 ? ' sm:col-start-1' : ''}`}
           >
             <div>
               <p className="font-semibold text-slate-900 mb-1.5 group-hover:text-slate-700 transition-colors">
