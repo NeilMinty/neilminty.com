@@ -1,14 +1,7 @@
 import { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
-
-const tools = [
-  { name: 'First Purchase', path: '/tools/first-purchase' },
-  { name: 'Promotions', path: '/tools/promotions' },
-  { name: 'Margin Leakage', path: '/tools/margin-leakage' },
-  { name: 'Returns Cost', path: '/tools/returns-cost' },
-  { name: 'Payback Period', path: '/tools/payback-period' },
-];
+import { TOOLS } from '@/lib/tools';
 
 export function NavBar() {
   const [open, setOpen] = useState(false);
@@ -24,7 +17,7 @@ export function NavBar() {
         </Link>
 
         <nav className="hidden md:flex items-center gap-6">
-          {tools.map((tool) => (
+          {TOOLS.map((tool) => (
             <NavLink
               key={tool.path}
               to={tool.path}
@@ -53,7 +46,7 @@ export function NavBar() {
       {open && (
         <div className="md:hidden bg-white border-b border-slate-200 px-6 pb-4">
           <nav className="flex flex-col gap-3 pt-3">
-            {tools.map((tool) => (
+            {TOOLS.map((tool) => (
               <NavLink
                 key={tool.path}
                 to={tool.path}

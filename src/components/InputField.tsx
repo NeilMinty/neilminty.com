@@ -2,6 +2,7 @@ interface InputFieldProps {
   label: string;
   value: string | number;
   onChange: (value: string) => void;
+  type?: 'number' | 'text' | 'email';
   prefix?: string;
   suffix?: string;
   hint?: string;
@@ -12,6 +13,7 @@ export function InputField({
   label,
   value,
   onChange,
+  type = 'number',
   prefix,
   suffix,
   hint,
@@ -27,7 +29,7 @@ export function InputField({
           </span>
         )}
         <input
-          type="number"
+          type={type}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}

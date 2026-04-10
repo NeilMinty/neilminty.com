@@ -1,37 +1,9 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-
-const tools = [
-  {
-    name: 'First Purchase Predictor',
-    description: "What is the expected value of a new customer's first order?",
-    path: '/tools/first-purchase',
-  },
-  {
-    name: 'Promotions Profitability',
-    description:
-      'Does this promotion generate margin after discounts and acquisition cost?',
-    path: '/tools/promotions',
-  },
-  {
-    name: 'Margin Leakage',
-    description:
-      'Where is contribution margin being lost between revenue and net profit?',
-    path: '/tools/margin-leakage',
-  },
-  {
-    name: 'Returns Cost',
-    description: 'What is the true margin impact of your current returns rate?',
-    path: '/tools/returns-cost',
-  },
-  {
-    name: 'Payback Period',
-    description:
-      'How many orders does it take to recover the cost of acquiring a customer?',
-    path: '/tools/payback-period',
-  },
-];
+import { TOOLS } from '@/lib/tools';
 
 export function Home() {
+  useEffect(() => { document.title = 'Neil Minty — DTC Operator Tools'; }, []);
   return (
     <div className="max-w-5xl mx-auto px-6 py-16">
       <div className="max-w-2xl mb-14">
@@ -52,12 +24,11 @@ export function Home() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {tools.map((tool) => (
+        {TOOLS.map((tool) => (
           <Link
             key={tool.path}
             to={tool.path}
-            className="group bg-white border border-slate-200 rounded-lg px-6 py-5 hover:border-slate-300 transition-colors"
-            style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}
+            className="group bg-white border border-slate-200 rounded-lg px-6 py-5 hover:border-slate-300 transition-colors shadow-card"
           >
             <p className="font-semibold text-slate-900 mb-1.5 group-hover:text-slate-700 transition-colors">
               {tool.name}

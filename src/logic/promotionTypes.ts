@@ -16,7 +16,6 @@ export interface PromotionInputs {
 export interface ScenarioResult {
   upliftPercent: number;
   orders: number;
-  revenue: number;
   profit: number;
   profitVsBaseline: number;
   profitVsBaselinePercent: number;
@@ -34,7 +33,7 @@ export interface PromotionResults {
   scenarios: ScenarioResult[];
   returnsImpactOnBreakEven: number;
   marketingSpendImpactOnBreakEven: number;
-  biggestLever: string;
+  biggestLever: 'discountDepth' | 'returnsRate' | 'marketingSpend' | 'fulfilmentCost' | 'default';
   biggestLeverRecommendation: string;
   overstockNote: string;
 }

@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+
 interface ToolLayoutProps {
   title: string;
   description: string;
@@ -5,6 +7,10 @@ interface ToolLayoutProps {
 }
 
 export function ToolLayout({ title, description, children }: ToolLayoutProps) {
+  useEffect(() => {
+    document.title = `${title} | Neil Minty`;
+    return () => { document.title = 'Neil Minty'; };
+  }, [title]);
   return (
     <div className="max-w-3xl mx-auto px-6 py-12">
       <div className="mb-8 pb-6 border-b border-slate-200">

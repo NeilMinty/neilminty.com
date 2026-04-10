@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { computeZScore } from "@/lib/z-score";
 import type { ZClassification } from "@/lib/z-score";
 
@@ -144,6 +143,3 @@ export function computeAnalysis(rows: ProductFormRow[]): AnalysisResult {
   };
 }
 
-export function useAnalysis(rows: ProductFormRow[]) {
-  return useMemo(() => computeAnalysis(rows), [rows]);
-}

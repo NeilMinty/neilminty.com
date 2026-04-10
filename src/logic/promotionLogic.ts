@@ -35,11 +35,10 @@ export function calculatePromotion(inputs: PromotionInputs): PromotionResults {
   // Returns adjustment — only the incremental promotional uplift is applied.
   // grossMarginPercent is assumed to already reflect the business's normal returns cost.
   const returnsImpactPerOrder = promotionalAOV * (returnsRateIncrease / 100) * grossMarginDecimal;
-  const adjustedPromotionalMarginPerOrder = promotionalMarginPerOrder - returnsImpactPerOrder;
 
-  // Subscription margin multiplier (derived)
-  const _subscriptionMarginMultiplier = 1 - (subscriptionPercent / 100) * 0.15;
-  void _subscriptionMarginMultiplier;
+  // Subscription margin multiplier — subscribed customers locked to discounted price have lower LTV
+  const subscriptionMarginMultiplier = 1 - (subscriptionPercent / 100) * 0.15;
+  const adjustedPromotionalMarginPerOrder = (promotionalMarginPerOrder - returnsImpactPerOrder) * subscriptionMarginMultiplier;
 
   const baselineProfit = baselineOrdersForPeriod * fullPriceMarginPerOrder;
 
@@ -76,12 +75,11 @@ export function calculatePromotion(inputs: PromotionInputs): PromotionResults {
   // Scenario analysis
   const scenarios = [10, 25, 50].map((upliftPercent) => {
     const orders = baselineOrdersForPeriod * (1 + upliftPercent / 100);
-    const revenue = orders * promotionalAOV;
     const profit = orders * adjustedPromotionalMarginPerOrder - incrementalMarketingSpend;
     const profitVsBaseline = profit - baselineProfit;
     const profitVsBaselinePercent =
       baselineProfit !== 0 ? (profitVsBaseline / baselineProfit) * 100 : 0;
-    return { upliftPercent, orders, revenue, profit, profitVsBaseline, profitVsBaselinePercent };
+    return { upliftPercent, orders, profit, profitVsBaseline, profitVsBaselinePercent };
   });
 
   // Risk factor: how much the promotional returns uplift adds to break-even
@@ -104,7 +102,7 @@ export function calculatePromotion(inputs: PromotionInputs): PromotionResults {
   const marketingSpendImpactOnBreakEven = breakEvenUpliftPercent - breakEvenWithoutMarketing;
 
   // Biggest lever
-  let biggestLever: string;
+  let biggestLever: PromotionResults['biggestLever'];
   let biggestLeverRecommendation: string;
 
   if (discountDepth > 25 && marginReductionPercent > 40) {
@@ -113,7 +111,7 @@ export function calculatePromotion(inputs: PromotionInputs): PromotionResults {
     const reducedPromoAOV = aov * (1 - reducedDiscount / 100);
     const reducedPromoMargin = reducedPromoAOV * grossMarginDecimal - fulfilmentCostPerOrder + effectiveDeliveryRevenue;
     const reducedReturnsImpact = reducedPromoAOV * (returnsRateIncrease / 100) * grossMarginDecimal;
-    const reducedAdjustedMargin = reducedPromoMargin - reducedReturnsImpact;
+    const reducedAdjustedMargin = (reducedPromoMargin - reducedReturnsImpact) * subscriptionMarginMultiplier;
     const reducedBreakEvenOrders =
       reducedAdjustedMargin > 0
         ? (baselineProfit + incrementalMarketingSpend) / reducedAdjustedMargin

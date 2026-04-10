@@ -76,8 +76,7 @@ function ScenarioTable({
 }) {
   return (
     <div
-      className="border border-slate-200 rounded-lg overflow-hidden"
-      style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}
+      className="border border-slate-200 rounded-lg overflow-hidden shadow-card"
     >
       <table className="w-full text-sm">
         <thead className="bg-white border-b border-slate-200">

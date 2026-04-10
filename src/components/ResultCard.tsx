@@ -23,8 +23,7 @@ export function ResultCard({
   const styles = variantStyles[variant];
   return (
     <div
-      className={`bg-white border rounded-lg px-5 py-4 ${styles.border}`}
-      style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}
+      className={`bg-white border rounded-lg px-5 py-4 shadow-card ${styles.border}`}
     >
       <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1.5">
         {label}

@@ -403,8 +403,7 @@ function ResultsTable({ products }: { products: ProductAnalysis[] }) {
 
   return (
     <div
-      className="border border-slate-200 rounded-lg overflow-hidden"
-      style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}
+      className="border border-slate-200 rounded-lg overflow-hidden shadow-card"
     >
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
@@ -604,7 +603,10 @@ export function FirstPurchase() {
             <InputForm rows={rows} onChange={setRows} />
           </div>
 
-          <div className="flex sm:justify-end">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <p className="text-xs text-slate-400">
+              Rows without a product name and volume are excluded from analysis.
+            </p>
             <button
               onClick={() => setView('results')}
               disabled={!canCalculate}
