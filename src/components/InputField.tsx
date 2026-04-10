@@ -3,6 +3,7 @@ interface InputFieldProps {
   value: string | number;
   onChange: (value: string) => void;
   prefix?: string;
+  suffix?: string;
   hint?: string;
   placeholder?: string;
 }
@@ -12,6 +13,7 @@ export function InputField({
   value,
   onChange,
   prefix,
+  suffix,
   hint,
   placeholder,
 }: InputFieldProps) {
@@ -31,6 +33,11 @@ export function InputField({
           placeholder={placeholder}
           className="flex-1 px-3 py-2 text-sm text-slate-900 bg-transparent outline-none min-w-0"
         />
+        {suffix && (
+          <span className="px-3 text-sm text-slate-500 border-l border-slate-200 flex items-center bg-slate-50 rounded-r select-none shrink-0">
+            {suffix}
+          </span>
+        )}
       </div>
       {hint && <p className="text-xs text-slate-400">{hint}</p>}
     </div>
