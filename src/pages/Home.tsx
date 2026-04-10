@@ -31,12 +31,14 @@ export function Home() {
           <p className="text-sm text-slate-500 mt-4">
             Neil Minty — fractional growth and ecommerce operator.
           </p>
-          <a
-            href="mailto:neil@personaify.io"
-            className="inline-block mt-6 px-6 py-3 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-700 transition-colors"
-          >
-            Get in touch
-          </a>
+          <div className="mt-6 text-center">
+            <a
+              href="mailto:neil@personaify.io"
+              className="inline-block px-6 py-3 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-700 transition-colors"
+            >
+              Get in touch
+            </a>
+          </div>
         </div>
       </div>
 
