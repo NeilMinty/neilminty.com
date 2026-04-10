@@ -6,11 +6,11 @@ export function About() {
   return (
     <div className="max-w-5xl mx-auto px-6 py-16">
       {/* Two-column hero */}
-      <div className="flex flex-col md:flex-row gap-10 pt-4">
+      <div className="flex flex-col md:flex-row md:items-center gap-10 pt-4">
         <img
           src="/images/neil-minty.jpg"
           alt="Neil Minty"
-          className="w-full h-[300px] md:h-auto md:w-[280px] md:flex-shrink-0 rounded-lg object-cover object-top self-start"
+          className="w-full h-[300px] md:h-auto md:w-[280px] md:flex-shrink-0 rounded-lg object-cover object-top"
         />
         <div className="flex flex-col justify-center">
           <h1 className="text-2xl font-semibold text-slate-900">Neil Minty</h1>

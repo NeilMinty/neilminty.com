@@ -28,12 +28,12 @@ export function Home() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-stretch">
-        {TOOLS.slice(0, -1).map((tool) => (
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        {TOOLS.map((tool, index) => (
           <Link
             key={tool.path}
             to={tool.path}
-            className="group flex flex-col justify-between h-full bg-white border border-slate-200 rounded-lg px-6 py-5 hover:border-slate-300 transition-colors shadow-card"
+            className={`group flex flex-col justify-between h-full bg-white border border-slate-200 rounded-lg px-6 py-5 hover:border-slate-300 transition-colors shadow-card sm:col-span-2${index === TOOLS.length - 1 ? ' sm:col-start-1' : ''}`}
           >
             <div>
               <p className="font-semibold text-slate-900 mb-1.5 group-hover:text-slate-700 transition-colors">
@@ -48,30 +48,6 @@ export function Home() {
             </p>
           </Link>
         ))}
-      </div>
-      <div className="mt-4">
-        {(() => {
-          const tool = TOOLS[TOOLS.length - 1];
-          return (
-            <Link
-              key={tool.path}
-              to={tool.path}
-              className="group flex flex-col justify-between bg-white border border-slate-200 rounded-lg px-6 py-5 hover:border-slate-300 transition-colors shadow-card w-full sm:w-[calc(50%-0.5rem)]"
-            >
-              <div>
-                <p className="font-semibold text-slate-900 mb-1.5 group-hover:text-slate-700 transition-colors">
-                  {tool.name}
-                </p>
-                <p className="text-sm text-slate-500 leading-relaxed">
-                  {tool.description}
-                </p>
-              </div>
-              <p className="text-sm text-slate-500 group-hover:text-slate-900 transition-colors mt-4">
-                Open tool →
-              </p>
-            </Link>
-          );
-        })()}
       </div>
 
       <footer className="mt-16 py-8 border-t border-slate-200">
