@@ -32,6 +32,14 @@ export function NavBar() {
               {tool.name}
             </NavLink>
           ))}
+          <NavLink
+            to="/notes"
+            className={({ isActive }) =>
+              `text-sm transition-colors ${isActive ? 'text-slate-900 font-medium' : 'text-slate-500 hover:text-slate-800'}`
+            }
+          >
+            Notes
+          </NavLink>
           <span className="mx-4 h-4 w-px bg-slate-200 inline-block" />
           <Link
             to="/about"
@@ -67,6 +75,15 @@ export function NavBar() {
                 {tool.name}
               </NavLink>
             ))}
+            <NavLink
+              to="/notes"
+              onClick={() => setOpen(false)}
+              className={({ isActive }) =>
+                `text-sm ${isActive ? 'text-slate-900 font-medium' : 'text-slate-500'}`
+              }
+            >
+              Notes
+            </NavLink>
             <Link
               to="/about"
               onClick={() => setOpen(false)}
