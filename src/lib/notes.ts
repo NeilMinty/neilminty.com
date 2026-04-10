@@ -1,10 +1,14 @@
 import type { ComponentType } from 'react';
 
-interface NoteModule {
-  default: ComponentType;
+interface NoteFrontmatter {
   title: string;
   date: string | Date;
   slug: string;
+}
+
+interface NoteModule {
+  default: ComponentType;
+  frontmatter: NoteFrontmatter;
 }
 
 function normaliseDate(value: string | Date): string {
@@ -26,12 +30,21 @@ const modules = import.meta.glob<NoteModule>('/content/notes/*.mdx', { eager: tr
 
 export function getAllNotes(): NoteMeta[] {
   return Object.values(modules)
-    .map((mod) => ({ title: mod.title, date: normaliseDate(mod.date), slug: mod.slug }))
+    .map((mod) => ({
+      title: mod.frontmatter.title,
+      date: normaliseDate(mod.frontmatter.date),
+      slug: mod.frontmatter.slug,
+    }))
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 }
 
 export function getNoteBySlug(slug: string): NoteWithComponent | null {
-  const entry = Object.values(modules).find((mod) => mod.slug === slug);
+  const entry = Object.values(modules).find((mod) => mod.frontmatter.slug === slug);
   if (!entry) return null;
-  return { title: entry.title, date: normaliseDate(entry.date), slug: entry.slug, Component: entry.default };
+  return {
+    title: entry.frontmatter.title,
+    date: normaliseDate(entry.frontmatter.date),
+    slug: entry.frontmatter.slug,
+    Component: entry.default,
+  };
 }

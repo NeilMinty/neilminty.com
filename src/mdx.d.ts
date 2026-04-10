@@ -1,8 +1,10 @@
 declare module '*.mdx' {
   import type { ComponentType } from 'react';
-  export const title: string;
-  export const date: string;
-  export const slug: string;
+  export const frontmatter: {
+    title: string;
+    date: string | Date;
+    slug: string;
+  };
   const MDXComponent: ComponentType;
   export default MDXComponent;
 }
