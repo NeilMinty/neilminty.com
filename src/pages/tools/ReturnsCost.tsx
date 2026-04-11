@@ -125,9 +125,12 @@ function ResultsView({
         <ResultCard
           label="Operational drag"
           value={formatCurrency(results.operationalDrag)}
-          subtext="Returns-driven fulfilment overhead"
+          subtext="Fulfilment cost × % attributable to returns handling"
           variant="neutral"
         />
+        <p className="text-sm text-slate-500 leading-relaxed mt-3">
+          The portion of your total fulfilment spend absorbed by returns — warehouse labour and admin diverted from forward orders rather than generating revenue.
+        </p>
       </div>
 
       {/* Cost breakdown list */}
