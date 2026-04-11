@@ -26,8 +26,8 @@ export const TOOLS: ToolDefinition[] = [
     path: '/tools/returns-cost',
   },
   {
-    name: 'Payback Period',
-    description: "How long until you recover CAC? Runs payback period and LTV:CAC at 12 and 24 months against your unit economics.",
-    path: '/tools/payback-period',
+    name: 'LTV:CAC Analyser',
+    description: "Enter your unit economics to see LTV:CAC at 12 and 24 months and how long it takes to recover acquisition cost.",
+    path: '/tools/ltv-cac',
   },
 ];

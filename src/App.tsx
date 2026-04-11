@@ -24,7 +24,7 @@ export default function App() {
           <Route path="/tools/promotions" element={<Promotions />} />
           <Route path="/tools/margin-leakage" element={<MarginLeakage />} />
           <Route path="/tools/returns-cost" element={<ReturnsCost />} />
-          <Route path="/tools/payback-period" element={<PaybackPeriod />} />
+          <Route path="/tools/ltv-cac" element={<PaybackPeriod />} />
         </Routes>
       </main>
     </BrowserRouter>

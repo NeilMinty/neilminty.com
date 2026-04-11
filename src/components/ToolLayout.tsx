@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
 const DEFAULT_META_DESCRIPTION =
-  'Free DTC operator tools for founders and growth operators. Calculate promotion profitability, margin leakage, returns cost, CAC payback period, and first purchase retention strength.';
+  'Free DTC operator tools for founders and growth operators. Calculate promotion profitability, margin leakage, returns cost, LTV:CAC ratio, and first purchase retention strength.';
 
 interface ToolLayoutProps {
   title: string;
