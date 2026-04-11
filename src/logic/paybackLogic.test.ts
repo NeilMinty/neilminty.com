@@ -45,9 +45,9 @@ describe('core formulas', () => {
   });
 
   it('computes monthsToPayback correctly', () => {
-    // monthlyContribution = 80 × 0.55 × 3 / 12 = 11; payback = 50 / 11 ≈ 4.545
+    // monthlyContribution = 80 × 0.55 × 0.35 × (1/4) = 3.85; payback = 50 / 3.85 ≈ 12.987
     const r = calculatePayback(base());
-    expect(r.monthsToPayback).toBeCloseTo(50 / 11, 3);
+    expect(r.monthsToPayback).toBeCloseTo(50 / 3.85, 3);
   });
 
   it('computes ordersToPayback as blendedCAC / marginPerOrder', () => {
@@ -93,30 +93,30 @@ describe('paybackVerdict', () => {
     expect(r.monthsToPayback).toBeLessThanOrEqual(6);
   });
 
-  it('strong at exactly 6 months', () => {
-    // monthlyContrib = 11, need CAC = 66
-    const r = calculatePayback(base({ blendedCAC: 66 }));
-    expect(r.monthsToPayback).toBeCloseTo(6, 0);
+  it('strong at boundary (≤ 6 months)', () => {
+    // monthlyContrib = 80 × 0.55 × 0.35 × 0.25 ≈ 3.85; CAC=23 → ~5.97 months
+    const r = calculatePayback(base({ blendedCAC: 23 }));
+    expect(r.monthsToPayback).toBeLessThanOrEqual(6);
     expect(r.paybackVerdict).toBe('strong');
   });
 
   it('acceptable when 6 < monthsToPayback ≤ 12', () => {
-    // CAC = 85 → payback = 85/11 ≈ 7.7
-    const r = calculatePayback(base({ blendedCAC: 85 }));
-    expect(r.monthsToPayback).toBeCloseTo(85 / 11, 2);
+    // monthlyContrib = 3.85; CAC = 35 → payback = 35/3.85 ≈ 9.09
+    const r = calculatePayback(base({ blendedCAC: 35 }));
+    expect(r.monthsToPayback).toBeCloseTo(35 / 3.85, 2);
     expect(r.paybackVerdict).toBe('acceptable');
   });
 
   it('stretched when 12 < monthsToPayback ≤ 18', () => {
-    // CAC = 165 → payback = 165/11 = 15
-    const r = calculatePayback(base({ blendedCAC: 165 }));
-    expect(r.monthsToPayback).toBeCloseTo(15, 2);
+    // monthlyContrib = 3.85; CAC = 58 → payback = 58/3.85 ≈ 15.06
+    const r = calculatePayback(base({ blendedCAC: 58 }));
+    expect(r.monthsToPayback).toBeCloseTo(58 / 3.85, 2);
     expect(r.paybackVerdict).toBe('stretched');
   });
 
   it('unviable when monthsToPayback > 18', () => {
-    // CAC = 200 → payback = 200/11 ≈ 18.2
-    const r = calculatePayback(base({ blendedCAC: 200 }));
+    // monthlyContrib = 3.85; CAC = 80 → payback = 80/3.85 ≈ 20.78
+    const r = calculatePayback(base({ blendedCAC: 80 }));
     expect(r.monthsToPayback).toBeGreaterThan(18);
     expect(r.paybackVerdict).toBe('unviable');
   });
@@ -263,9 +263,8 @@ describe('zero repeat rate', () => {
     expect(r.ltv12Month).toBeCloseTo(r.ltv24Month);
   });
 
-  it('payback still computable with zero repeat rate', () => {
+  it('payback is Infinity with zero repeat rate — no repeat purchases means CAC is never recovered', () => {
     const r = calculatePayback(base({ repeatPurchaseRate: 0 }));
-    expect(r.monthsToPayback).not.toBe(Infinity);
-    expect(r.monthsToPayback).toBeGreaterThan(0);
+    expect(r.monthsToPayback).toBe(Infinity);
   });
 });

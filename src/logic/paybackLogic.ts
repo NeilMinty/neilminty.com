@@ -18,10 +18,18 @@ export function calculatePayback(inputs: PaybackInputs): PaybackResults {
   // Margin per order — first-purchase contribution
   const marginPerOrder = aov * margin;
 
-  // Monthly contribution to payback (source: aov * margin * freq / 12)
-  const monthlyContribution = aov * margin * freq / 12;
+  // Monthly contribution to payback:
+  //   AOV × gross_margin × repeat_purchase_rate × purchase_frequency_per_month
+  //
+  // Trace — base inputs (CAC=50, AOV=80, margin=55%, repeat=35%, freq=every 4 months):
+  //   freq_per_month  = 1/4 = 0.25
+  //   monthlyContrib  = 80 × 0.55 × 0.35 × 0.25 = 3.85
+  //   monthsToPayback = 50 / 3.85 ≈ 12.99   ← expected (correct)
+  //
+  //   Old formula (missing retention): 80 × 0.55 × 0.25 = 11 → 50/11 ≈ 4.55  ← was wrong
+  const monthlyContribution = aov * margin * retention * freq / 12;
 
-  // Months to recover CAC (source: blendedCaC / monthlyContribution)
+  // Months to recover CAC
   const monthsToPayback = monthlyContribution > 0 ? blendedCAC / monthlyContribution : Infinity;
 
   // Orders to recover CAC at full margin per order
