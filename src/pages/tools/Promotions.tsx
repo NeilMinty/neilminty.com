@@ -77,57 +77,85 @@ function ScenarioTable({
   baselineOrders: number;
 }) {
   return (
-    <div
-      className="border border-slate-200 rounded-lg overflow-hidden shadow-card"
-    >
-      <table className="w-full text-sm">
-        <thead className="bg-white border-b border-slate-200">
-          <tr>
-            <th className="py-2.5 px-4 text-left text-[10px] uppercase tracking-wide font-semibold text-slate-400">
-              Uplift
-            </th>
-            <th className="py-2.5 px-4 text-right text-[10px] uppercase tracking-wide font-semibold text-slate-400">
-              Additional orders
-            </th>
-            <th className="py-2.5 px-4 text-right text-[10px] uppercase tracking-wide font-semibold text-slate-400">
-              Margin at this uplift
-            </th>
-            <th className="py-2.5 px-4 text-right text-[10px] uppercase tracking-wide font-semibold text-slate-400">
-              Verdict
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {scenarios.map((s) => {
-            const additionalOrders = s.orders - baselineOrders;
-            const isAbove = s.profitVsBaseline >= 0;
-            return (
-              <tr key={s.upliftPercent} className="border-t border-slate-200">
-                <td className="py-3 px-4 font-mono tabular-nums text-slate-700">
-                  +{s.upliftPercent}%
-                </td>
-                <td className="py-3 px-4 text-right font-mono tabular-nums text-slate-700">
-                  +{Math.round(additionalOrders).toLocaleString()}
-                </td>
-                <td className="py-3 px-4 text-right font-mono tabular-nums text-slate-700">
-                  {formatCurrency(s.profit)}
-                </td>
-                <td className="py-3 px-4 text-right">
-                  <span
-                    className={cn(
-                      'text-sm font-medium',
-                      isAbove ? 'text-slate-900' : 'text-red-600'
-                    )}
-                  >
-                    {isAbove ? 'Above baseline' : 'Below baseline'}
-                  </span>
-                </td>
+    <>
+      {/* Mobile card layout */}
+      <div className="sm:hidden space-y-2">
+        {scenarios.map((s) => {
+          const additionalOrders = s.orders - baselineOrders;
+          const isAbove = s.profitVsBaseline >= 0;
+          return (
+            <div key={s.upliftPercent} className="border border-slate-200 rounded-lg p-3 bg-white shadow-card">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-semibold text-slate-900 tabular-nums">
+                  +{s.upliftPercent}% uplift
+                </span>
+                <span className={cn('text-sm font-medium', isAbove ? 'text-slate-900' : 'text-red-600')}>
+                  {isAbove ? 'Above baseline' : 'Below baseline'}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <p className="text-xs uppercase tracking-widest text-slate-400 font-semibold mb-0.5">Additional orders</p>
+                  <p className="text-sm tabular-nums text-slate-700">+{Math.round(additionalOrders).toLocaleString()}</p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-widest text-slate-400 font-semibold mb-0.5">Margin</p>
+                  <p className="text-sm tabular-nums text-slate-700">{formatCurrency(s.profit)}</p>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden sm:block border border-slate-200 rounded-lg overflow-hidden shadow-card">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-white border-b border-slate-200">
+              <tr>
+                <th className="py-2.5 px-4 text-left text-xs uppercase tracking-widest font-semibold text-slate-400">
+                  Uplift
+                </th>
+                <th className="py-2.5 px-4 text-right text-xs uppercase tracking-widest font-semibold text-slate-400">
+                  Additional orders
+                </th>
+                <th className="py-2.5 px-4 text-right text-xs uppercase tracking-widest font-semibold text-slate-400">
+                  Margin at this uplift
+                </th>
+                <th className="py-2.5 px-4 text-right text-xs uppercase tracking-widest font-semibold text-slate-400">
+                  Verdict
+                </th>
               </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
+            </thead>
+            <tbody>
+              {scenarios.map((s) => {
+                const additionalOrders = s.orders - baselineOrders;
+                const isAbove = s.profitVsBaseline >= 0;
+                return (
+                  <tr key={s.upliftPercent} className="border-t border-slate-200">
+                    <td className="py-3 px-4 tabular-nums text-slate-700">
+                      +{s.upliftPercent}%
+                    </td>
+                    <td className="py-3 px-4 text-right tabular-nums text-slate-700">
+                      +{Math.round(additionalOrders).toLocaleString()}
+                    </td>
+                    <td className="py-3 px-4 text-right tabular-nums text-slate-700">
+                      {formatCurrency(s.profit)}
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      <span className={cn('text-sm font-medium', isAbove ? 'text-slate-900' : 'text-red-600')}>
+                        {isAbove ? 'Above baseline' : 'Below baseline'}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </>
   );
 }
 
