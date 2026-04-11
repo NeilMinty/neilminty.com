@@ -21,6 +21,14 @@ export function About() {
         <div className="flex flex-col justify-center">
           <h1 className="text-2xl font-semibold text-slate-900">Neil Minty</h1>
           <p className="text-base text-slate-500 mt-1">Fractional growth and ecommerce operator</p>
+          <div className="mt-4 text-center">
+            <button
+              onClick={() => { window.location.href = 'mail' + 'to:neil@person' + 'aify.io'; }}
+              className="bg-slate-900 text-white px-6 py-2.5 rounded text-sm font-medium hover:bg-slate-800 transition-colors"
+            >
+              Let's talk
+            </button>
+          </div>
         </div>
       </div>
 
