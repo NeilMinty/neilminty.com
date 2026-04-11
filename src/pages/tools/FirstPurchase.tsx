@@ -631,7 +631,15 @@ function QuickEstimate() {
               ?
             </span>
           </span>
-          <span className="text-xs uppercase tracking-widest text-slate-400 font-semibold text-right">Volume</span>
+          <span className="text-xs uppercase tracking-widest text-slate-400 font-semibold text-right flex items-center justify-end gap-1">
+            Volume
+            <span
+              className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-slate-200 text-slate-500 text-xs cursor-help leading-none normal-case tracking-normal font-normal"
+              title="Number of customers who made this product their first purchase in your dataset. Small volumes make the score less reliable — this is reflected in the weighting."
+            >
+              i
+            </span>
+          </span>
           <span />
         </div>
 
@@ -654,7 +662,15 @@ function QuickEstimate() {
                   <CellInput value={row.repeatRate} onChange={(v) => updateRow(row.id, 'repeatRate', v)} suffix="%" placeholder="0" />
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-widest text-slate-400 font-semibold mb-1">Volume</p>
+                  <p className="text-xs uppercase tracking-widest text-slate-400 font-semibold mb-1 flex items-center gap-1">
+                    Volume
+                    <span
+                      className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-slate-200 text-slate-500 text-xs cursor-help leading-none normal-case tracking-normal font-normal"
+                      title="Number of customers who made this product their first purchase in your dataset. Small volumes make the score less reliable — this is reflected in the weighting."
+                    >
+                      i
+                    </span>
+                  </p>
                   <CellInput value={row.volume} onChange={(v) => updateRow(row.id, 'volume', v)} placeholder="0" />
                 </div>
               </div>
@@ -730,7 +746,17 @@ function QuickEstimate() {
                     <tr>
                       <th className="py-2.5 px-4 text-left text-xs uppercase tracking-widest font-semibold text-slate-400 w-8">#</th>
                       <th className="py-2.5 px-4 text-left text-xs uppercase tracking-widest font-semibold text-slate-400">Product</th>
-                      <th className="py-2.5 px-4 text-right text-xs uppercase tracking-widest font-semibold text-slate-400">Retention score</th>
+                      <th className="py-2.5 px-4 text-right text-xs uppercase tracking-widest font-semibold text-slate-400">
+                        <span className="flex items-center justify-end gap-1">
+                          Retention score
+                          <span
+                            className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-slate-200 text-slate-500 text-xs cursor-help leading-none normal-case tracking-normal font-normal"
+                            title="Repeat rate adjusted for volume confidence and promotional mix. A product with 80% repeat rate from 400 full-price customers scores higher than the same rate from 12 promotional buyers."
+                          >
+                            i
+                          </span>
+                        </span>
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
