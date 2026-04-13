@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import { NavBar } from '@/components/NavBar';
 import { Home } from '@/pages/Home';
 import { About } from '@/pages/About';
@@ -27,6 +28,7 @@ export default function App() {
           <Route path="/tools/ltv-cac" element={<PaybackPeriod />} />
         </Routes>
       </main>
+      <Analytics />
     </BrowserRouter>
   );
 }
