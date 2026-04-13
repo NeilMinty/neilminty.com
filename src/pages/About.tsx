@@ -51,12 +51,14 @@ export function About() {
           <p className="text-base text-slate-700 leading-relaxed">
             If you're running a DTC brand and unit economics are the constraint, get in touch. I'll tell you within one conversation whether I can help.
           </p>
-          <button
-            onClick={() => { window.location.href = 'mail' + 'to:neil@person' + 'aify.io'; }}
-            className="mt-4 bg-slate-900 text-white px-6 py-2.5 rounded text-sm font-medium hover:bg-slate-800 transition-colors"
-          >
-            Let's talk
-          </button>
+          <div className="mt-4 text-center">
+            <button
+              onClick={() => { window.location.href = 'mail' + 'to:neil@person' + 'aify.io'; }}
+              className="bg-slate-900 text-white px-6 py-2.5 rounded text-sm font-medium hover:bg-slate-800 transition-colors"
+            >
+              Let's talk
+            </button>
+          </div>
         </div>
       </div>
     </div>
