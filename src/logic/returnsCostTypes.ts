@@ -7,8 +7,6 @@ export interface ReturnsCostInputs {
   resaleDiscountedPct: number;
   writeoffPct: number;
   avgDiscountPct: number;
-  fulfilmentCostPct: number;
-  returnsDragPct: number;
 }
 
 export interface ReturnsCostResults {
@@ -17,7 +15,6 @@ export interface ReturnsCostResults {
   discountedMarginLoss: number;
   writeoffMarginLoss: number;
   marginLeakage: number;
-  operationalDrag: number;
   totalReturnsCost: number;
   trueReturnsCost: number;
 }

@@ -10,8 +10,6 @@ export function calculateReturnsCost(inputs: ReturnsCostInputs): ReturnsCostResu
     resaleDiscountedPct,
     writeoffPct,
     avgDiscountPct,
-    fulfilmentCostPct,
-    returnsDragPct,
   } = inputs;
 
   const annualOrders = aov > 0 ? annualRevenue / aov : 0;
@@ -26,9 +24,7 @@ export function calculateReturnsCost(inputs: ReturnsCostInputs): ReturnsCostResu
   const writeoffMarginLoss = writeoffRevenueLoss * (grossMargin / 100);
   const marginLeakage = discountedMarginLoss + writeoffMarginLoss;
 
-  const fulfilmentCost = annualRevenue * (fulfilmentCostPct / 100);
-  const operationalDrag = fulfilmentCost * (returnsDragPct / 100);
-  const totalReturnsCost = hardReturnsCost + marginLeakage + operationalDrag;
+  const totalReturnsCost = hardReturnsCost + marginLeakage;
   const trueReturnsCost = annualReturns > 0 ? totalReturnsCost / annualReturns : 0;
 
   return {
@@ -37,7 +33,6 @@ export function calculateReturnsCost(inputs: ReturnsCostInputs): ReturnsCostResu
     discountedMarginLoss,
     writeoffMarginLoss,
     marginLeakage,
-    operationalDrag,
     totalReturnsCost,
     trueReturnsCost,
   };

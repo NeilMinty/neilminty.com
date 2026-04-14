@@ -17,8 +17,6 @@ interface FormState {
   resaleDiscountedPct: string;
   writeoffPct: string;
   avgDiscountPct: string;
-  fulfilmentCostPct: string;
-  returnsDragPct: string;
   grossMargin: string;
 }
 
@@ -30,8 +28,6 @@ const DEFAULT_FORM: FormState = {
   resaleDiscountedPct: '',
   writeoffPct: '',
   avgDiscountPct: '',
-  fulfilmentCostPct: '',
-  returnsDragPct: '',
   grossMargin: '',
 };
 
@@ -46,8 +42,6 @@ function toInputs(form: FormState): ReturnsCostInputs {
     resaleDiscountedPct: p(form.resaleDiscountedPct),
     writeoffPct: p(form.writeoffPct),
     avgDiscountPct: p(form.avgDiscountPct),
-    fulfilmentCostPct: p(form.fulfilmentCostPct),
-    returnsDragPct: p(form.returnsDragPct),
   };
 }
 
@@ -83,7 +77,6 @@ function ResultsView({
   const breakdownItems = [
     { label: 'Hard cost', value: results.hardReturnsCost },
     { label: 'Margin leakage', value: results.marginLeakage },
-    { label: 'Operational drag', value: results.operationalDrag },
   ];
 
   return (
@@ -117,20 +110,6 @@ function ResultsView({
             variant="warning"
           />
         </div>
-      </div>
-
-      {/* Operational drag — full width */}
-      <div>
-        <SectionLabel>Operational drag</SectionLabel>
-        <ResultCard
-          label="Operational drag"
-          value={formatCurrency(results.operationalDrag)}
-          subtext="Fulfilment cost × % attributable to returns handling"
-          variant="neutral"
-        />
-        <p className="text-sm text-slate-500 leading-relaxed mt-3">
-          The portion of your total fulfilment spend absorbed by returns — warehouse labour and admin diverted from forward orders rather than generating revenue.
-        </p>
       </div>
 
       {/* Cost breakdown list */}
@@ -260,29 +239,6 @@ function InputView({
             onChange={set('avgDiscountPct')}
             suffix="%"
             hint="Average markdown applied to discounted resale items"
-            placeholder="0"
-          />
-        </div>
-      </div>
-
-      {/* Operations */}
-      <div>
-        <SectionLabel>Operations</SectionLabel>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <InputField
-            label="Fulfilment Cost"
-            value={form.fulfilmentCostPct}
-            onChange={set('fulfilmentCostPct')}
-            suffix="% of revenue"
-            hint="Total fulfilment cost as a % of annual revenue"
-            placeholder="0"
-          />
-          <InputField
-            label="Returns Drag"
-            value={form.returnsDragPct}
-            onChange={set('returnsDragPct')}
-            suffix="% of fulfilment"
-            hint="% of fulfilment cost attributable to returns handling"
             placeholder="0"
           />
         </div>

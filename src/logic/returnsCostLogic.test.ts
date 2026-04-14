@@ -12,8 +12,6 @@ function base(overrides: Partial<ReturnsCostInputs> = {}): ReturnsCostInputs {
     resaleDiscountedPct: 30, // 30%
     writeoffPct: 20,        // 20%
     avgDiscountPct: 25,     // 25%
-    fulfilmentCostPct: 10,  // 10% of revenue
-    returnsDragPct: 15,     // 15% of fulfilment
     ...overrides,
   };
 }
@@ -100,32 +98,12 @@ describe('margin leakage', () => {
   });
 });
 
-// ─── Operational drag ────────────────────────────────────────────────────────
-
-describe('operationalDrag', () => {
-  it('is fulfilmentCost × returnsDragPct', () => {
-    // fulfilmentCost = 1M × 0.10 = 100,000; drag = 100,000 × 0.15 = 15,000
-    const r = calculateReturnsCost(base());
-    expect(r.operationalDrag).toBeCloseTo(15_000);
-  });
-
-  it('zero returns drag produces zero operational drag', () => {
-    const r = calculateReturnsCost(base({ returnsDragPct: 0 }));
-    expect(r.operationalDrag).toBe(0);
-  });
-
-  it('zero fulfilment cost produces zero operational drag', () => {
-    const r = calculateReturnsCost(base({ fulfilmentCostPct: 0 }));
-    expect(r.operationalDrag).toBe(0);
-  });
-});
-
 // ─── Total and true cost per return ──────────────────────────────────────────
 
 describe('total and true cost', () => {
-  it('totalReturnsCost = hard + leakage + drag', () => {
+  it('totalReturnsCost = hard + leakage', () => {
     const r = calculateReturnsCost(base());
-    expect(r.totalReturnsCost).toBeCloseTo(r.hardReturnsCost + r.marginLeakage + r.operationalDrag);
+    expect(r.totalReturnsCost).toBeCloseTo(r.hardReturnsCost + r.marginLeakage);
   });
 
   it('trueReturnsCost = totalReturnsCost / annualReturns', () => {
@@ -202,7 +180,7 @@ describe('edge cases — zero and extreme inputs', () => {
     const r = calculateReturnsCost({
       annualRevenue: 0, aov: 0, returnsRate: 0, grossMargin: 0,
       costPerReturn: 0, resaleDiscountedPct: 0, writeoffPct: 0,
-      avgDiscountPct: 0, fulfilmentCostPct: 0, returnsDragPct: 0,
+      avgDiscountPct: 0,
     });
     expect(r.totalReturnsCost).toBe(0);
     expect(r.trueReturnsCost).toBe(0);
