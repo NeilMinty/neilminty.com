@@ -803,6 +803,7 @@ export function FirstPurchase() {
       description="Which product a customer buys first predicts whether they come back. Enter up to ten products to surface which drive repeat buyers and which produce one-time purchasers."
       metaDescription="Which product should you acquire customers on? Ranks your catalogue by retention strength, adjusted for volume and discount dependency."
     >
+      <QuickEstimate />
       {view === 'input' ? (
         <div className="space-y-6">
           <div>
@@ -893,7 +894,6 @@ export function FirstPurchase() {
           </div>
         </div>
       )}
-      <QuickEstimate />
     </ToolLayout>
   );
 }
