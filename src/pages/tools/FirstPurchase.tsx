@@ -613,9 +613,12 @@ function QuickEstimate() {
   return (
     <div className="mt-16 pt-10 border-t border-slate-200">
       <div className="mb-6">
-        <h2 className="text-2xl font-semibold text-slate-900 tracking-tight mb-2">Quick Estimate</h2>
+        <div className="flex items-center gap-3 mb-2">
+          <h2 className="text-2xl font-semibold text-slate-900 tracking-tight">Quick Estimate</h2>
+          <span className="text-xs uppercase tracking-widest font-semibold text-slate-400 border border-slate-200 rounded px-2 py-0.5">Start here</span>
+        </div>
         <p className="text-slate-500 leading-relaxed">
-          Don't have full LTV or acquisition mix data yet? Enter repeat rate and order volume to get a volume-weighted retention ranking.
+          Two inputs per product. Enter your 90-day repeat rate and order volume and the tool ranks your catalogue by retention strength, adjusted so high-volume products don't automatically win.
         </p>
       </div>
 
@@ -771,7 +774,7 @@ function QuickEstimate() {
                 </table>
               </div>
               <p className="text-xs text-slate-400">
-                Adding first-purchase mix data gives a more accurate signal. Use the full calculator above.
+                Adding price mix, discount depth and LTV data gives a more accurate signal. Use the Full Analysis below.
               </p>
             </>
           )}
@@ -800,10 +803,15 @@ export function FirstPurchase() {
   return (
     <ToolLayout
       title="First Purchase Predictor"
-      description="Which product a customer buys first predicts whether they come back. Enter up to ten products to surface which drive repeat buyers and which produce one-time purchasers."
+      description="Which product a customer buys first is one of the strongest predictors of whether they come back. This tool ranks your catalogue by retention strength so you know which products are building your customer base and which are producing one-time purchasers."
       metaDescription="Which product should you acquire customers on? Ranks your catalogue by retention strength, adjusted for volume and discount dependency."
     >
-      <QuickEstimate />
+      <div className="mb-6">
+        <h2 className="text-2xl font-semibold text-slate-900 tracking-tight mb-2">Full Analysis</h2>
+        <p className="text-slate-500 leading-relaxed">
+          Add price mix, discount depth and LTV data to get a complete picture. Built for operators who already have the numbers and want them ranked in one place.
+        </p>
+      </div>
       {view === 'input' ? (
         <div className="space-y-6">
           <div>
@@ -894,6 +902,7 @@ export function FirstPurchase() {
           </div>
         </div>
       )}
+      <QuickEstimate />
     </ToolLayout>
   );
 }
