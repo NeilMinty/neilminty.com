@@ -726,7 +726,7 @@ function QuickEstimate() {
           </button>
           <button
             onClick={calculate}
-            className="bg-slate-900 text-white px-6 py-2.5 rounded text-sm font-medium hover:bg-slate-800 transition-colors"
+            className="bg-slate-900 text-white px-6 py-2.5 rounded text-sm font-medium hover:bg-slate-800 transition-colors min-w-[160px]"
           >
             Rank products
           </button>
@@ -821,7 +821,7 @@ export function FirstPurchase() {
           <div className="flex justify-end">
             <button
               onClick={() => setView('results')}
-              className="bg-slate-900 text-white px-6 py-2.5 rounded text-sm font-medium hover:bg-slate-800 transition-colors"
+              className="bg-slate-900 text-white px-6 py-2.5 rounded text-sm font-medium hover:bg-slate-800 transition-colors min-w-[160px]"
             >
               Calculate
             </button>
@@ -908,7 +908,7 @@ export function FirstPurchase() {
             href="https://demo.neilminty.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-slate-900 text-white px-6 py-2.5 rounded text-sm font-medium hover:bg-slate-800 transition-colors"
+            className="bg-slate-900 text-white px-6 py-2.5 rounded text-sm font-medium hover:bg-slate-800 transition-colors min-w-[160px]"
           >
             Explore the demo →
           </a>
