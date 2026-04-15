@@ -815,13 +815,13 @@ export function FirstPurchase() {
             <InputForm rows={rows} onChange={setRows} />
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <p className="text-xs text-slate-400">
-              Rows without a product name and volume are excluded from analysis.
-            </p>
+          <p className="text-xs text-slate-400">
+            Rows without a product name and volume are excluded from analysis.
+          </p>
+          <div className="flex justify-end">
             <button
               onClick={() => setView('results')}
-              className="w-full sm:w-auto bg-slate-900 text-white px-6 py-2.5 rounded text-sm font-medium hover:bg-slate-800 transition-colors"
+              className="bg-slate-900 text-white px-6 py-2.5 rounded text-sm font-medium hover:bg-slate-800 transition-colors"
             >
               Calculate
             </button>
@@ -908,7 +908,7 @@ export function FirstPurchase() {
             href="https://demo.neilminty.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-block px-6 py-2.5 bg-slate-900 text-white text-sm font-medium rounded hover:bg-slate-800 transition-colors"
+            className="bg-slate-900 text-white px-6 py-2.5 rounded text-sm font-medium hover:bg-slate-800 transition-colors"
           >
             Explore the demo →
           </a>
