@@ -31,7 +31,7 @@ export function Home() {
           <p className="text-sm text-slate-500 mt-4">
             Neil Minty — fractional growth and ecommerce operator.
           </p>
-          <div className="mt-6 flex justify-end">
+          <div className="mt-6 text-center">
             <a
               href="mailto:neil@personaify.io"
               className="inline-block px-6 py-3 bg-slate-900 text-white text-sm font-medium rounded hover:bg-slate-800 transition-colors"
@@ -72,7 +72,7 @@ export function Home() {
           <p className="text-slate-500 leading-relaxed mb-6">
             These tools are the lightweight version. Growth Engine is what they connect to — a multi-agent commercial intelligence platform that tracks retention, margin, acquisition, and pricing continuously, connected to your Shopify and Klaviyo data.
           </p>
-          <div className="flex justify-end">
+          <div className="text-center">
             <a
               href="https://demo.neilminty.com"
               target="_blank"
