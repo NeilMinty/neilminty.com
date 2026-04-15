@@ -608,8 +608,6 @@ function QuickEstimate() {
     setResults(valid);
   };
 
-  const canCalculate = rows.some((r) => r.name.trim() && parseFloat(r.volume) > 0);
-
   return (
     <div>
       <div className="mb-6">
@@ -728,8 +726,7 @@ function QuickEstimate() {
           </button>
           <button
             onClick={calculate}
-            disabled={!canCalculate}
-            className="bg-slate-900 text-white px-6 py-2.5 rounded text-sm font-medium hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="bg-slate-900 text-white px-6 py-2.5 rounded text-sm font-medium hover:bg-slate-800 transition-colors"
           >
             Rank products
           </button>
@@ -798,8 +795,6 @@ export function FirstPurchase() {
     return [...products].sort((a, b) => b.ltvMomentum - a.ltvMomentum)[0];
   }, [products]);
 
-  const canCalculate = products.length >= 1;
-
   return (
     <ToolLayout
       title="First Purchase Predictor"
@@ -826,8 +821,7 @@ export function FirstPurchase() {
             </p>
             <button
               onClick={() => setView('results')}
-              disabled={!canCalculate}
-              className="w-full sm:w-auto bg-slate-900 text-white px-6 py-2.5 rounded text-sm font-medium hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="w-full sm:w-auto bg-slate-900 text-white px-6 py-2.5 rounded text-sm font-medium hover:bg-slate-800 transition-colors"
             >
               Calculate
             </button>
