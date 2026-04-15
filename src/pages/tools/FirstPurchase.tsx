@@ -611,7 +611,7 @@ function QuickEstimate() {
   const canCalculate = rows.some((r) => r.name.trim() && parseFloat(r.volume) > 0);
 
   return (
-    <div className="mt-16 pt-10 border-t border-slate-200">
+    <div>
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-2">
           <h2 className="text-2xl font-semibold text-slate-900 tracking-tight">Quick Estimate</h2>
@@ -806,12 +806,14 @@ export function FirstPurchase() {
       description="Which product a customer buys first is one of the strongest predictors of whether they come back. This tool ranks your catalogue by retention strength so you know which products are building your customer base and which are producing one-time purchasers."
       metaDescription="Which product should you acquire customers on? Ranks your catalogue by retention strength, adjusted for volume and discount dependency."
     >
-      <div className="mb-6">
-        <h2 className="text-2xl font-semibold text-slate-900 tracking-tight mb-2">Full Analysis</h2>
-        <p className="text-slate-500 leading-relaxed">
-          Add price mix, discount depth and LTV data to get a complete picture. Built for operators who already have the numbers and want them ranked in one place.
-        </p>
-      </div>
+      <QuickEstimate />
+      <div className="mt-16 pt-10 border-t border-slate-200">
+        <div className="mb-6">
+          <h2 className="text-2xl font-semibold text-slate-900 tracking-tight mb-2">Full Analysis</h2>
+          <p className="text-slate-500 leading-relaxed">
+            Add price mix, discount depth and LTV data to get a complete picture. Built for operators who already have the numbers and want them ranked in one place.
+          </p>
+        </div>
       {view === 'input' ? (
         <div className="space-y-6">
           <div>
@@ -902,7 +904,7 @@ export function FirstPurchase() {
           </div>
         </div>
       )}
-      <QuickEstimate />
+      </div>
     </ToolLayout>
   );
 }
