@@ -34,7 +34,7 @@ export function Home() {
           <div className="mt-6 text-center">
             <a
               href="mailto:neil@personaify.io"
-              className="inline-block px-6 py-3 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-700 transition-colors"
+              className="inline-block px-6 py-3 bg-slate-900 text-white text-sm font-medium rounded hover:bg-slate-800 transition-colors"
             >
               Get in touch
             </a>
@@ -62,6 +62,25 @@ export function Home() {
             </p>
           </Link>
         ))}
+      </div>
+
+      <div className="mt-16 pt-10 border-t border-slate-200">
+        <div className="bg-white border border-slate-200 rounded-lg px-6 py-8 shadow-card">
+          <h2 className="text-xl font-semibold text-slate-900 tracking-tight mb-2">
+            Growth Engine
+          </h2>
+          <p className="text-slate-500 leading-relaxed mb-6">
+            These tools are the lightweight version. Growth Engine is what they connect to — a multi-agent commercial intelligence platform that tracks retention, margin, acquisition, and pricing continuously, connected to your Shopify and Klaviyo data.
+          </p>
+          <a
+            href="https://demo.neilminty.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block px-5 py-2.5 bg-slate-900 text-white text-sm font-medium rounded hover:bg-slate-800 transition-colors"
+          >
+            Explore the demo →
+          </a>
+        </div>
       </div>
 
       <footer className="mt-16 py-8 border-t border-slate-200">

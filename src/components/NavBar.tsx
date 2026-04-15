@@ -40,6 +40,14 @@ export function NavBar() {
           >
             Notes
           </NavLink>
+          <a
+            href="https://demo.neilminty.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-slate-500 hover:text-slate-800 transition-colors"
+          >
+            Growth Engine
+          </a>
           <span className="mx-4 h-4 w-px bg-slate-200 inline-block" />
           <Link
             to="/about"
@@ -84,6 +92,15 @@ export function NavBar() {
             >
               Notes
             </NavLink>
+            <a
+              href="https://demo.neilminty.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setOpen(false)}
+              className="text-sm text-slate-500"
+            >
+              Growth Engine
+            </a>
             <Link
               to="/about"
               onClick={() => setOpen(false)}
