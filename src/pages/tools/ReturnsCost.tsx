@@ -347,7 +347,7 @@ export function ReturnsCost() {
             href="https://demo.neilminty.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-block px-5 py-2.5 bg-slate-900 text-white text-sm font-medium rounded hover:bg-slate-800 transition-colors"
+            className="inline-block px-6 py-2.5 bg-slate-900 text-white text-sm font-medium rounded hover:bg-slate-800 transition-colors"
           >
             Explore the demo →
           </a>
