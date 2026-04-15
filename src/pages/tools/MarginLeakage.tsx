@@ -421,14 +421,16 @@ export function MarginLeakage() {
         <p className="text-sm text-slate-500 leading-relaxed mb-4">
           This is one signal. Growth Engine tracks all of them — connected to your Shopify and Klaviyo data, updated continuously.
         </p>
-        <a
-          href="https://demo.neilminty.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-block px-5 py-2.5 bg-slate-900 text-white text-sm font-medium rounded hover:bg-slate-800 transition-colors"
-        >
-          Explore the demo →
-        </a>
+        <div className="flex justify-end">
+          <a
+            href="https://demo.neilminty.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block px-5 py-2.5 bg-slate-900 text-white text-sm font-medium rounded hover:bg-slate-800 transition-colors"
+          >
+            Explore the demo →
+          </a>
+        </div>
       </div>
     </ToolLayout>
   );
