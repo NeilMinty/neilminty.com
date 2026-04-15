@@ -729,7 +729,7 @@ function QuickEstimate() {
           <button
             onClick={calculate}
             disabled={!canCalculate}
-            className="bg-slate-900 text-white px-5 py-2 rounded text-sm font-medium hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="bg-slate-900 text-white px-6 py-2.5 rounded text-sm font-medium hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             Rank products
           </button>
