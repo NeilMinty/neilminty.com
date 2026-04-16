@@ -569,6 +569,7 @@ interface QuickRow {
 interface QuickResult {
   name: string;
   score: number;
+  repeatRate: number;
 }
 
 function quickEmptyRow(): QuickRow {
@@ -602,7 +603,7 @@ function QuickEstimate() {
         const rate = parseFloat(r.repeatRate) || 0;
         const vol = parseFloat(r.volume);
         const score = vol >= 1 ? rate * (vol / (vol + 100)) : 0;
-        return { name: r.name.trim(), score };
+        return { name: r.name.trim(), score, repeatRate: rate };
       })
       .sort((a, b) => b.score - a.score);
     setResults(valid);
@@ -770,6 +771,19 @@ function QuickEstimate() {
                   </tbody>
                 </table>
               </div>
+              {results.length >= 2 && (() => {
+                const top = results[0].name;
+                const bottom = results[results.length - 1].name;
+                const gap = (results[0].score - results[results.length - 1].score).toFixed(1);
+                const tension = results[0].repeatRate < Math.max(...results.slice(1).map((r) => r.repeatRate));
+                return (
+                  <p className="text-sm text-slate-600 leading-relaxed mt-3">
+                    {tension
+                      ? `${top} ranks highest despite not having the strongest repeat rate. Volume confidence is lifting its score — it has enough purchase history to make the signal reliable. The score adjusts for this so high-volume products don't automatically win, but low-volume products with high repeat rates need more data before the ranking is definitive.`
+                      : `${top} ranks highest. Products ranked lower return less revenue per acquired customer — a ${gap}-point gap means acquisition spend works harder on ${top} than on ${bottom}. The score adjusts for volume so a product with strong loyalty can outrank a higher-volume one with weaker repeat behaviour.`}
+                  </p>
+                );
+              })()}
               <p className="text-xs text-slate-400">
                 Adding price mix, discount depth and LTV data gives a more accurate signal. Use the Full Analysis below.
               </p>
