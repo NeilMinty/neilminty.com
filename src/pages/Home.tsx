@@ -23,7 +23,10 @@ export function Home() {
             Fifteen years of DTC operator work distilled into five calculators. No login, no data upload, no spreadsheet. Enter your numbers, get the answer.
           </p>
           <p className="text-slate-500 leading-relaxed mt-3">
-            Built for founders and operators who already know the question. These tools just run the maths.
+            Built for founders and operators who already know the question. These tools just run the maths. Free to use.
+          </p>
+          <p className="text-slate-500 leading-relaxed mt-3">
+            Building something bigger: the Growth Engine is a multi-agent commercial intelligence platform for DTC brands. It's in the nav.
           </p>
           <p className="text-sm text-slate-500 mt-4">
             Neil Minty — growth and ecommerce operator.
