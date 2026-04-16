@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { TOOLS } from '@/lib/tools';
+import GrowthEngineAnimation from '@/components/GrowthEngineAnimation';
 
 export function Home() {
   useEffect(() => {
@@ -13,11 +14,7 @@ export function Home() {
   return (
     <div className="max-w-5xl mx-auto px-6 py-16">
       <div className="flex flex-col md:flex-row gap-10 mb-12 pt-4">
-        <img
-          src="/images/neil-minty.jpg"
-          alt="Neil Minty"
-          className="h-64 w-full object-cover object-top md:h-auto md:w-[280px] md:flex-shrink-0 rounded-lg self-start"
-        />
+        <GrowthEngineAnimation />
         <div className="flex flex-col justify-center">
           <h1 className="text-3xl font-semibold text-slate-900 tracking-tight mb-4">
             DTC operator tools
