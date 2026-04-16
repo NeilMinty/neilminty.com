@@ -14,9 +14,7 @@ export function Home() {
   return (
     <div className="max-w-5xl mx-auto px-6 py-16">
       <div className="flex flex-col md:flex-row gap-10 mb-12 pt-4">
-        <a href="https://demo.neilminty.com" target="_blank" rel="noopener noreferrer">
-          <GrowthEngineAnimation />
-        </a>
+        <GrowthEngineAnimation />
         <div className="flex flex-col justify-center">
           <h1 className="text-3xl font-semibold text-slate-900 tracking-tight mb-4">
             DTC operator tools
