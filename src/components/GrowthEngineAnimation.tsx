@@ -154,7 +154,7 @@ export default function GrowthEngineAnimation() {
     return () => obs.disconnect();
   }, []);
 
-  const VW = 680;
+  const VW = 700;
   const SX = 14, SW = 132, SH = 50, SGAP = 16;
   const sourceYs = SOURCES.map((_, i) => 90 + i * (SH + SGAP));
 
@@ -282,7 +282,7 @@ export default function GrowthEngineAnimation() {
         {CLUSTERS.map((cluster, i) => (
           <SignalDot
             key={cluster.id}
-            cx={CLX + CLW + 14}
+            cx={CLX + CLW + 16}
             cy={clusterLayouts[i].y + clusterLayouts[i].h / 2}
             color={cluster.color}
             delay={i * 0.5}
