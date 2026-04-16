@@ -29,7 +29,7 @@ export function Home() {
             Built for founders and operators who already know the question. These tools just run the maths.
           </p>
           <p className="text-sm text-slate-500 mt-4">
-            Neil Minty — fractional growth and ecommerce operator.
+            Neil Minty — growth and ecommerce operator.
           </p>
           <div className="mt-6 text-center">
             <a
