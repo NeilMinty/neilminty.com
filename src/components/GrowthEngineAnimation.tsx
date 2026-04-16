@@ -77,7 +77,7 @@ const HUB_LINES = [
   "CM1 scenario ranges",
 ];
 
-function Pipe({ d, color, speed = 1.8, reverse = false }) {
+function Pipe({ d, color, speed = 1.8, reverse = false }: { d: string; color: string; speed?: number; reverse?: boolean }) {
   return (
     <path
       d={d}
@@ -92,7 +92,7 @@ function Pipe({ d, color, speed = 1.8, reverse = false }) {
   );
 }
 
-function SignalDot({ cx, cy, color, delay = 0 }) {
+function SignalDot({ cx, cy, color, delay = 0 }: { cx: number; cy: number; color: string; delay?: number }) {
   return (
     <circle
       cx={cx}
@@ -105,7 +105,7 @@ function SignalDot({ cx, cy, color, delay = 0 }) {
   );
 }
 
-function SourceChip({ x, y, w = 130, h = 50, label, sub, color }) {
+function SourceChip({ x, y, w = 130, h = 50, label, sub, color }: { x: number; y: number; w?: number; h?: number; label: string; sub: string; color: string }) {
   return (
     <g>
       <rect x={x} y={y} width={w} height={h} rx={7} fill={color + "18"} stroke={color} strokeWidth={0.6} />
@@ -115,7 +115,7 @@ function SourceChip({ x, y, w = 130, h = 50, label, sub, color }) {
   );
 }
 
-function ClusterBox({ x, y, w, cluster }) {
+function ClusterBox({ x, y, w, cluster }: { x: number; y: number; w: number; cluster: { label: string; color: string; bg: string; border: string; agents: string[] } }) {
   const lineH = 16;
   const paddingTop = 36;
   const h = paddingTop + cluster.agents.length * lineH + 10;
