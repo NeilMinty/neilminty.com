@@ -715,7 +715,7 @@ export function PaybackPeriod() {
   return (
     <ToolLayout
       title="LTV:CAC Analyser"
-      description="CAC is only half the equation. Enter your unit economics to find out how long it takes to recover acquisition cost, and whether your LTV makes the model work."
+      description="CAC is only half the equation. Enter your unit economics to get the blended picture, then add channel-level data to see which acquisition channels are LTV-positive, which are breaking even, which are destroying margin at scale."
       metaDescription="Enter your unit economics to see LTV:CAC at 12 and 24 months and how long it takes to recover your acquisition cost."
     >
       {pageState.view === 'input' ? (
