@@ -1,4 +1,10 @@
-import type { PaybackInputs, PaybackResults } from './paybackTypes';
+import type {
+  PaybackInputs,
+  PaybackResults,
+  ChannelInput,
+  ChannelResult,
+  FullAnalyserResults,
+} from './paybackTypes';
 
 export function calculatePayback(inputs: PaybackInputs): PaybackResults {
   const {
@@ -59,5 +65,66 @@ export function calculatePayback(inputs: PaybackInputs): PaybackResults {
     paybackVerdict,
     ltvCacRatio12,
     ltvCacRatio24,
+  };
+}
+
+// ─── Full Analyser ────────────────────────────────────────────────────────────
+
+export function calculateFullAnalyser(
+  channels: ChannelInput[],
+  shared: Omit<PaybackInputs, 'blendedCAC'>
+): FullAnalyserResults {
+  const { aov, grossMarginPercent, repeatPurchaseRate, avgOrderFrequencyMonths } = shared;
+
+  const margin = Math.max(0, Math.min(1, grossMarginPercent / 100));
+  const retention = Math.max(0, Math.min(1, repeatPurchaseRate / 100));
+  const freq = avgOrderFrequencyMonths > 0 ? 12 / avgOrderFrequencyMonths : 0;
+
+  // LTV — identical formula to Tier 1
+  const ltv12 = aov * margin * (1 + retention * Math.max(0, freq - 1) * 1);
+  const ltv24 = aov * margin * (1 + retention * Math.max(0, freq - 1) * 2);
+
+  // Monthly contribution — identical to Tier 1
+  const monthlyContrib = aov * margin * retention * freq / 12;
+
+  // Customer lifespan in months: expected number of orders × order interval
+  // retention = 0 → lifespan = 0 (no repeats); retention ≥ 1 → Infinity
+  const lifespanMonths =
+    retention <= 0 ? 0 :
+    retention >= 1 ? Infinity :
+    (1 / (1 - retention)) * avgOrderFrequencyMonths;
+
+  const totalVolume = channels.reduce((s, ch) => s + ch.volume, 0);
+  const weightedCACSum = channels.reduce((s, ch) => s + ch.cac * ch.volume, 0);
+  const blendedCAC = totalVolume > 0 ? weightedCACSum / totalVolume : 0;
+
+  const blendedLtvCacRatio12 = blendedCAC > 0 ? ltv12 / blendedCAC : 0;
+  const blendedLtvCacRatio24 = blendedCAC > 0 ? ltv24 / blendedCAC : 0;
+
+  const channelResults: ChannelResult[] = channels.map((ch) => {
+    const ltvCacRatio12 = ch.cac > 0 ? ltv12 / ch.cac : 0;
+    const ltvCacRatio24 = ch.cac > 0 ? ltv24 / ch.cac : 0;
+    const paybackMonths = monthlyContrib > 0 ? ch.cac / monthlyContrib : Infinity;
+
+    return {
+      label: ch.label,
+      cac: ch.cac,
+      volume: ch.volume,
+      ltv12,
+      ltv24,
+      ltvCacRatio12,
+      ltvCacRatio24,
+      paybackMonths,
+      isUnderwater: ch.cac > 0 && ltvCacRatio12 < 1.0,
+      isPaybackRisk: ch.cac > 0 && paybackMonths > lifespanMonths,
+    };
+  });
+
+  return {
+    channels: channelResults,
+    blendedCAC,
+    blendedLtvCacRatio12,
+    blendedLtvCacRatio24,
+    totalVolume,
   };
 }

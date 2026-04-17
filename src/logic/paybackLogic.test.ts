@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { calculatePayback } from './paybackLogic';
-import type { PaybackInputs } from './paybackTypes';
+import { calculatePayback, calculateFullAnalyser } from './paybackLogic';
+import type { PaybackInputs, ChannelInput } from './paybackTypes';
 
 // Equivalent to source BASE_INPUTS:
 //   blendedCAC = (60 + 40) / 2 = 50
@@ -266,5 +266,226 @@ describe('zero repeat rate', () => {
   it('payback is Infinity with zero repeat rate — no repeat purchases means CAC is never recovered', () => {
     const r = calculatePayback(base({ repeatPurchaseRate: 0 }));
     expect(r.monthsToPayback).toBe(Infinity);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// calculateFullAnalyser
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Base shared inputs — same economics as calculatePayback base()
+// aov=80, margin=55%, retention=35%, freq=every 4 months → freq/yr=3
+function sharedBase(overrides: Partial<Omit<PaybackInputs, 'blendedCAC'>> = {}) {
+  return {
+    aov: 80,
+    grossMarginPercent: 55,
+    repeatPurchaseRate: 35,
+    avgOrderFrequencyMonths: 4,
+    ...overrides,
+  };
+}
+
+// Two active channels for blended CAC tests
+// blendedCAC = (60×100 + 40×200) / 300 = 14000/300 ≈ 46.667
+function twoChannels(): ChannelInput[] {
+  return [
+    { label: 'Paid Social', cac: 60, volume: 100 },
+    { label: 'Paid Search', cac: 40, volume: 200 },
+  ];
+}
+
+describe('calculateFullAnalyser — core formulas', () => {
+  it('LTV values match Tier 1 formula exactly', () => {
+    // ltv12 = 80 × 0.55 × (1 + 0.35 × 2 × 1) = 44 × 1.70 = 74.8
+    // ltv24 = 80 × 0.55 × (1 + 0.35 × 2 × 2) = 44 × 2.40 = 105.6
+    const r = calculateFullAnalyser(twoChannels(), sharedBase());
+    expect(r.channels[0].ltv12).toBeCloseTo(74.8, 2);
+    expect(r.channels[0].ltv24).toBeCloseTo(105.6, 2);
+    // LTV is shared — same value for every channel
+    expect(r.channels[1].ltv12).toBeCloseTo(74.8, 2);
+    expect(r.channels[1].ltv24).toBeCloseTo(105.6, 2);
+  });
+
+  it('blended CAC is volume-weighted', () => {
+    // (60×100 + 40×200) / 300 = 46.667
+    const r = calculateFullAnalyser(twoChannels(), sharedBase());
+    expect(r.blendedCAC).toBeCloseTo(46.667, 2);
+  });
+
+  it('totalVolume is sum of channel volumes', () => {
+    const r = calculateFullAnalyser(twoChannels(), sharedBase());
+    expect(r.totalVolume).toBe(300);
+  });
+
+  it('blendedLtvCacRatio12 = ltv12 / blendedCAC', () => {
+    const r = calculateFullAnalyser(twoChannels(), sharedBase());
+    expect(r.blendedLtvCacRatio12).toBeCloseTo(74.8 / (14000 / 300), 4);
+  });
+
+  it('blendedLtvCacRatio24 = ltv24 / blendedCAC', () => {
+    const r = calculateFullAnalyser(twoChannels(), sharedBase());
+    expect(r.blendedLtvCacRatio24).toBeCloseTo(105.6 / (14000 / 300), 4);
+  });
+
+  it('per-channel ltvCacRatio12 = ltv12 / channelCAC', () => {
+    const r = calculateFullAnalyser(twoChannels(), sharedBase());
+    expect(r.channels[0].ltvCacRatio12).toBeCloseTo(74.8 / 60, 4); // Paid Social
+    expect(r.channels[1].ltvCacRatio12).toBeCloseTo(74.8 / 40, 4); // Paid Search
+  });
+
+  it('per-channel paybackMonths = channelCAC / monthlyContrib', () => {
+    // monthlyContrib = 80 × 0.55 × 0.35 × 3/12 = 3.85
+    const r = calculateFullAnalyser(twoChannels(), sharedBase());
+    expect(r.channels[0].paybackMonths).toBeCloseTo(60 / 3.85, 3); // Paid Social
+    expect(r.channels[1].paybackMonths).toBeCloseTo(40 / 3.85, 3); // Paid Search
+  });
+
+  it('single channel: blendedCAC equals that channel CAC', () => {
+    const r = calculateFullAnalyser(
+      [{ label: 'Paid Social', cac: 75, volume: 50 }],
+      sharedBase()
+    );
+    expect(r.blendedCAC).toBeCloseTo(75);
+  });
+});
+
+describe('calculateFullAnalyser — flag: isUnderwater', () => {
+  it('not underwater when ltv12 > channelCAC', () => {
+    // ltv12 = 74.8; channel CAC = 60 → ratio = 1.247 > 1
+    const r = calculateFullAnalyser(twoChannels(), sharedBase());
+    expect(r.channels[0].isUnderwater).toBe(false);
+  });
+
+  it('underwater when channelCAC > ltv12', () => {
+    // ltv12 = 74.8; CAC = 80 → ratio = 0.935 < 1
+    const r = calculateFullAnalyser(
+      [{ label: 'Expensive', cac: 80, volume: 100 }],
+      sharedBase()
+    );
+    expect(r.channels[0].isUnderwater).toBe(true);
+  });
+
+  it('boundary: exactly ltv12 is not underwater', () => {
+    const r = calculateFullAnalyser(
+      [{ label: 'Exact', cac: 74.8, volume: 100 }],
+      sharedBase()
+    );
+    expect(r.channels[0].isUnderwater).toBe(false);
+  });
+
+  it('zero CAC channel is not flagged underwater', () => {
+    const r = calculateFullAnalyser(
+      [{ label: 'Organic', cac: 0, volume: 500 }],
+      sharedBase()
+    );
+    expect(r.channels[0].isUnderwater).toBe(false);
+  });
+});
+
+describe('calculateFullAnalyser — flag: isPaybackRisk', () => {
+  it('payback risk when paybackMonths > lifespanMonths', () => {
+    // lifespanMonths = (1/0.65) × 4 ≈ 6.15; Paid Social payback ≈ 15.58 months
+    const r = calculateFullAnalyser(twoChannels(), sharedBase());
+    expect(r.channels[0].isPaybackRisk).toBe(true);
+    expect(r.channels[1].isPaybackRisk).toBe(true);
+  });
+
+  it('not a payback risk when paybackMonths ≤ lifespanMonths', () => {
+    // lifespanMonths = (1/0.65) × 4 ≈ 6.15; need payback ≤ 6.15 → CAC ≤ 3.85 × 6.15 ≈ 23.68
+    const r = calculateFullAnalyser(
+      [{ label: 'Cheap', cac: 20, volume: 100 }],
+      sharedBase()
+    );
+    expect(r.channels[0].isPaybackRisk).toBe(false);
+  });
+
+  it('zero CAC channel is not flagged as payback risk', () => {
+    const r = calculateFullAnalyser(
+      [{ label: 'Organic', cac: 0, volume: 500 }],
+      sharedBase()
+    );
+    expect(r.channels[0].isPaybackRisk).toBe(false);
+  });
+
+  it('retention = 0: payback is Infinity → always payback risk when cac > 0', () => {
+    const r = calculateFullAnalyser(
+      [{ label: 'One-shot', cac: 50, volume: 100 }],
+      sharedBase({ repeatPurchaseRate: 0 })
+    );
+    expect(r.channels[0].paybackMonths).toBe(Infinity);
+    expect(r.channels[0].isPaybackRisk).toBe(true);
+  });
+
+  it('retention = 100%: lifespan = Infinity → no payback risk', () => {
+    const r = calculateFullAnalyser(
+      [{ label: 'Loyal', cac: 9999, volume: 100 }],
+      sharedBase({ repeatPurchaseRate: 100 })
+    );
+    expect(r.channels[0].isPaybackRisk).toBe(false);
+  });
+});
+
+describe('calculateFullAnalyser — edge cases', () => {
+  it('empty channels array: returns zero totals, no channel results', () => {
+    const r = calculateFullAnalyser([], sharedBase());
+    expect(r.channels).toHaveLength(0);
+    expect(r.blendedCAC).toBe(0);
+    expect(r.totalVolume).toBe(0);
+    expect(r.blendedLtvCacRatio12).toBe(0);
+    expect(r.blendedLtvCacRatio24).toBe(0);
+  });
+
+  it('all channels have cac = 0: blendedCAC = 0, ratios = 0', () => {
+    const r = calculateFullAnalyser(
+      [{ label: 'Organic', cac: 0, volume: 200 }],
+      sharedBase()
+    );
+    expect(r.blendedCAC).toBe(0);
+    expect(r.blendedLtvCacRatio12).toBe(0);
+    expect(r.channels[0].ltvCacRatio12).toBe(0);
+  });
+
+  it('zero aov: all LTV and ratio values are zero or Infinity payback', () => {
+    const r = calculateFullAnalyser(twoChannels(), sharedBase({ aov: 0 }));
+    expect(r.channels[0].ltv12).toBe(0);
+    expect(r.channels[0].ltvCacRatio12).toBe(0);
+    expect(r.channels[0].paybackMonths).toBe(Infinity);
+  });
+
+  it('grossMarginPercent > 100 is clamped', () => {
+    const rClamped = calculateFullAnalyser(twoChannels(), sharedBase({ grossMarginPercent: 150 }));
+    const rFull    = calculateFullAnalyser(twoChannels(), sharedBase({ grossMarginPercent: 100 }));
+    expect(rClamped.channels[0].ltv12).toBeCloseTo(rFull.channels[0].ltv12);
+  });
+
+  it('no NaN in any numeric output', () => {
+    const scenarios = [
+      { channels: twoChannels(), shared: sharedBase() },
+      { channels: twoChannels(), shared: sharedBase({ repeatPurchaseRate: 0 }) },
+      { channels: twoChannels(), shared: sharedBase({ avgOrderFrequencyMonths: 0 }) },
+      { channels: [{ label: 'A', cac: 0, volume: 100 }], shared: sharedBase() },
+      { channels: [], shared: sharedBase() },
+    ];
+    scenarios.forEach(({ channels, shared }) => {
+      const r = calculateFullAnalyser(channels, shared);
+      [r.blendedCAC, r.blendedLtvCacRatio12, r.blendedLtvCacRatio24, r.totalVolume].forEach(v => {
+        expect(isNaN(v)).toBe(false);
+      });
+      r.channels.forEach(ch => {
+        [ch.ltv12, ch.ltv24, ch.ltvCacRatio12, ch.ltvCacRatio24, ch.paybackMonths].forEach(v => {
+          expect(isNaN(v)).toBe(false);
+        });
+      });
+    });
+  });
+
+  it('avgOrderFrequencyMonths = 0: payback = Infinity, LTV = marginPerOrder', () => {
+    const r = calculateFullAnalyser(
+      [{ label: 'A', cac: 50, volume: 100 }],
+      sharedBase({ avgOrderFrequencyMonths: 0 })
+    );
+    expect(r.channels[0].paybackMonths).toBe(Infinity);
+    // freq = 0 → ltv12 = aov × margin × (1 + retention × max(0, 0-1) × 1) = 44 × 1 = 44
+    expect(r.channels[0].ltv12).toBeCloseTo(44);
   });
 });

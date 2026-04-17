@@ -4,8 +4,8 @@ import { ToolLayout } from '@/components/ToolLayout';
 import { ResultCard } from '@/components/ResultCard';
 import { SectionLabel } from '@/components/SectionLabel';
 import { InputField } from '@/components/InputField';
-import { calculatePayback } from '@/logic/paybackLogic';
-import type { PaybackInputs, PaybackResults } from '@/logic/paybackTypes';
+import { calculatePayback, calculateFullAnalyser } from '@/logic/paybackLogic';
+import type { PaybackInputs, PaybackResults, ChannelInput, FullAnalyserResults } from '@/logic/paybackTypes';
 import { formatCurrency } from '@/lib/utils';
 
 // ─── CHANNEL DATA MODEL ───────────────────────────────────────────────────────
@@ -76,7 +76,7 @@ function toInputs(form: FormState): PaybackInputs {
 
 type ViewState =
   | { view: 'input' }
-  | { view: 'results'; inputs: PaybackInputs; results: PaybackResults; channels: ChannelRow[] };
+  | { view: 'results'; inputs: PaybackInputs; results: PaybackResults; fullResults: FullAnalyserResults | null };
 
 // ─── VERDICT CALLOUT ──────────────────────────────────────────────────────────
 
@@ -141,9 +141,11 @@ function CellInput({
 
 function ResultsView({
   results,
+  fullResults,
   onRecalculate,
 }: {
   results: PaybackResults;
+  fullResults: FullAnalyserResults | null;
   onRecalculate: () => void;
 }) {
   const paybackVariant =
@@ -215,6 +217,86 @@ function ResultsView({
           </p>
         </div>
       </div>
+
+      {/* ── Full Analyser results ──────────────────────────────────────────── */}
+      {fullResults && fullResults.channels.length > 0 && (
+        <div className="pt-10 border-t border-slate-200">
+          <h2 className="text-2xl font-semibold text-slate-900 tracking-tight mb-6">Full Analyser</h2>
+
+          {/* Blended summary cards */}
+          <div>
+            <SectionLabel>Blended</SectionLabel>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <ResultCard
+                label="Volume-weighted blended CAC"
+                value={formatCurrency(fullResults.blendedCAC)}
+                subtext={`${fullResults.totalVolume.toLocaleString()} customers across ${fullResults.channels.length} channel${fullResults.channels.length !== 1 ? 's' : ''}`}
+                variant="neutral"
+              />
+              <ResultCard
+                label="Blended LTV:CAC at 12 months"
+                value={`${fullResults.blendedLtvCacRatio12.toFixed(1)}×`}
+                subtext="Healthy ≥ 3×"
+                variant={ltvCacVariant(fullResults.blendedLtvCacRatio12)}
+              />
+              <ResultCard
+                label="Blended LTV:CAC at 24 months"
+                value={`${fullResults.blendedLtvCacRatio24.toFixed(1)}×`}
+                subtext="Healthy ≥ 3×"
+                variant={ltvCacVariant(fullResults.blendedLtvCacRatio24)}
+              />
+            </div>
+          </div>
+
+          {/* Channel breakdown table */}
+          <div className="mt-8">
+            <SectionLabel>By channel</SectionLabel>
+            <div className="border border-slate-200 rounded-lg overflow-x-auto shadow-card">
+              <table className="w-full text-sm min-w-[600px]">
+                <thead className="bg-white border-b border-slate-200">
+                  <tr>
+                    <th className="py-2.5 px-4 text-left text-xs uppercase tracking-widest font-semibold text-slate-400">Channel</th>
+                    <th className="py-2.5 px-4 text-right text-xs uppercase tracking-widest font-semibold text-slate-400">CAC</th>
+                    <th className="py-2.5 px-4 text-right text-xs uppercase tracking-widest font-semibold text-slate-400">Volume</th>
+                    <th className="py-2.5 px-4 text-right text-xs uppercase tracking-widest font-semibold text-slate-400">LTV:CAC 12m</th>
+                    <th className="py-2.5 px-4 text-right text-xs uppercase tracking-widest font-semibold text-slate-400">LTV:CAC 24m</th>
+                    <th className="py-2.5 px-4 text-right text-xs uppercase tracking-widest font-semibold text-slate-400">Payback</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {fullResults.channels.map((ch) => (
+                    <tr key={ch.label} className="bg-white">
+                      <td className="py-3 px-4 font-medium text-slate-900">
+                        <span>{ch.label}</span>
+                        {ch.isUnderwater && (
+                          <span className="ml-2 text-xs font-semibold text-red-600">Underwater</span>
+                        )}
+                        {ch.isPaybackRisk && !ch.isUnderwater && (
+                          <span className="ml-2 text-xs font-semibold text-amber-600">Payback risk</span>
+                        )}
+                        {ch.isPaybackRisk && ch.isUnderwater && (
+                          <span className="ml-2 text-xs font-semibold text-amber-600">Payback risk</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-right tabular-nums text-slate-700">{formatCurrency(ch.cac)}</td>
+                      <td className="py-3 px-4 text-right tabular-nums text-slate-700">{ch.volume.toLocaleString()}</td>
+                      <td className={`py-3 px-4 text-right tabular-nums font-medium ${ch.ltvCacRatio12 < 1 ? 'text-red-700' : ch.ltvCacRatio12 < 3 ? 'text-amber-700' : 'text-slate-700'}`}>
+                        {ch.cac > 0 ? `${ch.ltvCacRatio12.toFixed(1)}×` : '—'}
+                      </td>
+                      <td className={`py-3 px-4 text-right tabular-nums font-medium ${ch.ltvCacRatio24 < 1 ? 'text-red-700' : ch.ltvCacRatio24 < 3 ? 'text-amber-700' : 'text-slate-700'}`}>
+                        {ch.cac > 0 ? `${ch.ltvCacRatio24.toFixed(1)}×` : '—'}
+                      </td>
+                      <td className="py-3 px-4 text-right tabular-nums text-slate-700">
+                        {ch.cac === 0 ? '—' : isFinite(ch.paybackMonths) ? `${ch.paybackMonths.toFixed(1)}m` : '∞'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Recalculate */}
       <div className="flex sm:justify-end pt-4 border-t border-slate-200">
@@ -484,7 +566,25 @@ export function PaybackPeriod() {
     setErrors([]);
     const inputs = toInputs(form);
     const results = calculatePayback(inputs);
-    setPageState({ view: 'results', inputs, results, channels });
+
+    const activeChannels: ChannelInput[] = channels
+      .filter((ch) => parseFloat(ch.volume) > 0)
+      .map((ch) => ({
+        label: ch.label || 'Unnamed channel',
+        cac: parseFloat(ch.cac) || 0,
+        volume: parseFloat(ch.volume),
+      }));
+
+    const fullResults = activeChannels.length > 0
+      ? calculateFullAnalyser(activeChannels, {
+          aov: parseFloat(form.aov) || 0,
+          grossMarginPercent: parseFloat(form.grossMarginPercent) || 0,
+          repeatPurchaseRate: parseFloat(form.repeatPurchaseRate) || 0,
+          avgOrderFrequencyMonths: parseFloat(form.avgOrderFrequencyMonths) || 0,
+        })
+      : null;
+
+    setPageState({ view: 'results', inputs, results, fullResults });
   };
 
   return (
@@ -505,6 +605,7 @@ export function PaybackPeriod() {
       ) : (
         <ResultsView
           results={pageState.results}
+          fullResults={pageState.fullResults}
           onRecalculate={() => setPageState({ view: 'input' })}
         />
       )}
