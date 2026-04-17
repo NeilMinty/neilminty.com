@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Plus, X } from 'lucide-react';
 import { ToolLayout } from '@/components/ToolLayout';
 import { ResultCard } from '@/components/ResultCard';
 import { SectionLabel } from '@/components/SectionLabel';
@@ -6,6 +7,41 @@ import { InputField } from '@/components/InputField';
 import { calculatePayback } from '@/logic/paybackLogic';
 import type { PaybackInputs, PaybackResults } from '@/logic/paybackTypes';
 import { formatCurrency } from '@/lib/utils';
+
+// ─── CHANNEL DATA MODEL ───────────────────────────────────────────────────────
+
+interface ChannelRow {
+  id: string;
+  label: string;
+  cac: string;
+  volume: string;
+  isPreset: boolean;
+}
+
+const PRESET_CHANNEL_LABELS = [
+  'Paid Social',
+  'Paid Search',
+  'Organic Search',
+  'Organic Social',
+  'Email/SMS',
+  'Direct',
+  'Affiliates',
+  'Other',
+];
+
+function makePresetChannels(): ChannelRow[] {
+  return PRESET_CHANNEL_LABELS.map((label) => ({
+    id: label,
+    label,
+    cac: '',
+    volume: '',
+    isPreset: true,
+  }));
+}
+
+function makeCustomChannel(): ChannelRow {
+  return { id: crypto.randomUUID(), label: '', cac: '', volume: '', isPreset: false };
+}
 
 // ─── FORM STATE ───────────────────────────────────────────────────────────────
 
@@ -40,7 +76,7 @@ function toInputs(form: FormState): PaybackInputs {
 
 type ViewState =
   | { view: 'input' }
-  | { view: 'results'; inputs: PaybackInputs; results: PaybackResults };
+  | { view: 'results'; inputs: PaybackInputs; results: PaybackResults; channels: ChannelRow[] };
 
 // ─── VERDICT CALLOUT ──────────────────────────────────────────────────────────
 
@@ -66,6 +102,39 @@ function ltvCacVariant(ratio: number): 'positive' | 'warning' | 'critical' {
   if (ratio >= 3) return 'positive';
   if (ratio >= 1) return 'warning';
   return 'critical';
+}
+
+// ─── COMPACT CELL INPUT ───────────────────────────────────────────────────────
+
+function CellInput({
+  value,
+  onChange,
+  prefix,
+  placeholder = '0',
+  type = 'number',
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  prefix?: string;
+  placeholder?: string;
+  type?: 'text' | 'number';
+}) {
+  return (
+    <div className="flex items-stretch border border-slate-200 rounded bg-white focus-within:border-slate-400 transition-colors">
+      {prefix && (
+        <span className="px-2 text-sm text-slate-500 border-r border-slate-200 flex items-center bg-slate-50 rounded-l select-none shrink-0">
+          {prefix}
+        </span>
+      )}
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="flex-1 px-2.5 py-2 text-sm text-slate-900 bg-transparent outline-none min-w-0"
+      />
+    </div>
+  );
 }
 
 // ─── RESULTS VIEW ─────────────────────────────────────────────────────────────
@@ -165,82 +234,210 @@ function ResultsView({
 function InputView({
   form,
   setForm,
+  channels,
+  setChannels,
   onCalculate,
   errors,
 }: {
   form: FormState;
   setForm: React.Dispatch<React.SetStateAction<FormState>>;
+  channels: ChannelRow[];
+  setChannels: React.Dispatch<React.SetStateAction<ChannelRow[]>>;
   onCalculate: () => void;
   errors: string[];
 }) {
   const set = (key: keyof FormState) => (value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
+  const updateChannel = (id: string, field: keyof Omit<ChannelRow, 'id' | 'isPreset'>, value: string) => {
+    setChannels((prev) => prev.map((ch) => (ch.id === id ? { ...ch, [field]: value } : ch)));
+  };
+
+  const addChannel = () => {
+    setChannels((prev) => [...prev, makeCustomChannel()]);
+  };
+
+  const removeChannel = (id: string) => {
+    setChannels((prev) => prev.filter((ch) => ch.id !== id));
+  };
+
   return (
-    <div className="space-y-8">
-      {/* Acquisition */}
-      <div>
-        <SectionLabel>Acquisition</SectionLabel>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <InputField
-            label="Blended CAC"
-            value={form.blendedCAC}
-            onChange={set('blendedCAC')}
-            prefix="£"
-            hint="Weighted average cost to acquire one customer across all channels"
-            placeholder="0"
-          />
+    <>
+      {/* ── Tier 1: Quick Estimate ─────────────────────────────────────────── */}
+      <div className="space-y-8">
+        {/* Acquisition */}
+        <div>
+          <SectionLabel>Acquisition</SectionLabel>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <InputField
+              label="Blended CAC"
+              value={form.blendedCAC}
+              onChange={set('blendedCAC')}
+              prefix="£"
+              hint="Weighted average cost to acquire one customer across all channels"
+              placeholder="0"
+            />
+          </div>
+        </div>
+
+        {/* Order economics */}
+        <div>
+          <SectionLabel>Order Economics</SectionLabel>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <InputField
+              label="AOV"
+              value={form.aov}
+              onChange={set('aov')}
+              prefix="£"
+              placeholder="0"
+            />
+            <InputField
+              label="Gross Margin"
+              value={form.grossMarginPercent}
+              onChange={set('grossMarginPercent')}
+              suffix="%"
+              hint="Product margin before fulfilment and other operational costs"
+              placeholder="0"
+            />
+          </div>
+        </div>
+
+        {/* Repeat behaviour */}
+        <div>
+          <SectionLabel>Repeat Behaviour</SectionLabel>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <InputField
+              label="Repeat Purchase Rate"
+              value={form.repeatPurchaseRate}
+              onChange={set('repeatPurchaseRate')}
+              suffix="%"
+              hint="% of customers who make at least a second purchase"
+              placeholder="0"
+            />
+            <InputField
+              label="Avg Order Frequency"
+              value={form.avgOrderFrequencyMonths}
+              onChange={set('avgOrderFrequencyMonths')}
+              suffix="months between orders"
+              hint="Average time between purchases for repeat customers"
+              placeholder="0"
+            />
+          </div>
         </div>
       </div>
 
-      {/* Order economics */}
-      <div>
-        <SectionLabel>Order Economics</SectionLabel>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <InputField
-            label="AOV"
-            value={form.aov}
-            onChange={set('aov')}
-            prefix="£"
-            placeholder="0"
-          />
-          <InputField
-            label="Gross Margin"
-            value={form.grossMarginPercent}
-            onChange={set('grossMarginPercent')}
-            suffix="%"
-            hint="Product margin before fulfilment and other operational costs"
-            placeholder="0"
-          />
+      {/* ── Tier 2: Full Analyser ──────────────────────────────────────────── */}
+      <div className="mt-16 pt-10 border-t border-slate-200">
+        <div className="mb-6">
+          <h2 className="text-2xl font-semibold text-slate-900 tracking-tight mb-2">Full Analyser</h2>
+          <p className="text-slate-500 leading-relaxed">
+            Enter CAC and volume per channel. AOV, margin, repeat rate and order frequency above apply to all channels.
+          </p>
+        </div>
+
+        {/* Desktop column headers */}
+        <div className="hidden sm:grid gap-3 mb-2" style={{ gridTemplateColumns: '1fr 7.5rem 7.5rem 2rem' }}>
+          <span className="text-xs uppercase tracking-widest text-slate-400 font-semibold">Channel</span>
+          <span className="text-xs uppercase tracking-widest text-slate-400 font-semibold">CAC</span>
+          <span className="text-xs uppercase tracking-widest text-slate-400 font-semibold">Volume</span>
+          <span />
+        </div>
+
+        {/* Desktop rows */}
+        <div className="hidden sm:block space-y-2">
+          {channels.map((ch) => (
+            <div key={ch.id} className="grid gap-3 items-center" style={{ gridTemplateColumns: '1fr 7.5rem 7.5rem 2rem' }}>
+              {ch.isPreset ? (
+                <span className="text-sm text-slate-700">{ch.label}</span>
+              ) : (
+                <CellInput
+                  type="text"
+                  value={ch.label}
+                  onChange={(v) => updateChannel(ch.id, 'label', v)}
+                  placeholder="Channel name"
+                />
+              )}
+              <CellInput
+                value={ch.cac}
+                onChange={(v) => updateChannel(ch.id, 'cac', v)}
+                prefix="£"
+                placeholder="0"
+              />
+              <CellInput
+                value={ch.volume}
+                onChange={(v) => updateChannel(ch.id, 'volume', v)}
+                placeholder="0"
+              />
+              {ch.isPreset ? (
+                <span />
+              ) : (
+                <button
+                  onClick={() => removeChannel(ch.id)}
+                  className="h-7 w-7 flex items-center justify-center rounded text-slate-400 hover:text-slate-700 transition-colors"
+                  aria-label="Remove channel"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Mobile card layout */}
+        <div className="sm:hidden space-y-3">
+          {channels.map((ch) => (
+            <div key={ch.id} className="border border-slate-200 rounded-lg p-3 space-y-2.5 bg-white">
+              {ch.isPreset ? (
+                <p className="text-sm font-medium text-slate-700">{ch.label}</p>
+              ) : (
+                <div className="flex gap-2 items-start">
+                  <div className="flex-1">
+                    <p className="text-xs uppercase tracking-widest text-slate-400 font-semibold mb-1">Channel name</p>
+                    <CellInput
+                      type="text"
+                      value={ch.label}
+                      onChange={(v) => updateChannel(ch.id, 'label', v)}
+                      placeholder="Channel name"
+                    />
+                  </div>
+                  <button
+                    onClick={() => removeChannel(ch.id)}
+                    className="mt-5 h-7 w-7 flex items-center justify-center rounded text-slate-400 hover:text-slate-700 transition-colors"
+                    aria-label="Remove channel"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <p className="text-xs uppercase tracking-widest text-slate-400 font-semibold mb-1">CAC</p>
+                  <CellInput value={ch.cac} onChange={(v) => updateChannel(ch.id, 'cac', v)} prefix="£" placeholder="0" />
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-widest text-slate-400 font-semibold mb-1">Volume</p>
+                  <CellInput value={ch.volume} onChange={(v) => updateChannel(ch.id, 'volume', v)} placeholder="0" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Add channel */}
+        <div className="mt-3">
+          <button
+            onClick={addChannel}
+            className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors"
+          >
+            <Plus size={14} />
+            Add channel
+          </button>
         </div>
       </div>
 
-      {/* Repeat behaviour */}
-      <div>
-        <SectionLabel>Repeat Behaviour</SectionLabel>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <InputField
-            label="Repeat Purchase Rate"
-            value={form.repeatPurchaseRate}
-            onChange={set('repeatPurchaseRate')}
-            suffix="%"
-            hint="% of customers who make at least a second purchase"
-            placeholder="0"
-          />
-          <InputField
-            label="Avg Order Frequency"
-            value={form.avgOrderFrequencyMonths}
-            onChange={set('avgOrderFrequencyMonths')}
-            suffix="months between orders"
-            hint="Average time between purchases for repeat customers"
-            placeholder="0"
-          />
-        </div>
-      </div>
-
-      {/* Validation errors */}
+      {/* ── Validation errors + Calculate ─────────────────────────────────── */}
       {errors.length > 0 && (
-        <div className="border border-red-200 bg-red-50 rounded-lg px-4 py-3">
+        <div className="mt-8 border border-red-200 bg-red-50 rounded-lg px-4 py-3">
           <ul className="space-y-1">
             {errors.map((err) => (
               <li key={err} className="text-sm text-red-700">
@@ -251,8 +448,7 @@ function InputView({
         </div>
       )}
 
-      {/* Calculate */}
-      <div className="flex justify-end">
+      <div className="mt-8 flex justify-end">
         <button
           onClick={onCalculate}
           className="bg-slate-900 text-white px-6 py-2.5 rounded text-sm font-medium hover:bg-slate-800 transition-colors min-w-[160px]"
@@ -260,7 +456,7 @@ function InputView({
           Calculate
         </button>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -269,6 +465,7 @@ function InputView({
 export function PaybackPeriod() {
   const [pageState, setPageState] = useState<ViewState>({ view: 'input' });
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
+  const [channels, setChannels] = useState<ChannelRow[]>(makePresetChannels);
   const [errors, setErrors] = useState<string[]>([]);
 
   const handleCalculate = () => {
@@ -287,7 +484,7 @@ export function PaybackPeriod() {
     setErrors([]);
     const inputs = toInputs(form);
     const results = calculatePayback(inputs);
-    setPageState({ view: 'results', inputs, results });
+    setPageState({ view: 'results', inputs, results, channels });
   };
 
   return (
@@ -300,6 +497,8 @@ export function PaybackPeriod() {
         <InputView
           form={form}
           setForm={setForm}
+          channels={channels}
+          setChannels={setChannels}
           onCalculate={handleCalculate}
           errors={errors}
         />
