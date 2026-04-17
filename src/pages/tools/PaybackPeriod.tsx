@@ -162,63 +162,67 @@ function ResultsView({
 
   return (
     <div className="space-y-8">
-      {/* 2×2 primary cards */}
-      <div>
-        <SectionLabel>Unit economics</SectionLabel>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <ResultCard
-            label="Months to payback"
-            value={monthsDisplay}
-            subtext={`Verdict: ${results.paybackVerdict}`}
-            variant={paybackVariant}
-          />
-          <ResultCard
-            label="Margin per order"
-            value={formatCurrency(results.marginPerOrder)}
-            subtext={`${results.ordersToPayback.toFixed(1)} orders to recover CAC`}
-            variant="neutral"
-          />
-          <ResultCard
-            label="LTV at 12 months"
-            value={formatCurrency(results.ltv12Month)}
-            variant="neutral"
-          />
-          <ResultCard
-            label="LTV at 24 months"
-            value={formatCurrency(results.ltv24Month)}
-            variant="neutral"
-          />
-        </div>
-      </div>
+      {inputs.blendedCAC > 0 && (
+        <>
+          {/* 2×2 primary cards */}
+          <div>
+            <SectionLabel>Unit economics</SectionLabel>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <ResultCard
+                label="Months to payback"
+                value={monthsDisplay}
+                subtext={`Verdict: ${results.paybackVerdict}`}
+                variant={paybackVariant}
+              />
+              <ResultCard
+                label="Margin per order"
+                value={formatCurrency(results.marginPerOrder)}
+                subtext={`${results.ordersToPayback.toFixed(1)} orders to recover CAC`}
+                variant="neutral"
+              />
+              <ResultCard
+                label="LTV at 12 months"
+                value={formatCurrency(results.ltv12Month)}
+                variant="neutral"
+              />
+              <ResultCard
+                label="LTV at 24 months"
+                value={formatCurrency(results.ltv24Month)}
+                variant="neutral"
+              />
+            </div>
+          </div>
 
-      {/* LTV:CAC ratios */}
-      <div>
-        <SectionLabel>LTV:CAC</SectionLabel>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <ResultCard
-            label="LTV:CAC at 12 months"
-            value={`${results.ltvCacRatio12.toFixed(1)}×`}
-            subtext="Healthy ≥ 3×"
-            variant={ltvCacVariant(results.ltvCacRatio12)}
-          />
-          <ResultCard
-            label="LTV:CAC at 24 months"
-            value={`${results.ltvCacRatio24.toFixed(1)}×`}
-            subtext="Healthy ≥ 3×"
-            variant={ltvCacVariant(results.ltvCacRatio24)}
-          />
-        </div>
-      </div>
+          {/* LTV:CAC ratios */}
+          <div>
+            <SectionLabel>LTV:CAC</SectionLabel>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <ResultCard
+                label="LTV:CAC at 12 months"
+                value={`${results.ltvCacRatio12.toFixed(1)}×`}
+                subtext="Healthy ≥ 3×"
+                variant={ltvCacVariant(results.ltvCacRatio12)}
+              />
+              <ResultCard
+                label="LTV:CAC at 24 months"
+                value={`${results.ltvCacRatio24.toFixed(1)}×`}
+                subtext="Healthy ≥ 3×"
+                variant={ltvCacVariant(results.ltvCacRatio24)}
+              />
+            </div>
+          </div>
 
-      {/* Verdict callout */}
-      <div>
-        <SectionLabel>Verdict</SectionLabel>
-        <div className="border border-slate-200 bg-slate-50 rounded-lg p-4">
-          <p className="text-sm text-slate-700 leading-relaxed">
-            {verdictText(results)}
-          </p>
-        </div>
-      </div>
+          {/* Verdict callout */}
+          <div>
+            <SectionLabel>Verdict</SectionLabel>
+            <div className="border border-slate-200 bg-slate-50 rounded-lg p-4">
+              <p className="text-sm text-slate-700 leading-relaxed">
+                {verdictText(results)}
+              </p>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* ── Full Analyser results ──────────────────────────────────────────── */}
       {fullResults && fullResults.channels.length > 0 && (() => {
@@ -365,15 +369,19 @@ function InputView({
   setForm,
   channels,
   setChannels,
-  onCalculate,
+  onCalculateQuickEstimate,
+  onCalculateFullAnalyser,
   errors,
+  showSharedError,
 }: {
   form: FormState;
   setForm: React.Dispatch<React.SetStateAction<FormState>>;
   channels: ChannelRow[];
   setChannels: React.Dispatch<React.SetStateAction<ChannelRow[]>>;
-  onCalculate: () => void;
+  onCalculateQuickEstimate: () => void;
+  onCalculateFullAnalyser: () => void;
   errors: string[];
+  showSharedError: boolean;
 }) {
   const set = (key: keyof FormState) => (value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -393,7 +401,7 @@ function InputView({
   return (
     <>
       {/* ── Tier 1: Quick Estimate ─────────────────────────────────────────── */}
-      <div className="space-y-8">
+      <div id="quick-estimate-inputs" className="space-y-8">
         {/* Acquisition */}
         <div>
           <SectionLabel>Acquisition</SectionLabel>
@@ -455,13 +463,52 @@ function InputView({
         </div>
       </div>
 
+      {/* ── Quick Estimate validation + Calculate ──────────────────────────── */}
+      {errors.length > 0 && (
+        <div className="mt-8 border border-red-200 bg-red-50 rounded-lg px-4 py-3">
+          <ul className="space-y-1">
+            {errors.map((err) => (
+              <li key={err} className="text-sm text-red-700">
+                {err}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <div className="mt-8 flex justify-end">
+        <button
+          onClick={onCalculateQuickEstimate}
+          className="bg-slate-900 text-white px-6 py-2.5 rounded text-sm font-medium hover:bg-slate-800 transition-colors min-w-[160px]"
+        >
+          Calculate
+        </button>
+      </div>
+
       {/* ── Tier 2: Full Analyser ──────────────────────────────────────────── */}
       <div className="mt-16 pt-10 border-t border-slate-200">
         <div className="mb-6">
-          <h2 className="text-2xl font-semibold text-slate-900 tracking-tight mb-2">Full Analyser</h2>
-          <p className="text-slate-500 leading-relaxed">
-            Enter CAC and volume per channel. AOV, margin, repeat rate and order frequency above apply to all channels.
-          </p>
+          <h2 className="text-2xl font-semibold text-slate-900 tracking-tight mb-3">Full Analyser</h2>
+          <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5">
+            <p className="text-sm text-slate-600">
+              <span className="text-slate-500">Calculating with: </span>
+              AOV {form.aov && parseFloat(form.aov) > 0 ? `£${form.aov}` : '—'}
+              {' · '}
+              Margin {form.grossMarginPercent && parseFloat(form.grossMarginPercent) > 0 ? `${form.grossMarginPercent}%` : '—'}
+              {' · '}
+              Repeat Rate {form.repeatPurchaseRate && parseFloat(form.repeatPurchaseRate) > 0 ? `${form.repeatPurchaseRate}%` : '—'}
+              {' · '}
+              Order Frequency {form.avgOrderFrequencyMonths && parseFloat(form.avgOrderFrequencyMonths) > 0 ? `${form.avgOrderFrequencyMonths} months` : '—'}
+            </p>
+            <button
+              onClick={() => {
+                document.getElementById('quick-estimate-inputs')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }}
+              className="text-xs text-slate-500 underline underline-offset-2 hover:text-slate-800 transition-colors shrink-0"
+            >
+              Edit shared inputs
+            </button>
+          </div>
         </div>
 
         {/* Desktop column headers */}
@@ -562,28 +609,24 @@ function InputView({
             Add channel
           </button>
         </div>
-      </div>
 
-      {/* ── Validation errors + Calculate ─────────────────────────────────── */}
-      {errors.length > 0 && (
-        <div className="mt-8 border border-red-200 bg-red-50 rounded-lg px-4 py-3">
-          <ul className="space-y-1">
-            {errors.map((err) => (
-              <li key={err} className="text-sm text-red-700">
-                {err}
-              </li>
-            ))}
-          </ul>
+        {/* ── Full Analyser validation + Calculate ───────────────────────── */}
+        {showSharedError && (
+          <div className="mt-8 border border-red-200 bg-red-50 rounded-lg px-4 py-3">
+            <p className="text-sm text-red-700">
+              Enter AOV, margin, repeat rate and order frequency in the Quick Estimate section above before running the full analysis.
+            </p>
+          </div>
+        )}
+
+        <div className="mt-8 flex justify-end">
+          <button
+            onClick={onCalculateFullAnalyser}
+            className="bg-slate-900 text-white px-6 py-2.5 rounded text-sm font-medium hover:bg-slate-800 transition-colors min-w-[160px]"
+          >
+            Calculate
+          </button>
         </div>
-      )}
-
-      <div className="mt-8 flex justify-end">
-        <button
-          onClick={onCalculate}
-          className="bg-slate-900 text-white px-6 py-2.5 rounded text-sm font-medium hover:bg-slate-800 transition-colors min-w-[160px]"
-        >
-          Calculate
-        </button>
       </div>
     </>
   );
@@ -596,10 +639,17 @@ export function PaybackPeriod() {
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
   const [channels, setChannels] = useState<ChannelRow[]>(makePresetChannels);
   const [errors, setErrors] = useState<string[]>([]);
+  const [sharedErrorTouched, setSharedErrorTouched] = useState(false);
+
+  const p = (s: string) => parseFloat(s);
+  const sharedInputsMissing =
+    !(p(form.aov) > 0) ||
+    !(p(form.grossMarginPercent) > 0) ||
+    !(p(form.avgOrderFrequencyMonths) > 0);
+  const showSharedError = sharedErrorTouched && sharedInputsMissing;
 
   const handleCalculate = () => {
     const errs: string[] = [];
-    const p = (s: string) => parseFloat(s);
 
     if (!(p(form.blendedCAC) > 0)) errs.push('Blended CAC must be greater than 0');
     if (!(p(form.aov) > 0)) errs.push('AOV must be greater than 0');
@@ -611,6 +661,34 @@ export function PaybackPeriod() {
       return;
     }
     setErrors([]);
+    const inputs = toInputs(form);
+    const results = calculatePayback(inputs);
+
+    const activeChannels: ChannelInput[] = channels
+      .filter((ch) => parseFloat(ch.volume) > 0)
+      .map((ch) => ({
+        label: ch.label || 'Unnamed channel',
+        cac: parseFloat(ch.cac) || 0,
+        volume: parseFloat(ch.volume),
+      }));
+
+    const fullResults = activeChannels.length > 0
+      ? calculateFullAnalyser(activeChannels, {
+          aov: parseFloat(form.aov) || 0,
+          grossMarginPercent: parseFloat(form.grossMarginPercent) || 0,
+          repeatPurchaseRate: parseFloat(form.repeatPurchaseRate) || 0,
+          avgOrderFrequencyMonths: parseFloat(form.avgOrderFrequencyMonths) || 0,
+        })
+      : null;
+
+    setPageState({ view: 'results', inputs, results, fullResults });
+  };
+
+  const handleFullAnalyserCalculate = () => {
+    if (sharedInputsMissing) {
+      setSharedErrorTouched(true);
+      return;
+    }
     const inputs = toInputs(form);
     const results = calculatePayback(inputs);
 
@@ -646,8 +724,10 @@ export function PaybackPeriod() {
           setForm={setForm}
           channels={channels}
           setChannels={setChannels}
-          onCalculate={handleCalculate}
+          onCalculateQuickEstimate={handleCalculate}
+          onCalculateFullAnalyser={handleFullAnalyserCalculate}
           errors={errors}
+          showSharedError={showSharedError}
         />
       ) : (
         <ResultsView
