@@ -8,7 +8,7 @@ export function Home() {
     document.title = 'Neil Minty — DTC Operator Tools';
     const tag = document.querySelector('meta[name="description"]') as HTMLMetaElement | null;
     const prev = tag?.content;
-    if (tag) tag.content = 'Free DTC operator tools for founders and growth operators. No login, no data upload, no spreadsheet.';
+    if (tag) tag.content = 'Fifteen years of DTC operator experience. Five free calculators, a multi-agent growth platform, and writing on ecommerce and retention.';
     return () => { if (tag && prev !== undefined) tag.content = prev; };
   }, []);
   return (
