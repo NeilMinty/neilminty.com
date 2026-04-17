@@ -14,7 +14,7 @@ export function Home() {
   return (
     <div className="max-w-5xl mx-auto px-6 py-16">
       <div className="flex flex-col md:flex-row gap-10 mb-12 pt-4">
-        <div style={{ position: 'relative' }}>
+        <div style={{ position: 'relative', width: '100%', maxWidth: 800 }}>
           <GrowthEngineAnimation />
           <div
             style={{
