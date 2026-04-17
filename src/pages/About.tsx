@@ -38,18 +38,24 @@ export function About() {
           Most brands don't have a growth problem. They have an economics problem.
         </p>
         <p className="text-base text-slate-700 leading-relaxed mt-4">
-          I work with founder-led DTC brands between £2M and £50M where scale has exposed structural weaknesses that marketing alone can't fix. Returns, retention, acquisition costs, and margin leakage get treated as marketing variables. They're structural. My work focuses on fixing the structure.
+          Returns, retention, acquisition costs, margin leakage. Founders treat them as marketing variables. They're structural. Marketing spend on top of a broken unit economics model doesn't fix the model. It just makes the bleed faster.
         </p>
         <p className="text-base text-slate-700 leading-relaxed mt-4">
-          Fifteen years owning P&Ls from £10M to £100M+. I embed as a fractional or interim operator to stabilise performance, rebuild acquisition economics, and implement scalable DTC infrastructure. Proof of work includes scaling digital revenue 100%+ across multiple businesses with board-level P&L accountability, rebuilding underperforming growth engines starting from a unit economics diagnosis rather than and supporting 200% revenue growth at a DTC consumables brand during my tenure.
+          I work with founder-led DTC brands between £2M and £50M where scale has exposed the structure. Revenue is there. The economics aren't holding.
         </p>
         <p className="text-base text-slate-700 leading-relaxed mt-4">
-          The tools on this site exist because the same diagnostic questions come up in every engagement. They're free to use.
+          Fifteen years owning P&Ls from £10M to £100M+. I come in as an operator, not a consultant — diagnosis first, then rebuild. At ROKA, that meant reversing a −10% DTC trajectory to +25% in a single trading year. At Buddy Brands, 200% revenue growth and launches into the US and German markets. At Magnum Photos, £10M to £22M DTC with a single partnership week generating £4M.
+        </p>
+        <p className="text-base text-slate-700 leading-relaxed mt-4">
+          The work starts with unit economics. Always. What you're spending to acquire, what you're keeping after returns and fulfilment, what your best customers are actually worth. Most of that is knowable within a few weeks if you know where to look.
+        </p>
+        <p className="text-base text-slate-700 leading-relaxed mt-4">
+          The tools on this site exist because the same diagnostic questions come up in every engagement. First purchase probability. Margin leakage. Promotions profitability. Use them.
         </p>
 
         <div className="mt-8 pt-8 border-t border-slate-200">
           <p className="text-base text-slate-700 leading-relaxed">
-            If you're running a DTC brand and unit economics are the constraint, get in touch. I'll tell you within one conversation whether I can help.
+            If unit economics are the constraint, get in touch. I'll tell you within one conversation whether I can help.
           </p>
           <div className="mt-4 text-center">
             <button
