@@ -141,10 +141,12 @@ function CellInput({
 
 function ResultsView({
   results,
+  inputs,
   fullResults,
   onRecalculate,
 }: {
   results: PaybackResults;
+  inputs: PaybackInputs;
   fullResults: FullAnalyserResults | null;
   onRecalculate: () => void;
 }) {
@@ -219,84 +221,129 @@ function ResultsView({
       </div>
 
       {/* ── Full Analyser results ──────────────────────────────────────────── */}
-      {fullResults && fullResults.channels.length > 0 && (
-        <div className="pt-10 border-t border-slate-200">
-          <h2 className="text-2xl font-semibold text-slate-900 tracking-tight mb-6">Full Analyser</h2>
+      {fullResults && fullResults.channels.length > 0 && (() => {
+        const margin = Math.max(0, Math.min(1, inputs.grossMarginPercent / 100));
+        const retention = Math.max(0, Math.min(1, inputs.repeatPurchaseRate / 100));
+        const freq = inputs.avgOrderFrequencyMonths > 0 ? 12 / inputs.avgOrderFrequencyMonths : 0;
+        const monthlyContrib = inputs.aov * margin * retention * freq / 12;
+        const blendedPaybackMonths = monthlyContrib > 0 ? fullResults.blendedCAC / monthlyContrib : Infinity;
+        const lifespanMonths = retention > 0 && retention < 1
+          ? (1 / (1 - retention)) * inputs.avgOrderFrequencyMonths
+          : Infinity;
 
-          {/* Blended summary cards */}
-          <div>
-            <SectionLabel>Blended</SectionLabel>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <ResultCard
-                label="Volume-weighted blended CAC"
-                value={formatCurrency(fullResults.blendedCAC)}
-                subtext={`${fullResults.totalVolume.toLocaleString()} customers across ${fullResults.channels.length} channel${fullResults.channels.length !== 1 ? 's' : ''}`}
-                variant="neutral"
-              />
-              <ResultCard
-                label="Blended LTV:CAC at 12 months"
-                value={`${fullResults.blendedLtvCacRatio12.toFixed(1)}×`}
-                subtext="Healthy ≥ 3×"
-                variant={ltvCacVariant(fullResults.blendedLtvCacRatio12)}
-              />
-              <ResultCard
-                label="Blended LTV:CAC at 24 months"
-                value={`${fullResults.blendedLtvCacRatio24.toFixed(1)}×`}
-                subtext="Healthy ≥ 3×"
-                variant={ltvCacVariant(fullResults.blendedLtvCacRatio24)}
-              />
+        const flagged = fullResults.channels.filter((ch) => ch.isUnderwater || ch.isPaybackRisk);
+
+        return (
+          <div className="pt-10 border-t border-slate-200">
+            <h2 className="text-2xl font-semibold text-slate-900 tracking-tight mb-6">Full Analyser</h2>
+
+            {/* Three summary figures */}
+            <div>
+              <SectionLabel>Summary</SectionLabel>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <ResultCard
+                  label="Blended LTV:CAC"
+                  value={`${fullResults.blendedLtvCacRatio12.toFixed(1)}×`}
+                  subtext="12-month horizon · Healthy ≥ 3×"
+                  variant={ltvCacVariant(fullResults.blendedLtvCacRatio12)}
+                />
+                <ResultCard
+                  label="Blended CAC"
+                  value={formatCurrency(fullResults.blendedCAC)}
+                  subtext="Volume-weighted across active channels"
+                  variant="neutral"
+                />
+                <ResultCard
+                  label="Total customers"
+                  value={fullResults.totalVolume.toLocaleString()}
+                  subtext={`Across ${fullResults.channels.length} active channel${fullResults.channels.length !== 1 ? 's' : ''}`}
+                  variant="neutral"
+                />
+              </div>
             </div>
-          </div>
 
-          {/* Channel breakdown table */}
-          <div className="mt-8">
-            <SectionLabel>By channel</SectionLabel>
-            <div className="border border-slate-200 rounded-lg overflow-x-auto shadow-card">
-              <table className="w-full text-sm min-w-[600px]">
-                <thead className="bg-white border-b border-slate-200">
-                  <tr>
-                    <th className="py-2.5 px-4 text-left text-xs uppercase tracking-widest font-semibold text-slate-400">Channel</th>
-                    <th className="py-2.5 px-4 text-right text-xs uppercase tracking-widest font-semibold text-slate-400">CAC</th>
-                    <th className="py-2.5 px-4 text-right text-xs uppercase tracking-widest font-semibold text-slate-400">Volume</th>
-                    <th className="py-2.5 px-4 text-right text-xs uppercase tracking-widest font-semibold text-slate-400">LTV:CAC 12m</th>
-                    <th className="py-2.5 px-4 text-right text-xs uppercase tracking-widest font-semibold text-slate-400">LTV:CAC 24m</th>
-                    <th className="py-2.5 px-4 text-right text-xs uppercase tracking-widest font-semibold text-slate-400">Payback</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {fullResults.channels.map((ch) => (
-                    <tr key={ch.label} className="bg-white">
-                      <td className="py-3 px-4 font-medium text-slate-900">
-                        <span>{ch.label}</span>
-                        {ch.isUnderwater && (
-                          <span className="ml-2 text-xs font-semibold text-red-600">Underwater</span>
-                        )}
-                        {ch.isPaybackRisk && !ch.isUnderwater && (
-                          <span className="ml-2 text-xs font-semibold text-amber-600">Payback risk</span>
-                        )}
-                        {ch.isPaybackRisk && ch.isUnderwater && (
-                          <span className="ml-2 text-xs font-semibold text-amber-600">Payback risk</span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4 text-right tabular-nums text-slate-700">{formatCurrency(ch.cac)}</td>
-                      <td className="py-3 px-4 text-right tabular-nums text-slate-700">{ch.volume.toLocaleString()}</td>
-                      <td className={`py-3 px-4 text-right tabular-nums font-medium ${ch.ltvCacRatio12 < 1 ? 'text-red-700' : ch.ltvCacRatio12 < 3 ? 'text-amber-700' : 'text-slate-700'}`}>
-                        {ch.cac > 0 ? `${ch.ltvCacRatio12.toFixed(1)}×` : '—'}
-                      </td>
-                      <td className={`py-3 px-4 text-right tabular-nums font-medium ${ch.ltvCacRatio24 < 1 ? 'text-red-700' : ch.ltvCacRatio24 < 3 ? 'text-amber-700' : 'text-slate-700'}`}>
-                        {ch.cac > 0 ? `${ch.ltvCacRatio24.toFixed(1)}×` : '—'}
+            {/* Channel table */}
+            <div className="mt-8">
+              <SectionLabel>By channel</SectionLabel>
+              <div className="border border-slate-200 rounded-lg overflow-x-auto shadow-card">
+                <table className="w-full text-sm min-w-[480px]">
+                  <thead className="bg-white border-b border-slate-200">
+                    <tr>
+                      <th className="py-2.5 px-4 text-left text-xs uppercase tracking-widest font-semibold text-slate-400">Channel</th>
+                      <th className="py-2.5 px-4 text-right text-xs uppercase tracking-widest font-semibold text-slate-400">CAC</th>
+                      <th className="py-2.5 px-4 text-right text-xs uppercase tracking-widest font-semibold text-slate-400">Volume</th>
+                      <th className="py-2.5 px-4 text-right text-xs uppercase tracking-widest font-semibold text-slate-400">LTV:CAC</th>
+                      <th className="py-2.5 px-4 text-right text-xs uppercase tracking-widest font-semibold text-slate-400">Payback Period</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {fullResults.channels.map((ch) => {
+                      const isBoth = ch.isUnderwater && ch.isPaybackRisk;
+                      const ltvColor = ch.isUnderwater
+                        ? (isBoth ? 'text-red-700' : 'text-amber-700')
+                        : 'text-slate-700';
+                      const paybackColor = ch.isPaybackRisk
+                        ? (isBoth ? 'text-red-700' : 'text-amber-700')
+                        : 'text-slate-700';
+                      return (
+                        <tr key={ch.label} className="bg-white">
+                          <td className="py-3 px-4 font-medium text-slate-900">{ch.label}</td>
+                          <td className="py-3 px-4 text-right tabular-nums text-slate-700">{formatCurrency(ch.cac)}</td>
+                          <td className="py-3 px-4 text-right tabular-nums text-slate-700">{ch.volume.toLocaleString()}</td>
+                          <td className={`py-3 px-4 text-right tabular-nums font-medium ${ltvColor}`}>
+                            {ch.cac > 0 ? `${ch.ltvCacRatio12.toFixed(1)}×` : '—'}
+                          </td>
+                          <td className={`py-3 px-4 text-right tabular-nums ${paybackColor}`}>
+                            {ch.cac === 0
+                              ? '—'
+                              : isFinite(ch.paybackMonths)
+                                ? `${ch.paybackMonths.toFixed(1)} months`
+                                : '∞'}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {/* Blended totals row */}
+                    <tr className="bg-slate-50 border-t-2 border-slate-200">
+                      <td className="py-3 px-4 text-xs font-semibold uppercase tracking-widest text-slate-500">Blended</td>
+                      <td className="py-3 px-4 text-right tabular-nums font-medium text-slate-700">{formatCurrency(fullResults.blendedCAC)}</td>
+                      <td className="py-3 px-4 text-right tabular-nums font-medium text-slate-700">{fullResults.totalVolume.toLocaleString()}</td>
+                      <td className={`py-3 px-4 text-right tabular-nums font-medium ${ltvCacVariant(fullResults.blendedLtvCacRatio12) === 'critical' ? 'text-red-700' : ltvCacVariant(fullResults.blendedLtvCacRatio12) === 'warning' ? 'text-amber-700' : 'text-slate-700'}`}>
+                        {fullResults.blendedCAC > 0 ? `${fullResults.blendedLtvCacRatio12.toFixed(1)}×` : '—'}
                       </td>
                       <td className="py-3 px-4 text-right tabular-nums text-slate-700">
-                        {ch.cac === 0 ? '—' : isFinite(ch.paybackMonths) ? `${ch.paybackMonths.toFixed(1)}m` : '∞'}
+                        {fullResults.blendedCAC === 0
+                          ? '—'
+                          : isFinite(blendedPaybackMonths)
+                            ? `${blendedPaybackMonths.toFixed(1)} months`
+                            : '∞'}
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </tbody>
+                </table>
+              </div>
             </div>
+
+            {/* Plain-language interpretation for flagged channels */}
+            {flagged.length > 0 && (
+              <div className="mt-6 space-y-2">
+                {flagged.map((ch) => {
+                  const sentence = ch.isUnderwater
+                    ? `${ch.label} is not LTV-positive at current CAC and volume.`
+                    : isFinite(ch.paybackMonths) && isFinite(lifespanMonths)
+                      ? `${ch.label} is recovering acquisition cost in ${ch.paybackMonths.toFixed(1)} months against an implied customer lifespan of ${lifespanMonths.toFixed(1)} months.`
+                      : `${ch.label} is not recovering acquisition cost within the implied customer lifespan.`;
+                  return (
+                    <p key={ch.label} className="text-sm text-slate-600 leading-relaxed">
+                      {sentence}
+                    </p>
+                  );
+                })}
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Recalculate */}
       <div className="flex sm:justify-end pt-4 border-t border-slate-200">
@@ -605,6 +652,7 @@ export function PaybackPeriod() {
       ) : (
         <ResultsView
           results={pageState.results}
+          inputs={pageState.inputs}
           fullResults={pageState.fullResults}
           onRecalculate={() => setPageState({ view: 'input' })}
         />
