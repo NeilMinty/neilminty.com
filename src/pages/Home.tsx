@@ -14,14 +14,19 @@ export function Home() {
   return (
     <div className="max-w-5xl mx-auto px-6 py-16">
       <div className="flex flex-col md:flex-row gap-10 mb-12 pt-4">
-        <div className="relative" style={{ cursor: 'pointer' }}>
+        <div style={{ position: 'relative' }}>
           <GrowthEngineAnimation />
-          <a
-            href="https://demo.neilminty.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Explore the Growth Engine demo"
-            className="absolute inset-0"
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              cursor: 'pointer',
+              zIndex: 10,
+            }}
+            onClick={() => window.open('https://demo.neilminty.com', '_blank')}
           />
         </div>
         <div className="flex flex-col justify-center">
