@@ -20,7 +20,7 @@ export function About() {
         />
         <div className="flex flex-col justify-center">
           <h1 className="text-2xl font-semibold text-slate-900">Neil Minty</h1>
-          <p className="text-base text-slate-500 mt-1">Growth and ecommerce operator</p>
+          <p className="text-base text-slate-500 mt-1">Growth and eCommerce Operator</p>
           <div className="mt-4 text-center">
             <button
               onClick={() => { window.location.href = 'mail' + 'to:neil@person' + 'aify.io'; }}
