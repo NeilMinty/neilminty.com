@@ -61,7 +61,7 @@ export function Home() {
           <Link
             key={tool.path}
             to={tool.path}
-            className={`group flex flex-col justify-between bg-white border border-slate-200 rounded-lg px-6 py-5 hover:border-slate-300 transition-colors shadow-card sm:col-span-2${index === TOOLS.length - 1 ? ' sm:col-start-1' : ''}`}
+            className="group flex flex-col justify-between bg-white border border-slate-200 rounded-lg px-6 py-5 hover:border-slate-300 transition-colors shadow-card sm:col-span-2"
           >
             <div>
               <p className="font-semibold text-slate-900 mb-1.5 group-hover:text-slate-700 transition-colors">
