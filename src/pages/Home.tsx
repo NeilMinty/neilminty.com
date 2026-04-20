@@ -57,7 +57,7 @@ export function Home() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        {TOOLS.map((tool, index) => (
+        {TOOLS.map((tool) => (
           <Link
             key={tool.path}
             to={tool.path}
