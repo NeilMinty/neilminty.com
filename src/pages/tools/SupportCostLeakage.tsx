@@ -30,9 +30,24 @@ const COMPLAINT_INSIGHTS: Record<string, string> = {
     "Description mismatch is a PDP accuracy problem. It also puts you at risk of being cited inaccurately by AI search engines — the same copy that confuses customers confuses LLMs.",
   'returns-process':
     "Returns process complaints usually mean your policy or post-purchase comms aren't clear enough — not that the policy itself is wrong.",
-  other:
-    "Without structured ticket analysis it's hard to diagnose further. The pattern is in the unstructured text of what customers are actually writing.",
 };
+
+const PLATFORM_LABELS: Record<string, string> = {
+  gorgias: 'Gorgias',
+  zendesk: 'Zendesk',
+  reamaze: 'Re:amaze',
+  freshdesk: 'Freshdesk',
+};
+
+function platformDisplayName(platform: string): string {
+  return PLATFORM_LABELS[platform] ?? 'your customer service platform';
+}
+
+function otherComplaintInsight(platform: string): string {
+  const name = platformDisplayName(platform);
+  const ref = name === 'your customer service platform' ? name : `your ${name}`;
+  return `Without structured ticket analysis it's hard to diagnose further. Growth Engine reads the unstructured text of ${ref} tickets and derives structured complaint themes automatically — no manual tagging required. The pattern is in there. You just need the right layer to surface it.`;
+}
 
 // ─── FORM STATE ───────────────────────────────────────────────────────────────
 
@@ -412,29 +427,42 @@ export function SupportCostLeakage() {
         </div>
 
         {/* Complaint reason insight */}
-        {form.complaintReason && COMPLAINT_INSIGHTS[form.complaintReason] && (
+        {form.complaintReason && (
           <div className="border border-slate-200 bg-slate-50 rounded-lg px-4 py-3">
             <p className="text-sm text-slate-700 leading-relaxed">
-              {COMPLAINT_INSIGHTS[form.complaintReason]}
+              {form.complaintReason === 'other'
+                ? otherComplaintInsight(form.platform)
+                : COMPLAINT_INSIGHTS[form.complaintReason]}
             </p>
           </div>
         )}
 
         {/* Growth Engine CTA */}
-        <div className="border border-emerald-200 bg-emerald-50 rounded-lg px-4 py-4">
-          <p className="text-sm text-slate-700 leading-relaxed mb-2">
-            To see which specific products are driving your support cost and what customers are
-            actually saying about them, connect your Gorgias account to Growth Engine.
-          </p>
-          <a
-            href="https://demo.neilminty.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-slate-900 underline underline-offset-2 hover:no-underline transition-colors"
-          >
-            Learn more →
-          </a>
-        </div>
+        {(() => {
+          const name = platformDisplayName(form.platform);
+          const accountRef = name === 'your customer service platform'
+            ? name
+            : `your ${name} account`;
+          return (
+            <div className="border border-emerald-200 bg-emerald-50 rounded-lg px-4 py-4">
+              <p className="text-sm text-slate-700 leading-relaxed mb-2">
+                To see which specific products are driving your support cost, connect {accountRef} to
+                Growth Engine. The ontology layer reads the unstructured text of every ticket and
+                derives structured signal automatically — complaint themes by SKU, fault patterns by
+                product line, and PDP gap signals from description mismatch language. No manual
+                tagging. No spreadsheet exports.
+              </p>
+              <a
+                href="https://demo.neilminty.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-slate-900 underline underline-offset-2 hover:no-underline transition-colors"
+              >
+                Learn more →
+              </a>
+            </div>
+          );
+        })()}
       </div>
     </ToolLayout>
   );
