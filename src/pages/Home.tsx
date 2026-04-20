@@ -33,7 +33,7 @@ export function Home() {
           <h1 className="text-3xl font-semibold text-slate-900 tracking-tight mb-4">
             DTC operator tools
           </h1>
-          <p className="text-slate-600 leading-relaxed text-lg">
+          <p className="text-slate-500 leading-relaxed">
             Fifteen years of DTC operator work distilled into six calculators. No login, no data upload, no spreadsheet. Enter your numbers, get the answer.
           </p>
           <p className="text-slate-500 leading-relaxed mt-3">
