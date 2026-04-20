@@ -34,7 +34,7 @@ export function Home() {
             DTC operator tools
           </h1>
           <p className="text-slate-600 leading-relaxed text-lg">
-            Fifteen years of DTC operator work distilled into five calculators. No login, no data upload, no spreadsheet. Enter your numbers, get the answer.
+            Fifteen years of DTC operator work distilled into six calculators. No login, no data upload, no spreadsheet. Enter your numbers, get the answer.
           </p>
           <p className="text-slate-500 leading-relaxed mt-3">
             Built for founders and operators who already know the question. These tools just run the maths. Free to use.
