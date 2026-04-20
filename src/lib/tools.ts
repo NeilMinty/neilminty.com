@@ -30,4 +30,9 @@ export const TOOLS: ToolDefinition[] = [
     description: "Enter your unit economics to see LTV:CAC at 12 and 24 months and how long it takes to recover acquisition cost.",
     path: '/tools/ltv-cac',
   },
+  {
+    name: 'Support Cost Leakage',
+    description: "What is support actually costing per order? People cost, platform cost, and refund attribution — combined into a single annual leakage figure.",
+    path: '/tools/support-cost-leakage',
+  },
 ];
