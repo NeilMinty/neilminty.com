@@ -211,8 +211,8 @@ function DimensionRow({
         </span>
 
         {/* Name + value */}
-        <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="flex flex-col gap-1 sm:col-span-1">
+        <div className="flex-1 grid grid-cols-1 sm:[grid-template-columns:2fr_3fr] gap-3">
+          <div className="flex flex-col gap-1">
             <label className="text-xs font-medium text-slate-700">Dimension name</label>
             <div className="flex items-stretch border border-slate-200 rounded bg-white focus-within:border-slate-400 transition-colors">
               <input
@@ -224,7 +224,7 @@ function DimensionRow({
               />
             </div>
           </div>
-          <div className="flex flex-col gap-1 sm:col-span-2">
+          <div className="flex flex-col gap-1">
             <label className="text-xs font-medium text-slate-700">Value</label>
             <div className="flex items-stretch border border-slate-200 rounded bg-white focus-within:border-slate-400 transition-colors">
               <input
