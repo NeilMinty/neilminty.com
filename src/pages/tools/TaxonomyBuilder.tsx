@@ -52,14 +52,14 @@ function makeDimensions(names: string[]): Dimension[] {
 const DEFAULT_DIMENSIONS = makeDimensions(ANALYSIS_NAMES);
 
 const VALUE_HINTS: Record<string, string> = {
-  'Campaign type':      'e.g. PROS',
-  'Offer type':         'e.g. FULLPRICE',
-  'Product':            'e.g. HERO',
-  'Platform':           'e.g. META',
-  'Format':             'e.g. VID',
-  'Creative type':      'e.g. UGC',
-  'CTA':                'e.g. SHOP',
-  'Version':            'e.g. V1',
+  'Campaign type':      'e.g. PROS, RETARG, BRAND',
+  'Offer type':         'e.g. FULLPRICE, PROMO, TRIAL, BOGO',
+  'Product':            'e.g. HERO, STARTER, CORE, BUNDLE',
+  'Platform':           'e.g. META, GOOGLE, TIKTOK, EMAIL',
+  'Format':             'e.g. VID, STATIC, CAROUSEL, REEL',
+  'Creative type':      'e.g. UGC, LIFESTYLE, BRAND, INFLUENCER',
+  'CTA':                'e.g. SHOP, LEARN, TRIAL, GETSTARTED',
+  'Version':            'e.g. V1, V2, V3',
   'Hook':               'e.g. PROBLEM, SOCIAL-PROOF, CURIOSITY',
   'Talent type':        'e.g. FOUNDER, CUSTOMER, NO-TALENT',
   'Narrative structure': 'e.g. TESTIMONIAL, DEMO, BEFORE-AFTER',
