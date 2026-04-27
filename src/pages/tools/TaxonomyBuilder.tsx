@@ -9,8 +9,7 @@ import { InputField } from '@/components/InputField';
 interface Dimension {
   id: string;
   name: string;
-  values: string[];
-  addInput: string;
+  value: string;
 }
 
 // ─── DEFAULTS ─────────────────────────────────────────────────────────────────
@@ -28,20 +27,20 @@ const SETUP_NAMES = [
 ];
 
 function makeDimensions(names: string[]): Dimension[] {
-  return names.map((name, i) => ({ id: String(i + 1), name, values: [], addInput: '' }));
+  return names.map((name, i) => ({ id: String(i + 1), name, value: '' }));
 }
 
 const DEFAULT_DIMENSIONS = makeDimensions(ANALYSIS_NAMES);
 
 const VALUE_HINTS: Record<string, string> = {
-  'Campaign type':  'e.g. PROS, RETARG',
-  'Offer type':     'e.g. FULLPRICE, PROMO',
-  'Product':        'e.g. STARTER, CORE',
-  'Platform':       'e.g. META, GOOGLE',
-  'Format':         'e.g. VID, STATIC, CAROUSEL',
-  'Creative type':  'e.g. UGC, LIFESTYLE, BRAND',
-  'CTA':            'e.g. SHOP, LEARN, TRIAL',
-  'Version':        'e.g. V1, V2',
+  'Campaign type':  'e.g. PROS',
+  'Offer type':     'e.g. FULLPRICE',
+  'Product':        'e.g. HERO',
+  'Platform':       'e.g. META',
+  'Format':         'e.g. VID',
+  'Creative type':  'e.g. UGC',
+  'CTA':            'e.g. SHOP',
+  'Version':        'e.g. V1',
 };
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
@@ -52,9 +51,9 @@ function makeId() {
 
 function buildPreview(dimensions: Dimension[]): string {
   const parts = dimensions
-    .filter((d) => d.values.length > 0)
-    .map((d) => d.values[0]);
-  return parts.length > 0 ? parts.join('_') : '';
+    .map((d) => d.value.trim().toUpperCase())
+    .filter(Boolean);
+  return parts.join('_');
 }
 
 // ─── SESSION & CSV ────────────────────────────────────────────────────────────
@@ -63,7 +62,7 @@ interface SavedTaxonomy {
   id: string;
   name: string;
   fullString: string;
-  dimensions: Array<{ position: number; name: string; values: string[] }>;
+  dimensions: Array<{ position: number; name: string; value: string }>;
 }
 
 function downloadCsv(filename: string, rows: string[][]): void {
@@ -83,7 +82,7 @@ function downloadCsv(filename: string, rows: string[][]): void {
 function exportCurrentCsv(dims: Dimension[], fullString: string): void {
   const rows: string[][] = [['Position', 'Dimension Name', 'Value']];
   dims.forEach((d, i) => {
-    rows.push([String(i + 1), d.name, d.values.join(' | ')]);
+    rows.push([String(i + 1), d.name, d.value]);
   });
   rows.push(['Full String', '', fullString]);
   downloadCsv('taxonomy.csv', rows);
@@ -93,71 +92,18 @@ function exportAllCsv(saved: SavedTaxonomy[]): void {
   const maxDims = Math.max(...saved.map((s) => s.dimensions.length), 0);
   const dimHeaders: string[] = [];
   for (let i = 1; i <= maxDims; i++) {
-    dimHeaders.push(`Dim ${i} Name`, `Dim ${i} Values`);
+    dimHeaders.push(`Dim ${i} Name`, `Dim ${i} Value`);
   }
   const rows: string[][] = [['Name', 'Full String', ...dimHeaders]];
   for (const s of saved) {
     const dimCells: string[] = [];
     for (let i = 0; i < maxDims; i++) {
       const d = s.dimensions[i];
-      dimCells.push(d ? d.name : '', d ? d.values.join(' | ') : '');
+      dimCells.push(d ? d.name : '', d ? d.value : '');
     }
     rows.push([s.name, s.fullString, ...dimCells]);
   }
   downloadCsv('taxonomies.csv', rows);
-}
-
-// ─── VALUE TAG ────────────────────────────────────────────────────────────────
-
-function ValueTag({ label, onRemove }: { label: string; onRemove: () => void }) {
-  return (
-    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-slate-100 text-slate-700 text-xs font-medium">
-      {label}
-      <button
-        onClick={onRemove}
-        className="text-slate-400 hover:text-slate-700 transition-colors"
-        aria-label={`Remove ${label}`}
-      >
-        <X size={11} />
-      </button>
-    </span>
-  );
-}
-
-// ─── ADD VALUE INPUT ──────────────────────────────────────────────────────────
-
-function AddValueInput({
-  value,
-  placeholder,
-  onChange,
-  onAdd,
-}: {
-  value: string;
-  placeholder?: string;
-  onChange: (v: string) => void;
-  onAdd: () => void;
-}) {
-  return (
-    <div className="flex items-stretch border border-slate-200 rounded bg-white focus-within:border-slate-400 transition-colors">
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') { e.preventDefault(); onAdd(); }
-        }}
-        placeholder={placeholder ?? 'Add value, press Enter'}
-        className="flex-1 px-3 py-2 text-sm text-slate-900 bg-transparent outline-none min-w-0"
-      />
-      <button
-        onClick={onAdd}
-        className="px-3 border-l border-slate-200 text-slate-400 hover:text-slate-700 transition-colors rounded-r bg-slate-50"
-        aria-label="Add value"
-      >
-        <Plus size={14} />
-      </button>
-    </div>
-  );
 }
 
 // ─── DIMENSION ROW ────────────────────────────────────────────────────────────
@@ -167,9 +113,7 @@ function DimensionRow({
   index,
   total,
   onNameChange,
-  onAddInput,
-  onAddValue,
-  onRemoveValue,
+  onValueChange,
   onMoveUp,
   onMoveDown,
   onRemoveDimension,
@@ -178,17 +122,15 @@ function DimensionRow({
   index: number;
   total: number;
   onNameChange: (v: string) => void;
-  onAddInput: (v: string) => void;
-  onAddValue: () => void;
-  onRemoveValue: (val: string) => void;
+  onValueChange: (v: string) => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
   onRemoveDimension: () => void;
 }) {
-  const hint = VALUE_HINTS[dim.name] ?? 'Add value, press Enter';
+  const hint = VALUE_HINTS[dim.name];
 
   return (
-    <div className="border border-slate-200 rounded-lg bg-white shadow-card p-4 space-y-3">
+    <div className="border border-slate-200 rounded-lg bg-white shadow-card p-4">
       <div className="flex items-start gap-3">
         {/* Reorder controls */}
         <div className="flex flex-col items-center gap-0.5 pt-1 shrink-0">
@@ -213,7 +155,7 @@ function DimensionRow({
           </button>
         </div>
 
-        {/* Name + add value */}
+        {/* Name + value */}
         <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
           <InputField
             label="Dimension name"
@@ -222,15 +164,13 @@ function DimensionRow({
             type="text"
             placeholder="e.g. Campaign type"
           />
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-slate-700">Values</label>
-            <AddValueInput
-              value={dim.addInput}
-              placeholder={hint}
-              onChange={onAddInput}
-              onAdd={onAddValue}
-            />
-          </div>
+          <InputField
+            label="Value"
+            value={dim.value}
+            onChange={(v) => onValueChange(v.toUpperCase())}
+            type="text"
+            placeholder={hint ?? 'e.g. PROS'}
+          />
         </div>
 
         {/* Remove dimension */}
@@ -242,15 +182,6 @@ function DimensionRow({
           <X size={14} />
         </button>
       </div>
-
-      {/* Value tags */}
-      {dim.values.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 pl-10">
-          {dim.values.map((v) => (
-            <ValueTag key={v} label={v} onRemove={() => onRemoveValue(v)} />
-          ))}
-        </div>
-      )}
     </div>
   );
 }
@@ -391,7 +322,7 @@ export function TaxonomyBuilder() {
 
   const switchOrder = (next: HierarchyOrder) => {
     if (next === order) return;
-    const hasValues = dimensions.some((d) => d.values.length > 0);
+    const hasValues = dimensions.some((d) => d.value);
     if (hasValues) {
       const confirmed = window.confirm('Switching order will clear all values you have entered. Continue?');
       if (!confirmed) return;
@@ -402,22 +333,6 @@ export function TaxonomyBuilder() {
 
   const update = (id: string, patch: Partial<Dimension>) =>
     setDimensions((prev) => prev.map((d) => (d.id === id ? { ...d, ...patch } : d)));
-
-  const addValue = (id: string) => {
-    setDimensions((prev) =>
-      prev.map((d) => {
-        if (d.id !== id) return d;
-        const raw = d.addInput.trim().toUpperCase();
-        if (!raw || d.values.includes(raw)) return { ...d, addInput: '' };
-        return { ...d, values: [...d.values, raw], addInput: '' };
-      })
-    );
-  };
-
-  const removeValue = (id: string, val: string) =>
-    setDimensions((prev) =>
-      prev.map((d) => (d.id === id ? { ...d, values: d.values.filter((v) => v !== val) } : d))
-    );
 
   const moveUp = (index: number) => {
     if (index === 0) return;
@@ -441,7 +356,7 @@ export function TaxonomyBuilder() {
     setDimensions((prev) => prev.filter((d) => d.id !== id));
 
   const addDimension = () =>
-    setDimensions((prev) => [...prev, { id: makeId(), name: '', values: [], addInput: '' }]);
+    setDimensions((prev) => [...prev, { id: makeId(), name: '', value: '' }]);
 
   const [session, setSession] = useState<SavedTaxonomy[]>([]);
   const [pendingSaveName, setPendingSaveName] = useState<string | null>(null);
@@ -456,7 +371,7 @@ export function TaxonomyBuilder() {
         id: makeId(),
         name: pendingSaveName.trim(),
         fullString: preview,
-        dimensions: dimensions.map((d, i) => ({ position: i + 1, name: d.name, values: d.values })),
+        dimensions: dimensions.map((d, i) => ({ position: i + 1, name: d.name, value: d.value })),
       },
     ]);
     setPendingSaveName(null);
@@ -504,9 +419,7 @@ export function TaxonomyBuilder() {
                 index={i}
                 total={dimensions.length}
                 onNameChange={(v) => update(dim.id, { name: v })}
-                onAddInput={(v) => update(dim.id, { addInput: v })}
-                onAddValue={() => addValue(dim.id)}
-                onRemoveValue={(val) => removeValue(dim.id, val)}
+                onValueChange={(v) => update(dim.id, { value: v })}
                 onMoveUp={() => moveUp(i)}
                 onMoveDown={() => moveDown(i)}
                 onRemoveDimension={() => removeDimension(dim.id)}
@@ -601,7 +514,7 @@ export function TaxonomyBuilder() {
         </div>
 
         {/* Structure reference */}
-        {dimensions.some((d) => d.values.length > 0) && (
+        {dimensions.some((d) => d.value) && (
           <div>
             <SectionLabel>Structure reference</SectionLabel>
             <div className="border border-slate-200 rounded-lg overflow-hidden shadow-card">
@@ -610,7 +523,7 @@ export function TaxonomyBuilder() {
                   <tr>
                     <th className="py-2.5 px-4 text-left text-xs uppercase tracking-widest font-semibold text-slate-400 w-8">#</th>
                     <th className="py-2.5 px-4 text-left text-xs uppercase tracking-widest font-semibold text-slate-400">Dimension</th>
-                    <th className="py-2.5 px-4 text-left text-xs uppercase tracking-widest font-semibold text-slate-400">Allowed values</th>
+                    <th className="py-2.5 px-4 text-left text-xs uppercase tracking-widest font-semibold text-slate-400">Value</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -621,12 +534,10 @@ export function TaxonomyBuilder() {
                         {dim.name || <span className="text-slate-400 italic">Unnamed</span>}
                       </td>
                       <td className="py-3 px-4">
-                        {dim.values.length > 0 ? (
-                          <span className="font-mono text-xs text-slate-600">
-                            {dim.values.join(', ')}
-                          </span>
+                        {dim.value ? (
+                          <span className="font-mono text-xs text-slate-600">{dim.value}</span>
                         ) : (
-                          <span className="text-xs text-slate-300 italic">No values yet</span>
+                          <span className="text-xs text-slate-300 italic">No value yet</span>
                         )}
                       </td>
                     </tr>
@@ -636,6 +547,7 @@ export function TaxonomyBuilder() {
             </div>
           </div>
         )}
+
         {/* Session list */}
         {session.length > 0 && (
           <div>
