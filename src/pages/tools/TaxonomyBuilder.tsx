@@ -17,7 +17,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { ChevronRight, X, Plus } from 'lucide-react';
 import { ToolLayout } from '@/components/ToolLayout';
 import { SectionLabel } from '@/components/SectionLabel';
-import { InputField } from '@/components/InputField';
+
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
@@ -211,21 +211,31 @@ function DimensionRow({
         </span>
 
         {/* Name + value */}
-        <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <InputField
-            label="Dimension name"
-            value={dim.name}
-            onChange={onNameChange}
-            type="text"
-            placeholder="e.g. Campaign type"
-          />
-          <InputField
-            label="Value"
-            value={dim.value}
-            onChange={(v) => onValueChange(v.toUpperCase())}
-            type="text"
-            placeholder={hint ?? 'e.g. PROS'}
-          />
+        <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="flex flex-col gap-1 sm:col-span-1">
+            <label className="text-xs font-medium text-slate-700">Dimension name</label>
+            <div className="flex items-stretch border border-slate-200 rounded bg-white focus-within:border-slate-400 transition-colors">
+              <input
+                type="text"
+                value={dim.name}
+                onChange={(e) => onNameChange(e.target.value)}
+                placeholder="e.g. Campaign type"
+                className="flex-1 px-2.5 py-1.5 text-xs text-slate-900 bg-transparent outline-none min-w-0"
+              />
+            </div>
+          </div>
+          <div className="flex flex-col gap-1 sm:col-span-2">
+            <label className="text-xs font-medium text-slate-700">Value</label>
+            <div className="flex items-stretch border border-slate-200 rounded bg-white focus-within:border-slate-400 transition-colors">
+              <input
+                type="text"
+                value={dim.value}
+                onChange={(e) => onValueChange(e.target.value.toUpperCase())}
+                placeholder={hint ?? 'e.g. PROS'}
+                className="flex-1 px-2.5 py-1.5 text-xs text-slate-900 bg-transparent outline-none min-w-0"
+              />
+            </div>
+          </div>
         </div>
 
         {/* Remove dimension */}
@@ -449,7 +459,7 @@ export function TaxonomyBuilder() {
               <button
                 key={o}
                 onClick={() => switchOrder(o)}
-                className={`px-4 py-1.5 rounded text-sm font-medium transition-colors ${
+                className={`px-4 py-1.5 rounded text-xs font-medium transition-colors ${
                   order === o
                     ? 'bg-white text-slate-900 shadow-card border border-slate-200'
                     : 'text-slate-500 hover:text-slate-800'
@@ -496,7 +506,7 @@ export function TaxonomyBuilder() {
           {dimensions.length < MAX_DIMENSIONS ? (
             <button
               onClick={addDimension}
-              className="mt-3 flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors"
+              className="mt-3 flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-800 transition-colors"
             >
               <Plus size={14} />
               Add dimension
@@ -513,7 +523,7 @@ export function TaxonomyBuilder() {
           <SectionLabel>Preview</SectionLabel>
           <div className="border border-slate-200 rounded-lg bg-white shadow-card px-4 py-4">
             {preview ? (
-              <p className="text-sm font-mono text-slate-900 break-all">{preview}</p>
+              <p className="text-xs font-mono text-slate-900 break-all">{preview}</p>
             ) : (
               <p className="text-sm text-slate-400 italic">
                 Add values to dimensions above to see a sample name here.
@@ -532,7 +542,7 @@ export function TaxonomyBuilder() {
             <button
               onClick={() => exportCurrentCsv(dimensions, preview)}
               disabled={!preview}
-              className="bg-slate-900 text-white px-4 py-2 rounded text-sm font-medium hover:bg-slate-800 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+              className="bg-slate-900 text-white px-4 py-2 rounded text-xs font-medium hover:bg-slate-800 transition-colors disabled:opacity-40 disabled:pointer-events-none"
             >
               Export CSV
             </button>
@@ -540,7 +550,7 @@ export function TaxonomyBuilder() {
               <button
                 onClick={() => setPendingSaveName(`Taxonomy ${session.length + 1}`)}
                 disabled={!preview}
-                className="border border-slate-200 text-slate-700 px-4 py-2 rounded text-sm font-medium hover:bg-slate-50 hover:border-slate-300 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                className="border border-slate-200 text-slate-700 px-4 py-2 rounded text-xs font-medium hover:bg-slate-50 hover:border-slate-300 transition-colors disabled:opacity-40 disabled:pointer-events-none"
               >
                 Save to session
               </button>
@@ -555,11 +565,11 @@ export function TaxonomyBuilder() {
                     if (e.key === 'Escape') setPendingSaveName(null);
                   }}
                   autoFocus
-                  className="border border-slate-200 rounded px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-slate-400 transition-colors w-48"
+                  className="border border-slate-200 rounded px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-slate-400 transition-colors w-48"
                 />
                 <button
                   onClick={confirmSave}
-                  className="bg-slate-900 text-white px-3 py-2 rounded text-sm font-medium hover:bg-slate-800 transition-colors"
+                  className="bg-slate-900 text-white px-3 py-2 rounded text-xs font-medium hover:bg-slate-800 transition-colors"
                 >
                   Save
                 </button>
@@ -655,7 +665,7 @@ export function TaxonomyBuilder() {
               <p className="text-xs text-slate-400">Saved taxonomies are cleared when you leave this page.</p>
               <button
                 onClick={() => exportAllCsv(session)}
-                className="shrink-0 border border-slate-200 text-slate-700 px-4 py-2 rounded text-sm font-medium hover:bg-slate-50 hover:border-slate-300 transition-colors"
+                className="shrink-0 border border-slate-200 text-slate-700 px-4 py-2 rounded text-xs font-medium hover:bg-slate-50 hover:border-slate-300 transition-colors"
               >
                 Export all
               </button>
