@@ -81,11 +81,11 @@ function downloadCsv(filename: string, rows: string[][]): void {
 }
 
 function exportCurrentCsv(dims: Dimension[], fullString: string): void {
-  const rows: string[][] = [['Position', 'Dimension Name', 'Value', 'Full String']];
+  const rows: string[][] = [['Position', 'Dimension Name', 'Value']];
   dims.forEach((d, i) => {
-    rows.push([String(i + 1), d.name, d.values.join(' | '), '']);
+    rows.push([String(i + 1), d.name, d.values.join(' | ')]);
   });
-  rows.push(['', '', '', fullString]);
+  rows.push(['Full String', '', fullString]);
   downloadCsv('taxonomy.csv', rows);
 }
 
@@ -444,22 +444,22 @@ export function TaxonomyBuilder() {
     setDimensions((prev) => [...prev, { id: makeId(), name: '', values: [], addInput: '' }]);
 
   const [session, setSession] = useState<SavedTaxonomy[]>([]);
+  const [pendingSaveName, setPendingSaveName] = useState<string | null>(null);
 
   const preview = buildPreview(dimensions);
 
-  const saveToSession = () => {
-    if (!preview) return;
-    const name = window.prompt('Name this taxonomy (e.g. Prospecting — Meta):');
-    if (!name?.trim()) return;
+  const confirmSave = () => {
+    if (!pendingSaveName?.trim() || !preview) return;
     setSession((prev) => [
       ...prev,
       {
         id: makeId(),
-        name: name.trim(),
+        name: pendingSaveName.trim(),
         fullString: preview,
         dimensions: dimensions.map((d, i) => ({ position: i + 1, name: d.name, values: d.values })),
       },
     ]);
+    setPendingSaveName(null);
   };
 
   return (
@@ -536,26 +536,58 @@ export function TaxonomyBuilder() {
             )}
           </div>
           {preview && (
-            <>
-              <p className="mt-2 text-xs text-slate-400">
-                Built from the first value of each dimension that has values defined.
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2">
+            <p className="mt-2 text-xs text-slate-400">
+              Built from the first value of each dimension that has values defined.
+            </p>
+          )}
+          <p className="mt-3 text-xs text-slate-400">
+            Build one taxonomy per channel or campaign type, then save each before changing values.
+          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => exportCurrentCsv(dimensions, preview)}
+              disabled={!preview}
+              className="bg-slate-900 text-white px-4 py-2 rounded text-sm font-medium hover:bg-slate-800 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+            >
+              Export CSV
+            </button>
+            {pendingSaveName === null ? (
+              <button
+                onClick={() => setPendingSaveName(`Taxonomy ${session.length + 1}`)}
+                disabled={!preview}
+                className="border border-slate-200 text-slate-700 px-4 py-2 rounded text-sm font-medium hover:bg-slate-50 hover:border-slate-300 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+              >
+                Save to session
+              </button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={pendingSaveName}
+                  onChange={(e) => setPendingSaveName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') confirmSave();
+                    if (e.key === 'Escape') setPendingSaveName(null);
+                  }}
+                  autoFocus
+                  className="border border-slate-200 rounded px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-slate-400 transition-colors w-48"
+                />
                 <button
-                  onClick={() => exportCurrentCsv(dimensions, preview)}
-                  className="bg-slate-900 text-white px-4 py-2 rounded text-sm font-medium hover:bg-slate-800 transition-colors"
+                  onClick={confirmSave}
+                  className="bg-slate-900 text-white px-3 py-2 rounded text-sm font-medium hover:bg-slate-800 transition-colors"
                 >
-                  Export CSV
+                  Save
                 </button>
                 <button
-                  onClick={saveToSession}
-                  className="border border-slate-200 text-slate-700 px-4 py-2 rounded text-sm font-medium hover:bg-slate-50 hover:border-slate-300 transition-colors"
+                  onClick={() => setPendingSaveName(null)}
+                  className="h-8 w-8 flex items-center justify-center rounded text-slate-400 hover:text-slate-700 transition-colors"
+                  aria-label="Cancel"
                 >
-                  Save to session
+                  <X size={14} />
                 </button>
               </div>
-            </>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Examples */}
@@ -607,7 +639,7 @@ export function TaxonomyBuilder() {
         {/* Session list */}
         {session.length > 0 && (
           <div>
-            <SectionLabel>Saved this session</SectionLabel>
+            <SectionLabel>Saved taxonomies</SectionLabel>
             <div className="border border-slate-200 rounded-lg overflow-hidden shadow-card">
               <table className="w-full text-sm">
                 <thead className="bg-white border-b border-slate-200">
@@ -636,7 +668,7 @@ export function TaxonomyBuilder() {
               </table>
             </div>
             <div className="mt-3 flex items-center justify-between gap-4">
-              <p className="text-xs text-slate-400">Session data is not saved on page refresh.</p>
+              <p className="text-xs text-slate-400">Saved taxonomies are cleared when you leave this page.</p>
               <button
                 onClick={() => exportAllCsv(session)}
                 className="shrink-0 border border-slate-200 text-slate-700 px-4 py-2 rounded text-sm font-medium hover:bg-slate-50 hover:border-slate-300 transition-colors"
