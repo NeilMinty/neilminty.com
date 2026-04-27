@@ -1,5 +1,20 @@
 import { useState } from 'react';
-import { ChevronUp, ChevronDown, ChevronRight, X, Plus } from 'lucide-react';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { ChevronRight, X, Plus } from 'lucide-react';
 import { ToolLayout } from '@/components/ToolLayout';
 import { SectionLabel } from '@/components/SectionLabel';
 import { InputField } from '@/components/InputField';
@@ -106,54 +121,87 @@ function exportAllCsv(saved: SavedTaxonomy[]): void {
   downloadCsv('taxonomies.csv', rows);
 }
 
-// ─── DIMENSION ROW ────────────────────────────────────────────────────────────
+// ─── DRAG HANDLE ICON ─────────────────────────────────────────────────────────
+
+function DragHandleIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 14 14"
+      fill="currentColor"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <circle cx="4.5" cy="2.5" r="1.25" />
+      <circle cx="9.5" cy="2.5" r="1.25" />
+      <circle cx="4.5" cy="7"   r="1.25" />
+      <circle cx="9.5" cy="7"   r="1.25" />
+      <circle cx="4.5" cy="11.5" r="1.25" />
+      <circle cx="9.5" cy="11.5" r="1.25" />
+    </svg>
+  );
+}
+
+// ─── SORTABLE DIMENSION ROW ───────────────────────────────────────────────────
 
 function DimensionRow({
   dim,
   index,
-  total,
   onNameChange,
   onValueChange,
-  onMoveUp,
-  onMoveDown,
   onRemoveDimension,
 }: {
   dim: Dimension;
   index: number;
-  total: number;
   onNameChange: (v: string) => void;
   onValueChange: (v: string) => void;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
   onRemoveDimension: () => void;
 }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: dim.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
   const hint = VALUE_HINTS[dim.name];
 
   return (
-    <div className="border border-slate-200 rounded-lg bg-white shadow-card p-4">
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`border border-slate-200 rounded-lg bg-white p-4 transition-shadow ${
+        isDragging
+          ? 'opacity-50 shadow-lg'
+          : 'shadow-card'
+      }`}
+    >
       <div className="flex items-start gap-3">
-        {/* Reorder controls */}
-        <div className="flex flex-col items-center gap-0.5 pt-1 shrink-0">
-          <button
-            onClick={onMoveUp}
-            disabled={index === 0}
-            className="h-5 w-5 flex items-center justify-center rounded text-slate-300 hover:text-slate-600 disabled:opacity-30 disabled:pointer-events-none transition-colors"
-            aria-label="Move up"
-          >
-            <ChevronUp size={13} />
-          </button>
-          <span className="text-[10px] font-semibold text-slate-300 tabular-nums leading-none">
-            {index + 1}
-          </span>
-          <button
-            onClick={onMoveDown}
-            disabled={index === total - 1}
-            className="h-5 w-5 flex items-center justify-center rounded text-slate-300 hover:text-slate-600 disabled:opacity-30 disabled:pointer-events-none transition-colors"
-            aria-label="Move down"
-          >
-            <ChevronDown size={13} />
-          </button>
-        </div>
+        {/* Drag handle */}
+        <button
+          ref={setActivatorNodeRef}
+          {...attributes}
+          {...listeners}
+          className="mt-1 h-7 w-5 flex items-center justify-center text-slate-300 hover:text-slate-500 cursor-grab active:cursor-grabbing transition-colors shrink-0 touch-none"
+          aria-label="Drag to reorder"
+          tabIndex={0}
+        >
+          <DragHandleIcon />
+        </button>
+
+        {/* Position number */}
+        <span className="mt-2 text-[10px] font-semibold text-slate-300 tabular-nums leading-none shrink-0 w-3 text-center">
+          {index + 1}
+        </span>
 
         {/* Name + value */}
         <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -185,6 +233,10 @@ function DimensionRow({
     </div>
   );
 }
+
+// ─── DROP LINE OVERLAY ────────────────────────────────────────────────────────
+// dnd-kit handles insertion visually via the transform on the dragged item.
+// We add a subtle overlay line by styling the gap between items when dragging.
 
 // ─── EXAMPLES ─────────────────────────────────────────────────────────────────
 
@@ -320,6 +372,23 @@ export function TaxonomyBuilder() {
   const [dimensions, setDimensions] = useState<Dimension[]>(DEFAULT_DIMENSIONS);
   const [order, setOrder] = useState<HierarchyOrder>('analysis');
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 5 },
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setDimensions((prev) => {
+        const oldIndex = prev.findIndex((d) => d.id === active.id);
+        const newIndex = prev.findIndex((d) => d.id === over.id);
+        return arrayMove(prev, oldIndex, newIndex);
+      });
+    }
+  };
+
   const switchOrder = (next: HierarchyOrder) => {
     if (next === order) return;
     const hasValues = dimensions.some((d) => d.value);
@@ -333,24 +402,6 @@ export function TaxonomyBuilder() {
 
   const update = (id: string, patch: Partial<Dimension>) =>
     setDimensions((prev) => prev.map((d) => (d.id === id ? { ...d, ...patch } : d)));
-
-  const moveUp = (index: number) => {
-    if (index === 0) return;
-    setDimensions((prev) => {
-      const next = [...prev];
-      [next[index - 1], next[index]] = [next[index], next[index - 1]];
-      return next;
-    });
-  };
-
-  const moveDown = (index: number) => {
-    setDimensions((prev) => {
-      if (index === prev.length - 1) return prev;
-      const next = [...prev];
-      [next[index], next[index + 1]] = [next[index + 1], next[index]];
-      return next;
-    });
-  };
 
   const removeDimension = (id: string) =>
     setDimensions((prev) => prev.filter((d) => d.id !== id));
@@ -409,23 +460,31 @@ export function TaxonomyBuilder() {
         {/* Dimension list */}
         <div>
           <SectionLabel>
-            Starting order built for analysis, not setup. Reorder to match your own convention.
+            Starting order built for analysis, not setup. Drag to reorder to match your own convention.
           </SectionLabel>
-          <div className="space-y-3">
-            {dimensions.map((dim, i) => (
-              <DimensionRow
-                key={dim.id}
-                dim={dim}
-                index={i}
-                total={dimensions.length}
-                onNameChange={(v) => update(dim.id, { name: v })}
-                onValueChange={(v) => update(dim.id, { value: v })}
-                onMoveUp={() => moveUp(i)}
-                onMoveDown={() => moveDown(i)}
-                onRemoveDimension={() => removeDimension(dim.id)}
-              />
-            ))}
-          </div>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={dimensions.map((d) => d.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-2">
+                {dimensions.map((dim, i) => (
+                  <DimensionRow
+                    key={dim.id}
+                    dim={dim}
+                    index={i}
+                    onNameChange={(v) => update(dim.id, { name: v })}
+                    onValueChange={(v) => update(dim.id, { value: v })}
+                    onRemoveDimension={() => removeDimension(dim.id)}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
 
           <button
             onClick={addDimension}
