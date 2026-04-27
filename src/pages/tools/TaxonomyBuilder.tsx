@@ -31,14 +31,18 @@ interface Dimension {
 
 type HierarchyOrder = 'analysis' | 'setup';
 
+const MAX_DIMENSIONS = 12;
+
 const ANALYSIS_NAMES = [
   'Campaign type', 'Offer type', 'Product', 'Platform',
   'Format', 'Creative type', 'CTA', 'Version',
+  'Hook', 'Talent type', 'Narrative structure',
 ];
 
 const SETUP_NAMES = [
   'Platform', 'Format', 'Creative type', 'Campaign type',
   'Offer type', 'Product', 'CTA', 'Version',
+  'Hook', 'Talent type', 'Narrative structure',
 ];
 
 function makeDimensions(names: string[]): Dimension[] {
@@ -48,14 +52,17 @@ function makeDimensions(names: string[]): Dimension[] {
 const DEFAULT_DIMENSIONS = makeDimensions(ANALYSIS_NAMES);
 
 const VALUE_HINTS: Record<string, string> = {
-  'Campaign type':  'e.g. PROS',
-  'Offer type':     'e.g. FULLPRICE',
-  'Product':        'e.g. HERO',
-  'Platform':       'e.g. META',
-  'Format':         'e.g. VID',
-  'Creative type':  'e.g. UGC',
-  'CTA':            'e.g. SHOP',
-  'Version':        'e.g. V1',
+  'Campaign type':      'e.g. PROS',
+  'Offer type':         'e.g. FULLPRICE',
+  'Product':            'e.g. HERO',
+  'Platform':           'e.g. META',
+  'Format':             'e.g. VID',
+  'Creative type':      'e.g. UGC',
+  'CTA':                'e.g. SHOP',
+  'Version':            'e.g. V1',
+  'Hook':               'e.g. PROBLEM, SOCIAL-PROOF, CURIOSITY',
+  'Talent type':        'e.g. FOUNDER, CUSTOMER, NO-TALENT',
+  'Narrative structure': 'e.g. TESTIMONIAL, DEMO, BEFORE-AFTER',
 };
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
@@ -486,13 +493,19 @@ export function TaxonomyBuilder() {
             </SortableContext>
           </DndContext>
 
-          <button
-            onClick={addDimension}
-            className="mt-3 flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors"
-          >
-            <Plus size={14} />
-            Add dimension
-          </button>
+          {dimensions.length < MAX_DIMENSIONS ? (
+            <button
+              onClick={addDimension}
+              className="mt-3 flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors"
+            >
+              <Plus size={14} />
+              Add dimension
+            </button>
+          ) : (
+            <p className="mt-3 text-xs text-slate-400">
+              12 dimensions is the practical limit for a naming string that stays readable and parseable across teams and agencies.
+            </p>
+          )}
         </div>
 
         {/* Preview */}
