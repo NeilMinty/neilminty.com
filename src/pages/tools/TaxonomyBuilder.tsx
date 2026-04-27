@@ -57,6 +57,56 @@ function buildPreview(dimensions: Dimension[]): string {
   return parts.length > 0 ? parts.join('_') : '';
 }
 
+// ─── SESSION & CSV ────────────────────────────────────────────────────────────
+
+interface SavedTaxonomy {
+  id: string;
+  name: string;
+  fullString: string;
+  dimensions: Array<{ position: number; name: string; values: string[] }>;
+}
+
+function downloadCsv(filename: string, rows: string[][]): void {
+  const escape = (v: string) => `"${v.replace(/"/g, '""')}"`;
+  const csv = rows.map((r) => r.map(escape).join(',')).join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function exportCurrentCsv(dims: Dimension[], fullString: string): void {
+  const rows: string[][] = [['Position', 'Dimension Name', 'Value', 'Full String']];
+  dims.forEach((d, i) => {
+    rows.push([String(i + 1), d.name, d.values.join(' | '), '']);
+  });
+  rows.push(['', '', '', fullString]);
+  downloadCsv('taxonomy.csv', rows);
+}
+
+function exportAllCsv(saved: SavedTaxonomy[]): void {
+  const maxDims = Math.max(...saved.map((s) => s.dimensions.length), 0);
+  const dimHeaders: string[] = [];
+  for (let i = 1; i <= maxDims; i++) {
+    dimHeaders.push(`Dim ${i} Name`, `Dim ${i} Values`);
+  }
+  const rows: string[][] = [['Name', 'Full String', ...dimHeaders]];
+  for (const s of saved) {
+    const dimCells: string[] = [];
+    for (let i = 0; i < maxDims; i++) {
+      const d = s.dimensions[i];
+      dimCells.push(d ? d.name : '', d ? d.values.join(' | ') : '');
+    }
+    rows.push([s.name, s.fullString, ...dimCells]);
+  }
+  downloadCsv('taxonomies.csv', rows);
+}
+
 // ─── VALUE TAG ────────────────────────────────────────────────────────────────
 
 function ValueTag({ label, onRemove }: { label: string; onRemove: () => void }) {
@@ -393,7 +443,24 @@ export function TaxonomyBuilder() {
   const addDimension = () =>
     setDimensions((prev) => [...prev, { id: makeId(), name: '', values: [], addInput: '' }]);
 
+  const [session, setSession] = useState<SavedTaxonomy[]>([]);
+
   const preview = buildPreview(dimensions);
+
+  const saveToSession = () => {
+    if (!preview) return;
+    const name = window.prompt('Name this taxonomy (e.g. Prospecting — Meta):');
+    if (!name?.trim()) return;
+    setSession((prev) => [
+      ...prev,
+      {
+        id: makeId(),
+        name: name.trim(),
+        fullString: preview,
+        dimensions: dimensions.map((d, i) => ({ position: i + 1, name: d.name, values: d.values })),
+      },
+    ]);
+  };
 
   return (
     <ToolLayout
@@ -469,9 +536,25 @@ export function TaxonomyBuilder() {
             )}
           </div>
           {preview && (
-            <p className="mt-2 text-xs text-slate-400">
-              Built from the first value of each dimension that has values defined.
-            </p>
+            <>
+              <p className="mt-2 text-xs text-slate-400">
+                Built from the first value of each dimension that has values defined.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  onClick={() => exportCurrentCsv(dimensions, preview)}
+                  className="bg-slate-900 text-white px-4 py-2 rounded text-sm font-medium hover:bg-slate-800 transition-colors"
+                >
+                  Export CSV
+                </button>
+                <button
+                  onClick={saveToSession}
+                  className="border border-slate-200 text-slate-700 px-4 py-2 rounded text-sm font-medium hover:bg-slate-50 hover:border-slate-300 transition-colors"
+                >
+                  Save to session
+                </button>
+              </div>
+            </>
           )}
         </div>
 
@@ -518,6 +601,48 @@ export function TaxonomyBuilder() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+        {/* Session list */}
+        {session.length > 0 && (
+          <div>
+            <SectionLabel>Saved this session</SectionLabel>
+            <div className="border border-slate-200 rounded-lg overflow-hidden shadow-card">
+              <table className="w-full text-sm">
+                <thead className="bg-white border-b border-slate-200">
+                  <tr>
+                    <th className="py-2.5 px-4 text-left text-xs uppercase tracking-widest font-semibold text-slate-400">Name</th>
+                    <th className="py-2.5 px-4 text-left text-xs uppercase tracking-widest font-semibold text-slate-400">Full string</th>
+                    <th className="py-2.5 px-4 w-16" />
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {session.map((s) => (
+                    <tr key={s.id} className="bg-white">
+                      <td className="py-3 px-4 font-medium text-slate-900 whitespace-nowrap">{s.name}</td>
+                      <td className="py-3 px-4 font-mono text-xs text-slate-600 break-all">{s.fullString}</td>
+                      <td className="py-3 px-4">
+                        <button
+                          onClick={() => setSession((prev) => prev.filter((x) => x.id !== s.id))}
+                          className="text-xs text-slate-400 hover:text-red-500 transition-colors"
+                        >
+                          Remove
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="mt-3 flex items-center justify-between gap-4">
+              <p className="text-xs text-slate-400">Session data is not saved on page refresh.</p>
+              <button
+                onClick={() => exportAllCsv(session)}
+                className="shrink-0 border border-slate-200 text-slate-700 px-4 py-2 rounded text-sm font-medium hover:bg-slate-50 hover:border-slate-300 transition-colors"
+              >
+                Export all
+              </button>
             </div>
           </div>
         )}
