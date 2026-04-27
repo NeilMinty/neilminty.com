@@ -35,4 +35,9 @@ export const TOOLS: ToolDefinition[] = [
     description: "What is support actually costing per order? People cost, platform cost, and refund attribution — combined into a single annual leakage figure.",
     path: '/tools/support-cost-leakage',
   },
+  {
+    name: 'Campaign Taxonomy Builder',
+    description: "Define the dimensions of your campaign naming convention, add allowed values, and preview the structure before rolling it out.",
+    path: '/tools/taxonomy-builder',
+  },
 ];
