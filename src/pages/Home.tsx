@@ -17,7 +17,7 @@ export function Home() {
           DTC operator tools
         </h1>
         <p className="text-slate-500 leading-relaxed">
-          Fifteen years of DTC operator work distilled into seven calculators. No login, no data upload, no spreadsheet. Enter your numbers, get the answer.
+          Fifteen years of DTC operator work distilled into a growing suite of calculators. No login, no data upload, no spreadsheet. Enter your numbers, get the answer.
         </p>
         <p className="text-slate-500 leading-relaxed mt-3">
           Built for founders and operators who already know the question. Free to use.
