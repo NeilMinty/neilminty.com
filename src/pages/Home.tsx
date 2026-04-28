@@ -2,6 +2,16 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { TOOLS } from '@/lib/tools';
 
+const RESULT_CHIPS = [
+  'First purchase: Trail Boot · Retention score 0.74 · Discount dependency: Low',
+  'Promotion break-even: +34% volume uplift · Margin at target: No',
+  'Margin leakage: Returns 41% · Discounting 38% · Delivery 21%',
+  'Returns true cost: £6.23/order · Margin drag: £1.84 · Operational: £0.91',
+  'LTV:CAC at 12m: 1.8x · Payback: 7 months · At 24m: 3.1x',
+  'Support leakage: £2.10/order · Refund attribution: 34% of total',
+  'Taxonomy preview: EN | META | PROS | RETARGETING | SPRING25 | VIDEO',
+];
+
 export function Home() {
   useEffect(() => {
     document.title = 'Neil Minty — DTC Operator Tools';
@@ -29,6 +39,32 @@ export function Home() {
           >
             See all tools ↓
           </a>
+        </div>
+      </div>
+
+      <div
+        className="relative overflow-hidden my-10"
+        style={{
+          width: '100vw',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          maskImage: 'linear-gradient(to right, transparent, black 12%, black 88%, transparent)',
+          WebkitMaskImage: 'linear-gradient(to right, transparent, black 12%, black 88%, transparent)',
+        }}
+      >
+        <style>{`@keyframes scroll-chips { from { transform: translateX(0); } to { transform: translateX(-50%); } }`}</style>
+        <div
+          className="flex items-center gap-3 py-2"
+          style={{ width: 'max-content', animation: 'scroll-chips 55s linear infinite' }}
+        >
+          {[...RESULT_CHIPS, ...RESULT_CHIPS].map((chip, i) => (
+            <span
+              key={i}
+              className="font-mono text-xs text-slate-500 bg-white border border-slate-200 rounded px-3 py-1.5 whitespace-nowrap shrink-0"
+            >
+              {chip}
+            </span>
+          ))}
         </div>
       </div>
 
