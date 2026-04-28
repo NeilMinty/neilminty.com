@@ -44,7 +44,7 @@ export const TOOLS: ToolDefinition[] = [
   },
   {
     name: 'Campaign Taxonomy Builder',
-    description: "Define the dimensions of your campaign naming convention, add allowed values, and preview the structure before rolling it out.",
+    description: "Build a consistent naming convention for Meta and Google paid campaigns. Define dimensions, add values, and preview the naming string before you roll it out.",
     path: '/tools/taxonomy-builder',
     cta: 'Build your taxonomy →',
   },

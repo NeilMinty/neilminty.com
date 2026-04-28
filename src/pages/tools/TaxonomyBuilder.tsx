@@ -304,18 +304,18 @@ const EXAMPLES: Example[] = [
     ],
   },
   {
-    id: 'email-acquisition',
-    channel: 'Email acquisition',
-    taxonomy: 'PROS_PROMO_STARTER_EMAIL_STATIC_OFFER_SIGNUP_V1',
+    id: 'meta-retargeting',
+    channel: 'Meta retargeting',
+    taxonomy: 'RETARG_PROMO_HERO_META_VID_UGC_SHOP_V1',
     rows: [
-      { position: 1, dimension: 'Campaign type', value: 'PROS',    reason: 'Prospecting — targeting new subscribers who have not yet purchased' },
-      { position: 2, dimension: 'Offer type',    value: 'PROMO',   reason: 'Promotional — incentive (discount or gift) used to convert cold list to first purchase' },
-      { position: 3, dimension: 'Product',       value: 'STARTER', reason: 'Starter product — lower price point reduces barrier to first purchase' },
-      { position: 4, dimension: 'Platform',      value: 'EMAIL',   reason: 'Email channel — owned list, typically via Klaviyo welcome or nurture flow' },
-      { position: 5, dimension: 'Format',        value: 'STATIC',  reason: 'Static — HTML email layout; no video playback in most email clients' },
-      { position: 6, dimension: 'Creative type', value: 'OFFER',   reason: 'Offer-led creative — discount or incentive is the primary message hierarchy' },
-      { position: 7, dimension: 'CTA',           value: 'SIGNUP',  reason: 'Sign up — captures email address before driving to purchase; top of funnel' },
-      { position: 8, dimension: 'Version',       value: 'V1',      reason: 'First send iteration — subject line and layout baseline for A/B testing' },
+      { position: 1, dimension: 'Campaign type', value: 'RETARG',  reason: 'Retargeting — warm audiences who visited the site or engaged with prior content' },
+      { position: 2, dimension: 'Offer type',    value: 'PROMO',   reason: 'Promotional — discount incentive used to convert site visitors who did not purchase' },
+      { position: 3, dimension: 'Product',       value: 'HERO',    reason: 'Hero SKU — highest-volume product; familiar to the warm audience from prior browsing' },
+      { position: 4, dimension: 'Platform',      value: 'META',    reason: 'Meta (Facebook / Instagram) — primary retargeting channel via pixel-based audiences' },
+      { position: 5, dimension: 'Format',        value: 'VID',     reason: 'Video — higher completion rate on warm audiences with prior brand familiarity' },
+      { position: 6, dimension: 'Creative type', value: 'UGC',     reason: 'User-generated content — social proof from existing customers; effective at overcoming purchase hesitation' },
+      { position: 7, dimension: 'CTA',           value: 'SHOP',    reason: 'Shop now — warm audience familiar with the brand; direct conversion CTA appropriate' },
+      { position: 8, dimension: 'Version',       value: 'V1',      reason: 'First iteration — test against static creative to validate video performance on retargeting' },
     ],
   },
   {
@@ -449,8 +449,8 @@ export function TaxonomyBuilder() {
   return (
     <ToolLayout
       title="Campaign Taxonomy Builder"
-      description="Define the dimensions of your campaign naming convention, add allowed values, and preview the structure. Add values to see a sample name build in real time."
-      metaDescription="Build a consistent campaign naming taxonomy for paid acquisition. Define dimensions, add values, and preview the naming structure."
+      description="Build a consistent naming convention for Meta and Google paid campaigns. Define your dimensions, add values, and preview the naming string as you build."
+      metaDescription="Build a consistent naming convention for Meta and Google paid media. Define dimensions, add values, and preview the naming string."
     >
       <div className="space-y-8">
         {/* Order toggle */}
