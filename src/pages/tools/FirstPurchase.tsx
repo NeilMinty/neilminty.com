@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { ChevronUp, ChevronDown, ChevronsUpDown, Plus, X } from 'lucide-react';
 import { ToolLayout } from '@/components/ToolLayout';
 import { ResultCard } from '@/components/ResultCard';
@@ -927,6 +928,19 @@ export function FirstPurchase() {
             Explore the demo →
           </a>
         </div>
+      </div>
+      <div className="mt-8 pt-8 border-t border-slate-200">
+        <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">Try this next</p>
+        <Link
+          to="/tools/promotions"
+          className="group flex items-start justify-between gap-4 bg-white border border-slate-200 rounded-lg px-5 py-4 hover:border-slate-300 transition-colors shadow-card"
+        >
+          <div>
+            <p className="text-sm font-semibold text-slate-900 mb-1 group-hover:text-slate-700 transition-colors">Promotions Profitability</p>
+            <p className="text-sm text-slate-500">You know which product to acquire on. Now see if the promotion you're planning can earn its margin.</p>
+          </div>
+          <span className="text-sm text-slate-400 group-hover:text-slate-900 transition-colors whitespace-nowrap mt-0.5">Open →</span>
+        </Link>
       </div>
     </ToolLayout>
   );

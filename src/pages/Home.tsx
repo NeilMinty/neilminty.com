@@ -1,62 +1,38 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { TOOLS } from '@/lib/tools';
-import GrowthEngineAnimation from '@/components/GrowthEngineAnimation';
 
 export function Home() {
   useEffect(() => {
     document.title = 'Neil Minty — DTC Operator Tools';
     const tag = document.querySelector('meta[name="description"]') as HTMLMetaElement | null;
     const prev = tag?.content;
-    if (tag) tag.content = 'Fifteen years of DTC operator experience. Five free calculators, a multi-agent growth platform, and writing on ecommerce and retention.';
+    if (tag) tag.content = 'Free DTC operator tools for founders and growth operators. Calculate LTV:CAC, promotion profitability, margin leakage, returns cost, and more. No login required.';
     return () => { if (tag && prev !== undefined) tag.content = prev; };
   }, []);
   return (
     <div className="max-w-5xl mx-auto px-6 py-16">
-      <div className="flex flex-col md:flex-row gap-10 mb-12 pt-4">
-        <div style={{ position: 'relative', width: '100%', maxWidth: 800 }}>
-          <GrowthEngineAnimation />
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              cursor: 'pointer',
-              zIndex: 10,
-            }}
-            onClick={() => window.open('https://demo.neilminty.com', '_blank')}
-          />
-        </div>
-        <div className="flex flex-col justify-center">
-          <h1 className="text-3xl font-semibold text-slate-900 tracking-tight mb-4">
-            DTC operator tools
-          </h1>
-          <p className="text-slate-500 leading-relaxed">
-            Fifteen years of DTC operator work distilled into seven calculators. No login, no data upload, no spreadsheet. Enter your numbers, get the answer.
-          </p>
-          <p className="text-slate-500 leading-relaxed mt-3">
-            Built for founders and operators who already know the question. These tools just run the maths. Free to use.
-          </p>
-          <p className="text-slate-500 leading-relaxed mt-3">
-            Building something bigger: the Growth Engine is a multi-agent commercial intelligence platform for DTC brands. It's in the nav.
-          </p>
-          <p className="text-sm text-slate-500 mt-4">
-            Neil Minty — growth and ecommerce operator.
-          </p>
-          <div className="mt-6 text-center">
-            <a
-              href="mailto:neil@personaify.io"
-              className="inline-block px-6 py-3 bg-slate-900 text-white text-sm font-medium rounded hover:bg-slate-800 transition-colors"
-            >
-              Get in touch
-            </a>
-          </div>
+      <div className="max-w-2xl mb-12 pt-4">
+        <h1 className="text-3xl font-semibold text-slate-900 tracking-tight mb-4">
+          DTC operator tools
+        </h1>
+        <p className="text-slate-500 leading-relaxed">
+          Fifteen years of DTC operator work distilled into seven calculators. No login, no data upload, no spreadsheet. Enter your numbers, get the answer.
+        </p>
+        <p className="text-slate-500 leading-relaxed mt-3">
+          Built for founders and operators who already know the question. Free to use.
+        </p>
+        <div className="mt-6">
+          <a
+            href="#tools"
+            className="inline-block px-6 py-3 bg-slate-900 text-white text-sm font-medium rounded hover:bg-slate-800 transition-colors"
+          >
+            See all tools ↓
+          </a>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+      <div id="tools" className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         {TOOLS.map((tool) => (
           <Link
             key={tool.path}
@@ -72,7 +48,7 @@ export function Home() {
               </p>
             </div>
             <p className="text-sm text-slate-500 group-hover:text-slate-900 transition-colors mt-4">
-              Open tool →
+              {tool.cta}
             </p>
           </Link>
         ))}

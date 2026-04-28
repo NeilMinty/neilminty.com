@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { ToolLayout } from '@/components/ToolLayout';
 import { ResultCard } from '@/components/ResultCard';
 import { SectionLabel } from '@/components/SectionLabel';
@@ -431,6 +432,19 @@ export function MarginLeakage() {
             Explore the demo →
           </a>
         </div>
+      </div>
+      <div className="mt-8 pt-8 border-t border-slate-200">
+        <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">Try this next</p>
+        <Link
+          to="/tools/returns-cost"
+          className="group flex items-start justify-between gap-4 bg-white border border-slate-200 rounded-lg px-5 py-4 hover:border-slate-300 transition-colors shadow-card"
+        >
+          <div>
+            <p className="text-sm font-semibold text-slate-900 mb-1 group-hover:text-slate-700 transition-colors">Returns Cost</p>
+            <p className="text-sm text-slate-500">Returns are often the biggest leakage driver. Calculate the true cost — hard cost, margin loss, and operational drag combined.</p>
+          </div>
+          <span className="text-sm text-slate-400 group-hover:text-slate-900 transition-colors whitespace-nowrap mt-0.5">Open →</span>
+        </Link>
       </div>
     </ToolLayout>
   );
