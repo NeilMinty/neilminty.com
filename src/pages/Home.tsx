@@ -2,16 +2,6 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { TOOLS } from '@/lib/tools';
 
-const RESULT_CHIPS = [
-  'First purchase: Trail Boot · Retention score 0.74 · Discount dependency: Low',
-  'Promotion break-even: +34% volume uplift · Margin at target: No',
-  'Margin leakage: Returns 41% · Discounting 38% · Delivery 21%',
-  'Returns true cost: £6.23/order · Margin drag: £1.84 · Operational: £0.91',
-  'LTV:CAC at 12m: 1.8x · Payback: 7 months · At 24m: 3.1x',
-  'Support leakage: £2.10/order · Refund attribution: 34% of total',
-  'Taxonomy preview: EN | META | PROS | RETARGETING | SPRING25 | VIDEO',
-];
-
 export function Home() {
   useEffect(() => {
     document.title = 'Neil Minty — DTC Operator Tools';
@@ -42,29 +32,52 @@ export function Home() {
         </div>
       </div>
 
-      <div
-        className="relative overflow-hidden my-10"
-        style={{
-          width: '100vw',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          maskImage: 'linear-gradient(to right, transparent, black 12%, black 88%, transparent)',
-          WebkitMaskImage: 'linear-gradient(to right, transparent, black 12%, black 88%, transparent)',
-        }}
-      >
-        <style>{`@keyframes scroll-chips { from { transform: translateX(0); } to { transform: translateX(-50%); } }`}</style>
-        <div
-          className="flex items-center gap-3 py-2"
-          style={{ width: 'max-content', animation: 'scroll-chips 55s linear infinite' }}
-        >
-          {[...RESULT_CHIPS, ...RESULT_CHIPS].map((chip, i) => (
-            <span
-              key={i}
-              className="font-mono text-xs text-slate-500 bg-white border border-slate-200 rounded px-3 py-1.5 whitespace-nowrap shrink-0"
-            >
-              {chip}
-            </span>
-          ))}
+      <div className="mb-12 border border-slate-200 rounded-lg bg-white shadow-card overflow-hidden">
+        <div className="px-5 pt-4 pb-3 border-b border-slate-100">
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Example output</p>
+            <p className="text-xs text-slate-400">First Purchase Predictor</p>
+          </div>
+          <p className="text-xs text-slate-400 mt-1.5">8 SKUs · 6 months of orders · Mid-range fashion brand</p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm" style={{ minWidth: '480px' }}>
+            <thead>
+              <tr className="border-b border-slate-100">
+                <th className="py-2.5 pl-5 pr-3 text-left text-xs uppercase tracking-widest font-semibold text-slate-300 w-8">#</th>
+                <th className="py-2.5 px-3 text-left text-xs uppercase tracking-widest font-semibold text-slate-300">Product</th>
+                <th className="py-2.5 px-3 text-right text-xs uppercase tracking-widest font-semibold text-slate-300">Retention</th>
+                <th className="py-2.5 px-3 text-right text-xs uppercase tracking-widest font-semibold text-slate-300">Volume</th>
+                <th className="py-2.5 pl-3 pr-5 text-right text-xs uppercase tracking-widest font-semibold text-slate-300">Disc. dependency</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              <tr>
+                <td className="py-3 pl-5 pr-3 text-slate-400 tabular-nums">1</td>
+                <td className="py-3 px-3 font-medium text-slate-900">Merino Crew Neck</td>
+                <td className="py-3 px-3 text-right font-mono tabular-nums text-slate-700">0.81</td>
+                <td className="py-3 px-3 text-right text-slate-600">High</td>
+                <td className="py-3 pl-3 pr-5 text-right text-slate-600">Low</td>
+              </tr>
+              <tr>
+                <td className="py-3 pl-5 pr-3 text-slate-400 tabular-nums">2</td>
+                <td className="py-3 px-3 font-medium text-slate-900">Canvas Tote</td>
+                <td className="py-3 px-3 text-right font-mono tabular-nums text-slate-700">0.74</td>
+                <td className="py-3 px-3 text-right text-slate-600">Medium</td>
+                <td className="py-3 pl-3 pr-5 text-right text-slate-600">Low</td>
+              </tr>
+              <tr>
+                <td className="py-3 pl-5 pr-3 text-slate-400 tabular-nums">3</td>
+                <td className="py-3 px-3 font-medium text-slate-900">Wool Overshirt</td>
+                <td className="py-3 px-3 text-right font-mono tabular-nums text-slate-700">0.68</td>
+                <td className="py-3 px-3 text-right text-slate-600">Low</td>
+                <td className="py-3 pl-3 pr-5 text-right text-amber-600">Medium</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div className="px-5 py-4 border-t border-slate-100">
+          <p className="text-sm text-slate-500 italic leading-relaxed">Acquire on the Merino Crew Neck. High retention, no discount crutch, enough volume to trust the signal.</p>
         </div>
       </div>
 
