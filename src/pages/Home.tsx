@@ -40,38 +40,38 @@ export function Home() {
           </div>
           <p className="text-xs text-slate-400 mt-1.5">8 SKUs · 6 months of orders · Mid-range fashion brand</p>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm" style={{ minWidth: '480px' }}>
+        <div>
+          <table className="w-full text-sm table-fixed sm:table-auto">
             <thead>
               <tr className="border-b border-slate-100">
-                <th className="py-2.5 pl-5 pr-3 text-left text-xs uppercase tracking-widest font-semibold text-slate-300 w-8">#</th>
-                <th className="py-2.5 px-3 text-left text-xs uppercase tracking-widest font-semibold text-slate-300">Product</th>
-                <th className="py-2.5 px-3 text-right text-xs uppercase tracking-widest font-semibold text-slate-300">Retention</th>
-                <th className="py-2.5 px-3 text-right text-xs uppercase tracking-widest font-semibold text-slate-300">Volume</th>
-                <th className="py-2.5 pl-3 pr-5 text-right text-xs uppercase tracking-widest font-semibold text-slate-300">Disc. dependency</th>
+                <th className="py-2 pr-2 sm:py-2.5 sm:pl-5 sm:pr-3 text-left text-xs uppercase tracking-widest font-semibold text-slate-300 w-6 sm:w-8">#</th>
+                <th className="py-2 px-1.5 sm:py-2.5 sm:px-3 text-left text-xs uppercase tracking-widest font-semibold text-slate-300">Product</th>
+                <th className="py-2 px-1.5 sm:py-2.5 sm:px-3 text-right text-xs uppercase tracking-widest font-semibold text-slate-300 whitespace-nowrap">Retention</th>
+                <th className="py-2 px-1.5 sm:py-2.5 sm:px-3 text-right text-xs uppercase tracking-widest font-semibold text-slate-300 whitespace-nowrap">Volume</th>
+                <th className="py-2.5 pl-3 pr-5 text-right text-xs uppercase tracking-widest font-semibold text-slate-300 hidden sm:table-cell">Disc. dependency</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               <tr>
-                <td className="py-3 pl-5 pr-3 text-slate-400 tabular-nums">1</td>
-                <td className="py-3 px-3 font-medium text-slate-900">Merino Crew Neck</td>
-                <td className="py-3 px-3 text-right font-mono tabular-nums text-slate-700">0.81</td>
-                <td className="py-3 px-3 text-right text-slate-600">High</td>
-                <td className="py-3 pl-3 pr-5 text-right text-slate-600">Low</td>
+                <td className="py-2 pr-2 sm:py-3 sm:pl-5 sm:pr-3 text-slate-400 tabular-nums">1</td>
+                <td className="py-2 px-1.5 sm:py-3 sm:px-3 font-medium text-slate-900">Merino Crew Neck</td>
+                <td className="py-2 px-1.5 sm:py-3 sm:px-3 text-right font-mono tabular-nums text-slate-700 whitespace-nowrap">0.81</td>
+                <td className="py-2 px-1.5 sm:py-3 sm:px-3 text-right text-slate-600 whitespace-nowrap">High</td>
+                <td className="py-3 pl-3 pr-5 text-right text-slate-600 hidden sm:table-cell">Low</td>
               </tr>
               <tr>
-                <td className="py-3 pl-5 pr-3 text-slate-400 tabular-nums">2</td>
-                <td className="py-3 px-3 font-medium text-slate-900">Canvas Tote</td>
-                <td className="py-3 px-3 text-right font-mono tabular-nums text-slate-700">0.74</td>
-                <td className="py-3 px-3 text-right text-slate-600">Medium</td>
-                <td className="py-3 pl-3 pr-5 text-right text-slate-600">Low</td>
+                <td className="py-2 pr-2 sm:py-3 sm:pl-5 sm:pr-3 text-slate-400 tabular-nums">2</td>
+                <td className="py-2 px-1.5 sm:py-3 sm:px-3 font-medium text-slate-900">Canvas Tote</td>
+                <td className="py-2 px-1.5 sm:py-3 sm:px-3 text-right font-mono tabular-nums text-slate-700 whitespace-nowrap">0.74</td>
+                <td className="py-2 px-1.5 sm:py-3 sm:px-3 text-right text-slate-600 whitespace-nowrap">Medium</td>
+                <td className="py-3 pl-3 pr-5 text-right text-slate-600 hidden sm:table-cell">Low</td>
               </tr>
               <tr>
-                <td className="py-3 pl-5 pr-3 text-slate-400 tabular-nums">3</td>
-                <td className="py-3 px-3 font-medium text-slate-900">Wool Overshirt</td>
-                <td className="py-3 px-3 text-right font-mono tabular-nums text-slate-700">0.68</td>
-                <td className="py-3 px-3 text-right text-slate-600">Low</td>
-                <td className="py-3 pl-3 pr-5 text-right text-amber-600">Medium</td>
+                <td className="py-2 pr-2 sm:py-3 sm:pl-5 sm:pr-3 text-slate-400 tabular-nums">3</td>
+                <td className="py-2 px-1.5 sm:py-3 sm:px-3 font-medium text-slate-900">Wool Overshirt</td>
+                <td className="py-2 px-1.5 sm:py-3 sm:px-3 text-right font-mono tabular-nums text-slate-700 whitespace-nowrap">0.68</td>
+                <td className="py-2 px-1.5 sm:py-3 sm:px-3 text-right text-slate-600 whitespace-nowrap">Low</td>
+                <td className="py-3 pl-3 pr-5 text-right text-amber-600 hidden sm:table-cell">Medium</td>
               </tr>
             </tbody>
           </table>
