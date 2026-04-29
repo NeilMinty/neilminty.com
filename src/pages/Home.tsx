@@ -44,7 +44,7 @@ export function Home() {
           <table className="w-full text-sm table-fixed sm:table-auto">
             <thead>
               <tr className="border-b border-slate-100">
-                <th className="py-2 pr-2 sm:py-2.5 sm:pl-5 sm:pr-3 text-left text-xs uppercase tracking-widest font-semibold text-slate-300 w-6 sm:w-8">#</th>
+                <th className="py-2 pl-4 pr-2 sm:py-2.5 sm:pl-5 sm:pr-3 text-left text-xs uppercase tracking-widest font-semibold text-slate-300 w-6 sm:w-8">#</th>
                 <th className="py-2 px-1.5 sm:py-2.5 sm:px-3 text-left text-xs uppercase tracking-widest font-semibold text-slate-300">Product</th>
                 <th className="py-2 px-1.5 sm:py-2.5 sm:px-3 text-right text-xs uppercase tracking-widest font-semibold text-slate-300 whitespace-nowrap">Retention</th>
                 <th className="py-2 px-1.5 sm:py-2.5 sm:px-3 text-right text-xs uppercase tracking-widest font-semibold text-slate-300 whitespace-nowrap">Volume</th>
@@ -53,22 +53,22 @@ export function Home() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               <tr>
-                <td className="py-2 pr-2 sm:py-3 sm:pl-5 sm:pr-3 text-slate-400 tabular-nums">1</td>
-                <td className="py-2 px-1.5 sm:py-3 sm:px-3 font-medium text-slate-900">Merino Crew Neck</td>
+                <td className="py-2 pl-4 pr-2 sm:py-3 sm:pl-5 sm:pr-3 text-slate-400 tabular-nums">1</td>
+                <td className="py-2 px-1.5 sm:py-3 sm:px-3 font-medium text-xs sm:text-sm text-slate-900 whitespace-nowrap">Merino Crew Neck</td>
                 <td className="py-2 px-1.5 sm:py-3 sm:px-3 text-right font-mono tabular-nums text-slate-700 whitespace-nowrap">0.81</td>
                 <td className="py-2 px-1.5 sm:py-3 sm:px-3 text-right text-slate-600 whitespace-nowrap">High</td>
                 <td className="py-3 pl-3 pr-5 text-right text-slate-600 hidden sm:table-cell">Low</td>
               </tr>
               <tr>
-                <td className="py-2 pr-2 sm:py-3 sm:pl-5 sm:pr-3 text-slate-400 tabular-nums">2</td>
-                <td className="py-2 px-1.5 sm:py-3 sm:px-3 font-medium text-slate-900">Canvas Tote</td>
+                <td className="py-2 pl-4 pr-2 sm:py-3 sm:pl-5 sm:pr-3 text-slate-400 tabular-nums">2</td>
+                <td className="py-2 px-1.5 sm:py-3 sm:px-3 font-medium text-xs sm:text-sm text-slate-900 whitespace-nowrap">Canvas Tote</td>
                 <td className="py-2 px-1.5 sm:py-3 sm:px-3 text-right font-mono tabular-nums text-slate-700 whitespace-nowrap">0.74</td>
                 <td className="py-2 px-1.5 sm:py-3 sm:px-3 text-right text-slate-600 whitespace-nowrap">Medium</td>
                 <td className="py-3 pl-3 pr-5 text-right text-slate-600 hidden sm:table-cell">Low</td>
               </tr>
               <tr>
-                <td className="py-2 pr-2 sm:py-3 sm:pl-5 sm:pr-3 text-slate-400 tabular-nums">3</td>
-                <td className="py-2 px-1.5 sm:py-3 sm:px-3 font-medium text-slate-900">Wool Overshirt</td>
+                <td className="py-2 pl-4 pr-2 sm:py-3 sm:pl-5 sm:pr-3 text-slate-400 tabular-nums">3</td>
+                <td className="py-2 px-1.5 sm:py-3 sm:px-3 font-medium text-xs sm:text-sm text-slate-900 whitespace-nowrap">Wool Overshirt</td>
                 <td className="py-2 px-1.5 sm:py-3 sm:px-3 text-right font-mono tabular-nums text-slate-700 whitespace-nowrap">0.68</td>
                 <td className="py-2 px-1.5 sm:py-3 sm:px-3 text-right text-slate-600 whitespace-nowrap">Low</td>
                 <td className="py-3 pl-3 pr-5 text-right text-amber-600 hidden sm:table-cell">Medium</td>
