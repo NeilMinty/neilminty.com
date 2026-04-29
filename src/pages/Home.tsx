@@ -32,7 +32,7 @@ export function Home() {
         </div>
       </div>
 
-      <div className="mb-12 border border-slate-200 rounded-lg bg-white shadow-card overflow-hidden">
+      <div className="mb-12 border border-slate-200 rounded-lg bg-white shadow-card">
         <div className="px-5 pt-4 pb-3 border-b border-slate-100">
           <div className="flex items-center justify-between gap-4">
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Example output</p>
