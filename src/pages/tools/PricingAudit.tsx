@@ -824,7 +824,7 @@ export function PricingAudit() {
                 type="text"
                 value={brandName}
                 onChange={(e) => setBrandName(e.target.value)}
-                placeholder="e.g. Leapfrog Remedies"
+                placeholder="e.g. Meridian"
                 className="w-full border border-slate-200 rounded bg-white text-sm text-slate-900 outline-none focus:border-slate-400 transition-colors py-1.5 px-2"
               />
             </div>
@@ -834,7 +834,7 @@ export function PricingAudit() {
                 type="text"
                 value={sector}
                 onChange={(e) => setSector(e.target.value)}
-                placeholder="e.g. natural remedies, womenswear"
+                placeholder="e.g. womenswear, outdoor apparel"
                 className="w-full border border-slate-200 rounded bg-white text-sm text-slate-900 outline-none focus:border-slate-400 transition-colors py-1.5 px-2"
               />
             </div>
