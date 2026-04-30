@@ -24,23 +24,21 @@ interface DiscountRow {
 
 type PromoOnMarkdown = 'yes' | 'no' | 'sometimes';
 
+interface PerplexityInsight {
+  type: string;
+  title: string;
+  summary: string;
+  confidence: 'high' | 'medium' | 'low';
+  signalStrength: 'strong' | 'moderate' | 'weak';
+  category: string;
+  direction: 'up' | 'down' | 'flat';
+}
+
 type ViewState =
   | { state: 'input' }
   | { state: 'loading'; msg: string }
-  | { state: 'results'; data: AuditResult }
+  | { state: 'results'; insights: PerplexityInsight[]; citations: string[] }
   | { state: 'error'; message: string };
-
-interface AuditResult {
-  architectureScore: number;
-  architectureSummary: string;
-  cannibalisation: string | null;
-  ladderGaps: string;
-  competitivePosition: string;
-  headroomAmount: string;
-  headroomRationale: string;
-  stackingRisk: string;
-  actions: Array<{ priority: number; action: string; impact: string }>;
-}
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
 
@@ -413,61 +411,32 @@ function DiscountRows({
   );
 }
 
-// ─── SCORE DISPLAY ────────────────────────────────────────────────────────────
+// ─── INSIGHT CARD ─────────────────────────────────────────────────────────────
 
-function ScoreDisplay({ score }: { score: number }) {
-  const { color, label } =
-    score >= 7
-      ? { color: '#2d6a4f', label: 'Healthy' }
-      : score >= 4
-        ? { color: '#b45309', label: 'At risk' }
-        : { color: '#991b1b', label: 'Critical' };
+const CONFIDENCE_STYLES: Record<string, string> = {
+  high:   'bg-slate-100 text-slate-600 border-slate-200',
+  medium: 'bg-amber-50 text-amber-700 border-amber-200',
+  low:    'bg-slate-50 text-slate-400 border-slate-200',
+};
 
+function InsightCard({ insight }: { insight: PerplexityInsight }) {
   return (
-    <div className="flex items-baseline gap-3">
-      <span className="text-5xl font-bold tabular-nums leading-none" style={{ color }}>
-        {score}
-        <span className="text-2xl font-medium text-slate-300">/10</span>
-      </span>
-      <span
-        className="text-sm font-semibold px-2 py-0.5 rounded border"
-        style={{ color, borderColor: color, background: `${color}18` }}
-      >
-        {label}
-      </span>
-    </div>
-  );
-}
-
-// ─── FINDING CARD ─────────────────────────────────────────────────────────────
-
-function FindingCard({
-  label,
-  text,
-  highlight = false,
-}: {
-  label: string;
-  text: string | null;
-  highlight?: boolean;
-}) {
-  return (
-    <div
-      className={cn(
-        'border rounded-lg p-4',
-        highlight ? 'border-red-200 bg-red-50' : 'border-slate-200 bg-white'
-      )}
-    >
-      <p
-        className={cn(
-          'text-xs uppercase tracking-widest font-semibold mb-2',
-          highlight ? 'text-red-400' : 'text-slate-400'
-        )}
-      >
-        {label}
-      </p>
-      <p className="text-sm text-slate-700 leading-relaxed">
-        {text ?? 'No issues identified.'}
-      </p>
+    <div className="border border-slate-200 rounded-lg p-4 bg-white">
+      <div className="flex items-start justify-between gap-3 mb-2">
+        <p className="text-xs uppercase tracking-widest text-slate-400 font-semibold">
+          {insight.category}
+        </p>
+        <span
+          className={cn(
+            'text-xs font-medium px-1.5 py-0.5 rounded border whitespace-nowrap',
+            CONFIDENCE_STYLES[insight.confidence] ?? CONFIDENCE_STYLES.low
+          )}
+        >
+          {insight.confidence} confidence
+        </span>
+      </div>
+      <p className="text-sm font-semibold text-slate-900 mb-1">{insight.title}</p>
+      <p className="text-sm text-slate-600 leading-relaxed">{insight.summary}</p>
     </div>
   );
 }
@@ -481,7 +450,7 @@ async function runPerplexity(
   categories: CategoryRow[],
   competitors: string,
   sessionId: string
-): Promise<string> {
+): Promise<{ insights: PerplexityInsight[]; citations: string[] }> {
   const categoryNames = categories
     .filter((c) => c.name.trim())
     .map((c) => c.name.trim())
@@ -513,120 +482,14 @@ async function runPerplexity(
     }),
   });
 
-  if (!res.ok) throw new Error(`Perplexity request failed (${res.status})`);
+  if (!res.ok) throw new Error(`Market sweep failed (${res.status})`);
   const data = await res.json();
+  if (!data.success) throw new Error(data.error ?? 'Market sweep returned an error');
 
-  if (data.success && Array.isArray(data.insights) && data.insights.length > 0) {
-    return data.insights
-      .map((i: { title: string; summary: string }) => `${i.title}: ${i.summary}`)
-      .join('\n');
-  }
-  if (typeof data.summary === 'string') return data.summary;
-  return 'Market intelligence unavailable — analysis based on inputs only.';
-}
-
-function buildPrompt(
-  brandName: string,
-  sector: string,
-  priceTier: string,
-  categories: CategoryRow[],
-  discounts: DiscountRow[],
-  promoOnMarkdown: PromoOnMarkdown,
-  marketIntel: string
-): string {
-  const catLines = categories
-    .filter((c) => c.name.trim())
-    .map(
-      (c) =>
-        `  - ${c.name}: £${c.priceFrom || '?'}–£${c.priceTo || '?'}, margin ${c.margin || 'unknown'}%, role: ${c.role || 'unspecified'}`
-    )
-    .join('\n');
-
-  const discLines = discounts
-    .filter((d) => d.type)
-    .map(
-      (d) =>
-        `  - ${d.type}: ${d.depth || '?'}% depth, frequency: ${d.frequency || 'unspecified'}`
-    )
-    .join('\n');
-
-  const stackingNote =
-    promoOnMarkdown === 'yes'
-      ? 'IMPORTANT: This brand runs promotional codes on already-marked-down product. This is a stacking risk — flag the margin impact clearly in stackingRisk.'
-      : promoOnMarkdown === 'sometimes'
-        ? 'Note: This brand sometimes runs promotional codes on marked-down product — flag as a potential stacking risk in stackingRisk.'
-        : '';
-
-  return `You are a pricing strategy analyst. Analyse this brand's pricing architecture and return JSON only — no markdown, no preamble, no explanation.
-
-Brand: ${brandName}
-Sector: ${sector}
-Price tier positioning: ${priceTier}
-
-Category architecture:
-${catLines || '  (none provided)'}
-
-Discount structure:
-${discLines || '  (none provided)'}
-
-Promotional stacking: ${promoOnMarkdown}
-${stackingNote}
-
-Market intelligence:
-${marketIntel}
-
-Return ONLY this exact JSON schema:
-{
-  "architectureScore": <integer 1-10>,
-  "architectureSummary": "<2-3 sentences summarising the overall architecture health>",
-  "cannibalisation": "<finding, or null if none identified>",
-  "ladderGaps": "<finding>",
-  "competitivePosition": "<finding>",
-  "headroomAmount": "<£ range or % estimate of available headroom>",
-  "headroomRationale": "<1-2 sentences>",
-  "stackingRisk": "<finding — flag clearly if stacking is occurring>",
-  "actions": [
-    { "priority": 1, "action": "<string>", "impact": "<commercial impact string>" },
-    { "priority": 2, "action": "<string>", "impact": "<commercial impact string>" },
-    { "priority": 3, "action": "<string>", "impact": "<commercial impact string>" }
-  ]
-}`;
-}
-
-async function runClaude(prompt: string): Promise<AuditResult> {
-  const anthropicKey = import.meta.env.VITE_ANTHROPIC_API_KEY as string | undefined;
-  if (!anthropicKey) throw new Error('Anthropic key not configured');
-
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': anthropicKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true',
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1000,
-      messages: [{ role: 'user', content: prompt }],
-    }),
-  });
-
-  if (!res.ok) throw new Error(`Analysis request failed (${res.status})`);
-  const data = await res.json();
-
-  const rawText: string = data.content?.[0]?.text ?? '';
-  const start = rawText.indexOf('{');
-  const end = rawText.lastIndexOf('}');
-  if (start === -1 || end === -1) {
-    throw new Error('Analysis failed. Check your inputs and try again.');
-  }
-
-  try {
-    return JSON.parse(rawText.slice(start, end + 1)) as AuditResult;
-  } catch {
-    throw new Error('Analysis failed. Check your inputs and try again.');
-  }
+  return {
+    insights: Array.isArray(data.insights) ? data.insights : [],
+    citations: Array.isArray(data.citations) ? data.citations : [],
+  };
 }
 
 // ─── PAGE ─────────────────────────────────────────────────────────────────────
@@ -653,25 +516,15 @@ export function PricingAudit() {
 
     setView({ state: 'loading', msg: 'Running competitive market sweep…' });
 
-    let marketIntel = 'Market intelligence unavailable — analysis based on inputs only.';
     try {
-      marketIntel = await runPerplexity(brandName, sector, priceTier, categories, competitors, sessionId);
-    } catch {
-      // non-blocking — continue with fallback string
-    }
-
-    setView({ state: 'loading', msg: 'Analysing pricing architecture…' });
-
-    try {
-      const prompt = buildPrompt(
-        brandName, sector, priceTier, categories, discounts, promoOnMarkdown, marketIntel
+      const { insights, citations } = await runPerplexity(
+        brandName, sector, priceTier, categories, competitors, sessionId
       );
-      const result = await runClaude(prompt);
-      setView({ state: 'results', data: result });
+      setView({ state: 'results', insights, citations });
     } catch (err) {
       setView({
         state: 'error',
-        message: err instanceof Error ? err.message : 'Analysis failed. Check your inputs and try again.',
+        message: err instanceof Error ? err.message : 'Market sweep failed. Please try again.',
       });
     }
   };
@@ -679,8 +532,7 @@ export function PricingAudit() {
   // ── Results view ──────────────────────────────────────────────────────────
 
   if (view.state === 'results') {
-    const d = view.data;
-    const stackingHighlight = promoOnMarkdown === 'yes';
+    const { insights, citations } = view;
 
     return (
       <ToolLayout
@@ -690,62 +542,45 @@ export function PricingAudit() {
       >
         <div className="space-y-8">
 
-          {/* Architecture score */}
+          {/* Market intelligence */}
           <div>
             <p className="text-xs uppercase tracking-widest text-slate-400 font-semibold mb-3">
-              Architecture score
+              Market intelligence
             </p>
-            <ScoreDisplay score={d.architectureScore} />
-            <p className="mt-4 text-sm text-slate-700 leading-relaxed">{d.architectureSummary}</p>
+            {insights.length === 0 ? (
+              <p className="text-sm text-slate-400">No insights returned.</p>
+            ) : (
+              <div className="space-y-3">
+                {insights.map((insight, i) => (
+                  <InsightCard key={i} insight={insight} />
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Headroom callout */}
-          <div className="border-l-4 border-slate-900 bg-slate-50 rounded-r-lg px-5 py-4">
-            <p className="text-xs uppercase tracking-widest text-slate-400 font-semibold mb-1">
-              Pricing headroom
-            </p>
-            <p className="text-2xl font-bold text-slate-900 mb-2">{d.headroomAmount}</p>
-            <p className="text-sm text-slate-600 leading-relaxed">{d.headroomRationale}</p>
-          </div>
-
-          {/* Findings grid */}
-          <div>
-            <p className="text-xs uppercase tracking-widest text-slate-400 font-semibold mb-3">
-              Findings
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <FindingCard label="Cannibalisation" text={d.cannibalisation} />
-              <FindingCard label="Ladder gaps" text={d.ladderGaps} />
-              <FindingCard label="Competitive position" text={d.competitivePosition} />
-              <FindingCard
-                label="Stacking risk"
-                text={d.stackingRisk}
-                highlight={stackingHighlight}
-              />
+          {/* Citations */}
+          {citations.length > 0 && (
+            <div>
+              <p className="text-xs uppercase tracking-widest text-slate-400 font-semibold mb-2">
+                Sources
+              </p>
+              <ol className="space-y-1">
+                {citations.map((url, i) => (
+                  <li key={i} className="text-xs text-slate-400">
+                    <span className="tabular-nums mr-1.5">{i + 1}.</span>
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-slate-600 underline underline-offset-2 break-all"
+                    >
+                      {url}
+                    </a>
+                  </li>
+                ))}
+              </ol>
             </div>
-          </div>
-
-          {/* Priority actions */}
-          <div>
-            <p className="text-xs uppercase tracking-widest text-slate-400 font-semibold mb-3">
-              Priority actions
-            </p>
-            <div className="space-y-3">
-              {d.actions.map((a) => (
-                <div key={a.priority} className="border border-slate-200 rounded-lg px-4 py-4 bg-white">
-                  <div className="flex gap-3 items-start">
-                    <span className="text-xs font-bold text-slate-400 bg-slate-100 rounded w-5 h-5 flex items-center justify-center shrink-0 mt-0.5">
-                      {a.priority}
-                    </span>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900 mb-0.5">{a.action}</p>
-                      <p className="text-xs text-slate-500">{a.impact}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          )}
 
           {/* Edit inputs */}
           <div className="flex sm:justify-end pt-4 border-t border-slate-200">
@@ -927,7 +762,7 @@ export function PricingAudit() {
                 disabled={!canSubmit || isSubmitting}
                 className="w-full sm:w-auto bg-slate-900 text-white px-6 py-2.5 rounded text-sm font-medium hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-w-[240px] text-center"
               >
-                {isSubmitting && view.state === 'loading' ? view.msg : 'Run pricing audit'}
+                {isSubmitting ? 'Running market sweep…' : 'Run pricing audit'}
               </button>
             </div>
           </div>
