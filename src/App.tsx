@@ -12,6 +12,7 @@ import { ReturnsCost } from '@/pages/tools/ReturnsCost';
 import { PaybackPeriod } from '@/pages/tools/PaybackPeriod';
 import { SupportCostLeakage } from '@/pages/tools/SupportCostLeakage';
 import { TaxonomyBuilder } from '@/pages/tools/TaxonomyBuilder';
+import { PricingAudit } from '@/pages/tools/PricingAudit';
 
 export default function App() {
   return (
@@ -30,6 +31,7 @@ export default function App() {
           <Route path="/tools/ltv-cac" element={<PaybackPeriod />} />
           <Route path="/tools/support-cost-leakage" element={<SupportCostLeakage />} />
           <Route path="/tools/taxonomy-builder" element={<TaxonomyBuilder />} />
+          <Route path="/tools/pricing-audit" element={<PricingAudit />} />
         </Routes>
       </main>
       <Analytics />

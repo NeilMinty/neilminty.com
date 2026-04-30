@@ -537,12 +537,12 @@ export function Promotions() {
       <div className="mt-8 pt-8 border-t border-slate-200">
         <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">Try this next</p>
         <Link
-          to="/tools/margin-leakage"
+          to="/tools/pricing-audit"
           className="group flex items-start justify-between gap-4 bg-white border border-slate-200 rounded-lg px-5 py-4 hover:border-slate-300 transition-colors shadow-card"
         >
           <div>
-            <p className="text-sm font-semibold text-slate-900 mb-1 group-hover:text-slate-700 transition-colors">Margin Leakage</p>
-            <p className="text-sm text-slate-500">Discounting is one leakage driver. See how it stacks up against returns and delivery across your full P&L.</p>
+            <p className="text-sm font-semibold text-slate-900 mb-1 group-hover:text-slate-700 transition-colors">Pricing Architecture Audit</p>
+            <p className="text-sm text-slate-500">You know if your promotion can earn its margin. Now audit whether your underlying pricing architecture is giving your promotions room to work.</p>
           </div>
           <span className="text-sm text-slate-400 group-hover:text-slate-900 transition-colors whitespace-nowrap mt-0.5">Open →</span>
         </Link>

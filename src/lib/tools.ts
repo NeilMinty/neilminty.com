@@ -48,4 +48,10 @@ export const TOOLS: ToolDefinition[] = [
     path: '/tools/taxonomy-builder',
     cta: 'Build your taxonomy →',
   },
+  {
+    name: 'Pricing Architecture Audit',
+    description: "Map your price ladder, discount structure, and market positioning. Identifies cannibalisation, ladder gaps, stacking risk, and headroom.",
+    path: '/tools/pricing-audit',
+    cta: 'Audit your pricing →',
+  },
 ];
