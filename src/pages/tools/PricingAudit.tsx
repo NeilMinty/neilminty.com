@@ -492,7 +492,8 @@ async function runPerplexity(
 
   const query = (
     `Current retail pricing in the UK ${sector} market for ${priceTier.toLowerCase()} positioning. ` +
-    `Categories: ${categoryNames}. Typical price points, discount practices and promotional norms. ` +
+    `Brand: ${brandName}. Categories: ${categoryNames}. ` +
+    `Typical price points, discount practices and promotional norms. ` +
     competitorSentence
   ).trim();
 
