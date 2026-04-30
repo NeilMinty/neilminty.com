@@ -37,12 +37,6 @@ export const TOOLS: ToolDefinition[] = [
     cta: 'Analyse your LTV:CAC →',
   },
   {
-    name: 'Pricing Architecture Audit',
-    description: "Find out where your discount structure is eroding margin and how much headroom your pricing is leaving.",
-    path: '/tools/pricing-audit',
-    cta: 'Audit your pricing →',
-  },
-  {
     name: 'Support Cost Leakage',
     description: "What is support actually costing per order? People cost, platform cost, and refund attribution — combined into a single annual leakage figure.",
     path: '/tools/support-cost-leakage',
