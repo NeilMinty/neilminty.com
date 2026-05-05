@@ -82,6 +82,12 @@ export function NavBar() {
           >
             About
           </Link>
+          <a
+            href="mailto:neil@personaify.io"
+            className="text-sm text-slate-600 hover:text-slate-900 transition-colors"
+          >
+            Let's talk →
+          </a>
         </nav>
 
         <button
@@ -146,6 +152,13 @@ export function NavBar() {
             >
               About
             </Link>
+            <a
+              href="mailto:neil@personaify.io"
+              onClick={() => setOpen(false)}
+              className="text-sm text-slate-500"
+            >
+              Let's talk →
+            </a>
           </nav>
         </div>
       )}
