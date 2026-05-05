@@ -584,6 +584,22 @@ export function TaxonomyBuilder() {
               </div>
             )}
           </div>
+          {preview && (
+            <div className="mt-6 pt-6 border-t border-slate-100">
+              <p className="text-base font-medium text-slate-900 mb-2">
+                If you can't trust your campaign naming, you can't trust your reporting.
+              </p>
+              <p className="text-sm text-slate-500 mb-4">
+                If your taxonomy needs sorting — or you're starting from scratch — I can help.
+              </p>
+              <a
+                href="mailto:neil@personaify.io"
+                className="text-sm text-slate-900 underline underline-offset-2 hover:text-slate-600 transition-colors"
+              >
+                Let's talk →
+              </a>
+            </div>
+          )}
         </div>
 
         {/* Examples */}

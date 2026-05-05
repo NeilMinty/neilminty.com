@@ -911,6 +911,21 @@ export function FirstPurchase() {
               Recalculate
             </button>
           </div>
+
+          <div className="pt-8 border-t border-slate-100">
+            <p className="text-base font-medium text-slate-900 mb-2">
+              Your first purchase economics set the ceiling on everything else.
+            </p>
+            <p className="text-sm text-slate-500 mb-4">
+              If these numbers are tighter than they should be, that's worth a conversation.
+            </p>
+            <a
+              href="mailto:neil@personaify.io"
+              className="text-sm text-slate-900 underline underline-offset-2 hover:text-slate-600 transition-colors"
+            >
+              Let's talk →
+            </a>
+          </div>
         </div>
       )}
       </div>

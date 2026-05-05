@@ -464,6 +464,23 @@ export function SupportCostLeakage() {
             </div>
           );
         })()}
+
+        {results !== null && (
+          <div className="pt-8 border-t border-slate-100">
+            <p className="text-base font-medium text-slate-900 mb-2">
+              Support costs that look manageable on their own usually don't look that way against LTV.
+            </p>
+            <p className="text-sm text-slate-500 mb-4">
+              If this raised a flag, let's look at what's driving it.
+            </p>
+            <a
+              href="mailto:neil@personaify.io"
+              className="text-sm text-slate-900 underline underline-offset-2 hover:text-slate-600 transition-colors"
+            >
+              Let's talk →
+            </a>
+          </div>
+        )}
       </div>
       <div className="mt-12 pt-8 border-t border-slate-200">
         <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">Try this next</p>

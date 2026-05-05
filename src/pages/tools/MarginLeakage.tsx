@@ -170,6 +170,21 @@ function ResultsView({
           Recalculate
         </button>
       </div>
+
+      <div className="pt-8 border-t border-slate-100">
+        <p className="text-base font-medium text-slate-900 mb-2">
+          Most brands only see margin leakage once it's already embedded in the P&L.
+        </p>
+        <p className="text-sm text-slate-500 mb-4">
+          If this output flagged something, it's worth looking at properly.
+        </p>
+        <a
+          href="mailto:neil@personaify.io"
+          className="text-sm text-slate-900 underline underline-offset-2 hover:text-slate-600 transition-colors"
+        >
+          Let's talk →
+        </a>
+      </div>
     </div>
   );
 }
