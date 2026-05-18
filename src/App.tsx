@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { Analytics } from '@vercel/analytics/react';
 import { NavBar } from '@/components/NavBar';
 import { Home } from '@/pages/Home';
@@ -34,6 +34,15 @@ export default function App() {
           <Route path="/growth-room-privacy" element={<GrowthRoomPrivacy />} />
         </Routes>
       </main>
+      <footer className="py-8 border-t border-slate-200">
+        <div className="max-w-5xl mx-auto px-6 flex flex-col items-center gap-2 sm:flex-row sm:justify-between">
+          <p className="text-sm text-slate-400">© Neil Minty {new Date().getFullYear()}</p>
+          <div className="flex gap-4">
+            <Link to="/about" className="text-sm text-slate-400 hover:text-slate-600 no-underline hover:underline transition-colors">About</Link>
+            <Link to="/growth-room-privacy" className="text-sm text-slate-400 hover:text-slate-600 no-underline hover:underline transition-colors">Growth Room Privacy Policy</Link>
+          </div>
+        </div>
+      </footer>
       <Analytics />
     </BrowserRouter>
   );
