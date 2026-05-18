@@ -102,7 +102,7 @@ function QueryCard({ result }: { result: QueryResult }) {
       )}
 
       {!hasError && result.snippet && (
-        <p className="text-xs text-slate-500 leading-relaxed line-clamp-3">{result.snippet}</p>
+        <p className="text-xs text-slate-500 leading-relaxed line-clamp-5">{result.snippet}</p>
       )}
 
       {!hasError && hasCited && result.citations.length > 0 && (
