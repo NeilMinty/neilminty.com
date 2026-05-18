@@ -99,6 +99,7 @@ async function queryOpenAI(query: string, domain: string): Promise<QueryResult> 
     body:    JSON.stringify({
       model: OPENAI_MODEL,
       tools: [{ type: 'web_search_preview' }],
+      tool_choice: { type: 'web_search_preview' },
       input: query,
     }),
   })
