@@ -55,31 +55,35 @@ async function writeUsageLog(params: {
   durationMs:   number
   errorMessage: string | null
 }): Promise<void> {
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')
-  const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')
-  if (!supabaseUrl || !supabaseKey) return
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')
+    if (!supabaseUrl || !supabaseKey) return
 
-  // Claude Sonnet 4 pricing: $3/$15 per MTok in/out
-  const costEstimate =
-    params.tokensIn !== null && params.tokensOut !== null
-      ? (params.tokensIn * 3 + params.tokensOut * 15) / 1_000_000
-      : null
+    // Claude Sonnet 4 pricing: $3/$15 per MTok in/out
+    const costEstimate =
+      params.tokensIn !== null && params.tokensOut !== null
+        ? (params.tokensIn * 3 + params.tokensOut * 15) / 1_000_000
+        : null
 
-  const supabase = createClient(supabaseUrl, supabaseKey)
-  const { error } = await supabase.from('tool_usage_logs').insert({
-    session_id:    null,
-    tool_name:     'geo-audit',
-    api_provider:  'anthropic',
-    model:         MODEL,
-    tokens_in:     params.tokensIn,
-    tokens_out:    params.tokensOut,
-    cost_estimate: costEstimate,
-    endpoint:      ANTHROPIC_API,
-    status:        params.status,
-    duration_ms:   params.durationMs,
-    error_message: params.errorMessage,
-  })
-  if (error) console.error('[geo-score] usage log error:', error.message)
+    const supabase = createClient(supabaseUrl, supabaseKey)
+    const { error } = await supabase.from('tool_usage_logs').insert({
+      session_id:    null,
+      tool_name:     'geo-audit',
+      api_provider:  'anthropic',
+      model:         MODEL,
+      tokens_in:     params.tokensIn,
+      tokens_out:    params.tokensOut,
+      cost_estimate: costEstimate,
+      endpoint:      ANTHROPIC_API,
+      status:        params.status,
+      duration_ms:   params.durationMs,
+      error_message: params.errorMessage,
+    })
+    if (error) console.error('[geo-score] usage log error:', error.message)
+  } catch (err) {
+    console.error('[geo-score] writeUsageLog threw:', err)
+  }
 }
 
 // ─── HANDLER ──────────────────────────────────────────────────────────────────

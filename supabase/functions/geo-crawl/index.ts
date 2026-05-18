@@ -50,25 +50,29 @@ async function writeUsageLog(params: {
   durationMs:   number
   errorMessage: string | null
 }): Promise<void> {
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')
-  const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')
-  if (!supabaseUrl || !supabaseKey) return
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')
+    if (!supabaseUrl || !supabaseKey) return
 
-  const supabase = createClient(supabaseUrl, supabaseKey)
-  const { error } = await supabase.from('tool_usage_logs').insert({
-    session_id:    null,
-    tool_name:     'geo-audit',
-    api_provider:  'firecrawl',
-    model:         null,
-    tokens_in:     null,
-    tokens_out:    null,
-    cost_estimate: null,
-    endpoint:      `${FIRECRAWL_BASE}/map+scrape`,
-    status:        params.status,
-    duration_ms:   params.durationMs,
-    error_message: params.errorMessage,
-  })
-  if (error) console.error('[geo-crawl] usage log error:', error.message)
+    const supabase = createClient(supabaseUrl, supabaseKey)
+    const { error } = await supabase.from('tool_usage_logs').insert({
+      session_id:    null,
+      tool_name:     'geo-audit',
+      api_provider:  'firecrawl',
+      model:         null,
+      tokens_in:     null,
+      tokens_out:    null,
+      cost_estimate: null,
+      endpoint:      `${FIRECRAWL_BASE}/map+scrape`,
+      status:        params.status,
+      duration_ms:   params.durationMs,
+      error_message: params.errorMessage,
+    })
+    if (error) console.error('[geo-crawl] usage log error:', error.message)
+  } catch (err) {
+    console.error('[geo-crawl] writeUsageLog threw:', err)
+  }
 }
 
 // ─── HANDLER ──────────────────────────────────────────────────────────────────
@@ -206,6 +210,7 @@ Deno.serve(async (req) => {
 
     await writeUsageLog({ status: 'success', durationMs: Date.now() - startedAt, errorMessage: null })
 
+    console.log(`[geo-crawl] returning response with ${pages.length} pages`)
     return new Response(
       JSON.stringify({ success: true, pages }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
