@@ -52,25 +52,31 @@ const NOISE_PATTERNS = [
   /\bwe use cookies\b/i,
 ]
 
-function isConsentNoise(text: string): boolean {
-  // Count sentences (split on . ! ?)
+// Returns a reason string if the page should be excluded, null if it passes
+function getNoiseReason(text: string, url: string): string | null {
   const sentences = text
     .split(/[.!?]+/)
     .map(s => s.trim())
     .filter(s => s.length > 15)
 
   const unique = new Set(sentences.map(s => s.toLowerCase()))
-  if (unique.size < 3) return true
-
-  // Count noise-pattern matches in first 500 chars (where banners dominate)
-  const head = text.slice(0, 500).toLowerCase()
-  const noiseHits = NOISE_PATTERNS.filter(re => re.test(head)).length
   const totalWords = countWords(text)
 
-  // More than 2 noise signals in the first 500 chars on a short page → exclude
-  if (noiseHits >= 2 && totalWords < 300) return true
+  console.log(`[geo-crawl] quality check ${url} — unique sentences: ${unique.size}, words: ${totalWords}`)
+  console.log(`[geo-crawl] first 200 chars: ${text.slice(0, 200).replace(/\n/g, ' ')}`)
 
-  return false
+  if (unique.size < 3) {
+    return `unique sentences ${unique.size} < 3`
+  }
+
+  const head = text.slice(0, 500).toLowerCase()
+  const matchedPatterns = NOISE_PATTERNS.filter(re => re.test(head)).map(re => re.toString())
+
+  if (matchedPatterns.length >= 2 && totalWords < 300) {
+    return `noise patterns [${matchedPatterns.join(', ')}] on short page (${totalWords} words)`
+  }
+
+  return null
 }
 
 // ─── USAGE LOG ────────────────────────────────────────────────────────────────
@@ -206,6 +212,7 @@ Deno.serve(async (req) => {
 
     // ── Step 4: scrape each sampled page ──────────────────────────────────────
     const pages: { url: string; type: string; content: string; wordCount: number }[] = []
+    const skipped: { url: string; reason: string; preview: string }[] = []
 
     for (const { url, type } of sampled) {
       console.log(`[geo-crawl] scraping ${type}: ${url}`)
@@ -218,7 +225,7 @@ Deno.serve(async (req) => {
             formats: ['markdown'],
             onlyMainContent: true,
             waitFor: 2000,
-            removeTags: [
+            excludeTags: [
               '#cookie-banner',
               '.cookie-consent',
               '[class*="cookie"]',
@@ -231,26 +238,32 @@ Deno.serve(async (req) => {
 
         if (!scrapeRes.ok) {
           console.warn(`[geo-crawl] scrape ${scrapeRes.status} for ${url}`)
+          skipped.push({ url, reason: `scrape ${scrapeRes.status}`, preview: '' })
           continue
         }
 
         const scrapeData = await scrapeRes.json() as { data?: { markdown?: string } }
         const content = scrapeData.data?.markdown ?? ''
         const wordCount = countWords(content)
+        const preview = content.slice(0, 200).replace(/\n/g, ' ')
 
         if (wordCount < WORD_FLOOR) {
           console.log(`[geo-crawl] skip ${url} — ${wordCount} words`)
+          skipped.push({ url, reason: `word count ${wordCount} < ${WORD_FLOOR}`, preview })
           continue
         }
 
-        if (isConsentNoise(content)) {
-          console.log(`[geo-crawl] skip ${url} — consent/cookie noise detected`)
+        const noiseResult = getNoiseReason(content, url)
+        if (noiseResult) {
+          skipped.push({ url, reason: noiseResult, preview })
           continue
         }
 
         pages.push({ url, type, content, wordCount })
       } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err)
         console.warn(`[geo-crawl] error scraping ${url}:`, err)
+        skipped.push({ url, reason: `error: ${msg}`, preview: '' })
       }
     }
 
@@ -258,9 +271,9 @@ Deno.serve(async (req) => {
 
     await writeUsageLog({ status: 'success', durationMs: Date.now() - startedAt, errorMessage: null })
 
-    console.log(`[geo-crawl] returning response with ${pages.length} pages`)
+    console.log(`[geo-crawl] returning response with ${pages.length} pages, ${skipped.length} skipped`)
     return new Response(
-      JSON.stringify({ success: true, pages }),
+      JSON.stringify({ success: true, pages, skipped }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     )
   } catch (error) {
