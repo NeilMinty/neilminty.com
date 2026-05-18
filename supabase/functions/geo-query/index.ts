@@ -71,7 +71,7 @@ async function queryPerplexity(query: string, domain: string): Promise<QueryResu
 
   const text      = data.choices?.[0]?.message?.content ?? ''
   const citations = data.citations ?? []
-  const snippet   = stripMarkdown(text).slice(0, 600)
+  const snippet   = stripMarkdown(text)
 
   console.info(`[geo-query] Perplexity: ${citations.length} citations, cited=${isCited(domain, citations)}`)
   console.info(`[geo-query] Perplexity citations:`, JSON.stringify(citations))
@@ -134,7 +134,7 @@ async function queryOpenAI(query: string, domain: string): Promise<QueryResult> 
     }
   }
 
-  const snippet = stripMarkdown(text).slice(0, 600)
+  const snippet = stripMarkdown(text)
   console.info(`[geo-query] ChatGPT raw response:`, JSON.stringify(data))
   console.info(`[geo-query] ChatGPT: ${citationUrls.length} citations, cited=${isCited(domain, citationUrls)}`)
 

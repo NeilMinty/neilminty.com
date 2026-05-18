@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ToolLayout } from '@/components/ToolLayout';
 import { SectionLabel } from '@/components/SectionLabel';
 import { useGeoAudit } from '@/hooks/use-geo-audit';
@@ -74,6 +74,36 @@ function citationMessage(results: QueryResult[]): string {
   return "Strong AI visibility for this query. A full audit identifies where this breaks down across your full catalogue.";
 }
 
+function SnippetText({ text }: { text: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const [clamped, setClamped]   = useState(false);
+  const ref = useRef<HTMLParagraphElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (el) setClamped(el.scrollHeight > el.clientHeight);
+  }, [text]);
+
+  return (
+    <div>
+      <p
+        ref={ref}
+        className={`text-xs text-slate-500 leading-relaxed ${expanded ? '' : 'line-clamp-3'}`}
+      >
+        {text}
+      </p>
+      {(clamped || expanded) && (
+        <button
+          onClick={() => setExpanded(e => !e)}
+          className="mt-1 text-xs text-slate-400 hover:text-slate-600 transition-colors"
+        >
+          {expanded ? 'Show less' : 'Show more'}
+        </button>
+      )}
+    </div>
+  );
+}
+
 function QueryCard({ result }: { result: QueryResult }) {
   const hasCited  = result.cited && !result.error;
   const hasError  = !!result.error;
@@ -102,7 +132,7 @@ function QueryCard({ result }: { result: QueryResult }) {
       )}
 
       {!hasError && result.snippet && (
-        <p className="text-xs text-slate-500 leading-relaxed">{result.snippet}</p>
+        <SnippetText text={result.snippet} />
       )}
 
       {!hasError && hasCited && result.citations.length > 0 && (
