@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ToolLayout } from '@/components/ToolLayout';
 import { SectionLabel } from '@/components/SectionLabel';
 import { useGeoAudit } from '@/hooks/use-geo-audit';
@@ -156,6 +156,11 @@ export function GeoAudit() {
   const { state, stageLabel, runAudit, reset } = useGeoAudit();
   const [input, setInput]   = useState('');
   const [domainError, setDomainError] = useState('');
+
+  useEffect(() => {
+    console.log('[geo-audit] VITE_NEILMINTY_SUPABASE_URL:', import.meta.env.VITE_NEILMINTY_SUPABASE_URL);
+    console.log('[geo-audit] VITE_NEILMINTY_SUPABASE_ANON_KEY present:', !!import.meta.env.VITE_NEILMINTY_SUPABASE_ANON_KEY);
+  }, []);
 
   function handleSubmit() {
     const domain = normaliseDomain(input);
