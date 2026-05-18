@@ -7,6 +7,7 @@ const corsHeaders = {
 
 interface QueryResult {
   engine:    string
+  mentioned: boolean
   cited:     boolean
   citations: string[]
   snippet:   string
@@ -28,6 +29,19 @@ function stripMarkdown(text: string): string {
     .trim()
 }
 
+function aliasesFromDomain(domain: string): string[] {
+  const host  = domain.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0]
+  const noTld = host.replace(/(\.[a-z]{2,4}){1,2}$/, '')
+  const words = noTld.replace(/[-_.]/g, ' ').trim()
+  const title = words.replace(/\b\w/g, c => c.toUpperCase())
+  return [...new Set([words, title])].filter(s => s.length > 2)
+}
+
+function isMentioned(text: string, aliases: string[]): boolean {
+  const lower = text.toLowerCase()
+  return aliases.some(a => a.length > 2 && lower.includes(a.toLowerCase()))
+}
+
 function isCited(domain: string, citations: string[]): boolean {
   const d = domain.replace(/^https?:\/\//, '').replace(/^www\./, '').toLowerCase().replace(/\/$/, '')
   return citations.some(url => url.toLowerCase().includes(d))
@@ -45,50 +59,47 @@ function topDomains(citations: string[], exclude: string, limit = 3): string[] {
 
 // ─── PERPLEXITY ───────────────────────────────────────────────────────────────
 
-async function queryPerplexity(query: string, domain: string): Promise<QueryResult> {
+async function queryPerplexity(query: string, domain: string, aliases: string[]): Promise<QueryResult> {
   const apiKey = Deno.env.get('PERPLEXITY_API_KEY')
-  if (!apiKey) return { engine: 'Perplexity', cited: false, citations: [], snippet: '', error: 'API key not configured' }
+  if (!apiKey) return { engine: 'Perplexity', mentioned: false, cited: false, citations: [], snippet: '', error: 'API key not configured' }
 
   const response = await fetch('https://api.perplexity.ai/chat/completions', {
     method:  'POST',
     headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
     body:    JSON.stringify({
-      model:    'sonar',
-      messages: [{ role: 'user', content: query }],
+      model:      'sonar',
+      messages:   [{ role: 'user', content: query }],
       max_tokens: 400,
     }),
   })
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({})) as { error?: { message?: string } }
-    return { engine: 'Perplexity', cited: false, citations: [], snippet: '', error: err.error?.message ?? `HTTP ${response.status}` }
+    return { engine: 'Perplexity', mentioned: false, cited: false, citations: [], snippet: '', error: err.error?.message ?? `HTTP ${response.status}` }
   }
 
   const data = await response.json() as {
-    choices?: Array<{ message?: { content?: string } }>
+    choices?:   Array<{ message?: { content?: string } }>
     citations?: string[]
   }
 
   const text      = data.choices?.[0]?.message?.content ?? ''
   const citations = data.citations ?? []
   const snippet   = stripMarkdown(text)
+  const mentioned = isMentioned(text, aliases)
+  const cited     = isCited(domain, citations)
 
-  console.info(`[geo-query] Perplexity: ${citations.length} citations, cited=${isCited(domain, citations)}`)
+  console.info(`[geo-query] Perplexity: mentioned=${mentioned} cited=${cited} citations=${citations.length}`)
   console.info(`[geo-query] Perplexity citations:`, JSON.stringify(citations))
 
-  return {
-    engine:    'Perplexity',
-    cited:     isCited(domain, citations),
-    citations: citations.slice(0, 10),
-    snippet,
-  }
+  return { engine: 'Perplexity', mentioned, cited, citations: citations.slice(0, 10), snippet }
 }
 
 // ─── OPENAI WEB SEARCH ────────────────────────────────────────────────────────
 
-async function queryOpenAI(query: string, domain: string): Promise<QueryResult> {
+async function queryOpenAI(query: string, domain: string, aliases: string[]): Promise<QueryResult> {
   const apiKey = Deno.env.get('Chat_GPT_API_Key')
-  if (!apiKey) return { engine: 'ChatGPT', cited: false, citations: [], snippet: '', error: 'API key not configured' }
+  if (!apiKey) return { engine: 'ChatGPT', mentioned: false, cited: false, citations: [], snippet: '', error: 'API key not configured' }
 
   const OPENAI_MODEL = 'gpt-4o'
   console.info(`[geo-query] ChatGPT using model: ${OPENAI_MODEL}`)
@@ -97,16 +108,16 @@ async function queryOpenAI(query: string, domain: string): Promise<QueryResult> 
     method:  'POST',
     headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
     body:    JSON.stringify({
-      model: OPENAI_MODEL,
-      tools: [{ type: 'web_search_preview' }],
+      model:       OPENAI_MODEL,
+      tools:       [{ type: 'web_search_preview' }],
       tool_choice: { type: 'web_search_preview' },
-      input: query,
+      input:       query,
     }),
   })
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({})) as { error?: { message?: string } }
-    return { engine: 'ChatGPT', cited: false, citations: [], snippet: '', error: err.error?.message ?? `HTTP ${response.status}` }
+    return { engine: 'ChatGPT', mentioned: false, cited: false, citations: [], snippet: '', error: err.error?.message ?? `HTTP ${response.status}` }
   }
 
   const data = await response.json() as {
@@ -120,8 +131,7 @@ async function queryOpenAI(query: string, domain: string): Promise<QueryResult> 
     }>
   }
 
-  // Extract text and URL citations from output
-  let text      = ''
+  let text = ''
   const citationUrls: string[] = []
 
   for (const item of data.output ?? []) {
@@ -134,16 +144,14 @@ async function queryOpenAI(query: string, domain: string): Promise<QueryResult> 
     }
   }
 
-  const snippet = stripMarkdown(text)
-  console.info(`[geo-query] ChatGPT raw response:`, JSON.stringify(data))
-  console.info(`[geo-query] ChatGPT: ${citationUrls.length} citations, cited=${isCited(domain, citationUrls)}`)
+  const snippet   = stripMarkdown(text)
+  const mentioned = isMentioned(text, aliases)
+  const cited     = isCited(domain, citationUrls)
 
-  return {
-    engine:    'ChatGPT',
-    cited:     isCited(domain, citationUrls),
-    citations: citationUrls.slice(0, 10),
-    snippet,
-  }
+  console.info(`[geo-query] ChatGPT raw response:`, JSON.stringify(data))
+  console.info(`[geo-query] ChatGPT: mentioned=${mentioned} cited=${cited} citations=${citationUrls.length}`)
+
+  return { engine: 'ChatGPT', mentioned, cited, citations: citationUrls.slice(0, 10), snippet }
 }
 
 // ─── HANDLER ──────────────────────────────────────────────────────────────────
@@ -154,7 +162,11 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { domain, query } = await req.json() as { domain?: string; query?: string }
+    const { domain, query, brand_aliases } = await req.json() as {
+      domain?:        string
+      query?:         string
+      brand_aliases?: string[]
+    }
 
     if (!domain || !query) {
       return new Response(
@@ -163,11 +175,15 @@ Deno.serve(async (req) => {
       )
     }
 
-    console.info(`[geo-query] domain=${domain} query="${query}"`)
+    const aliases = (brand_aliases && brand_aliases.length > 0)
+      ? brand_aliases
+      : aliasesFromDomain(domain)
+
+    console.info(`[geo-query] domain=${domain} query="${query}" aliases=${JSON.stringify(aliases)}`)
 
     const [perplexity, openai] = await Promise.allSettled([
-      queryPerplexity(query, domain),
-      queryOpenAI(query, domain),
+      queryPerplexity(query, domain, aliases),
+      queryOpenAI(query, domain, aliases),
     ])
 
     const results: QueryResult[] = []
@@ -175,16 +191,15 @@ Deno.serve(async (req) => {
     if (perplexity.status === 'fulfilled') {
       results.push(perplexity.value)
     } else {
-      results.push({ engine: 'Perplexity', cited: false, citations: [], snippet: '', error: perplexity.reason?.message ?? 'Failed' })
+      results.push({ engine: 'Perplexity', mentioned: false, cited: false, citations: [], snippet: '', error: perplexity.reason?.message ?? 'Failed' })
     }
 
     if (openai.status === 'fulfilled') {
       results.push(openai.value)
     } else {
-      results.push({ engine: 'ChatGPT', cited: false, citations: [], snippet: '', error: openai.reason?.message ?? 'Failed' })
+      results.push({ engine: 'ChatGPT', mentioned: false, cited: false, citations: [], snippet: '', error: openai.reason?.message ?? 'Failed' })
     }
 
-    // Attach topDomains for uncited results so the client can show "cited instead"
     const enriched = results.map(r => ({
       ...r,
       top_alternatives: r.cited ? [] : topDomains(r.citations, domain),

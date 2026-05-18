@@ -22,10 +22,12 @@ export interface GeoScore {
     base_model: number;
   };
   retrieval_dominance?: string;
+  brand_aliases?: string[];
 }
 
 export interface QueryResult {
   engine: string;
+  mentioned: boolean;
   cited: boolean;
   citations: string[];
   snippet: string;
@@ -115,7 +117,15 @@ export function useGeoAudit() {
     }
   }
 
-  async function runAudit(domain: string) {
+  function aliasesFromDomain(domain: string): string[] {
+    const host  = domain.replace(/^www\./, '').split('/')[0];
+    const noTld = host.replace(/(\.[a-z]{2,4}){1,2}$/, '');
+    const words = noTld.replace(/[-_.]/g, ' ').trim();
+    const title = words.replace(/\b\w/g, c => c.toUpperCase());
+    return [...new Set([words, title])].filter(s => s.length > 2);
+  }
+
+  async function runAudit(domain: string, query?: string) {
     setState({ status: 'loading', stage: 'discovering' });
     setSignalState({ status: 'idle' });
 
@@ -167,8 +177,13 @@ export function useGeoAudit() {
 
       setState({ status: 'complete', domain, score: scoreData.score });
 
-      // ── Step 3: signal coverage (non-blocking) ────────────────────────────
+      // ── Step 3: signal coverage + query (non-blocking, post-score) ────────
+      const aliases = (scoreData.score.brand_aliases && scoreData.score.brand_aliases.length > 0)
+        ? scoreData.score.brand_aliases
+        : aliasesFromDomain(domain);
+
       runSignalCoverage(domain, scoreData.score.verdict);
+      if (query) runQuery(domain, query, aliases);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
       setState({ status: 'error', message });
@@ -189,13 +204,13 @@ export function useGeoAudit() {
     }
   }
 
-  async function runQuery(domain: string, query: string) {
+  async function runQuery(domain: string, query: string, aliases?: string[]) {
     setQueryState({ status: 'running' });
     try {
       const res = await fetch(`${FUNCTIONS_URL}/geo-query`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ domain, query }),
+        body:    JSON.stringify({ domain, query, brand_aliases: aliases ?? [] }),
       });
       const data = await res.json() as { success: boolean; results?: QueryResult[]; error?: string };
       if (!data.success || !data.results) {
@@ -223,7 +238,6 @@ export function useGeoAudit() {
     signalState,
     suggestedQuery,
     suggestQuery,
-    runQuery,
     runAudit,
     reset,
   };

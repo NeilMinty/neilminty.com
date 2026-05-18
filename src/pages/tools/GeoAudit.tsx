@@ -350,8 +350,9 @@ function SnippetText({ text }: { text: string }) {
 }
 
 function QueryCard({ result }: { result: QueryResult }) {
-  const hasCited = result.cited && !result.error;
-  const hasError = !!result.error;
+  const hasCited    = result.cited && !result.error;
+  const hasMentioned = result.mentioned && !result.cited && !result.error;
+  const hasError    = !!result.error;
 
   return (
     <div className="bg-white border border-slate-200 rounded-lg px-5 py-5 shadow-card flex flex-col gap-3">
@@ -361,10 +362,16 @@ function QueryCard({ result }: { result: QueryResult }) {
           <span className="text-xs px-2 py-0.5 rounded border bg-slate-100 text-slate-400 border-slate-200">unavailable</span>
         ) : hasCited ? (
           <span className="text-xs px-2 py-0.5 rounded border bg-green-50 text-green-700 border-green-200 font-medium">cited ✓</span>
+        ) : hasMentioned ? (
+          <span className="text-xs px-2 py-0.5 rounded border bg-amber-50 text-amber-700 border-amber-200 font-medium">mentioned</span>
         ) : (
           <span className="text-xs px-2 py-0.5 rounded border bg-red-50 text-red-600 border-red-200 font-medium">not cited</span>
         )}
       </div>
+
+      {hasMentioned && (
+        <p className="text-xs text-amber-600">Your brand appears in this response but your site isn't the source</p>
+      )}
 
       {hasError && <p className="text-xs text-slate-400">{result.error}</p>}
 
@@ -497,7 +504,7 @@ function AuditLoadingSection({ stageLabel, stage }: {
 // ─── PAGE ─────────────────────────────────────────────────────────────────────
 
 export function GeoAudit() {
-  const { state, stageLabel, queryState, signalState, suggestedQuery, suggestQuery, runQuery, runAudit, reset } = useGeoAudit();
+  const { state, stageLabel, queryState, signalState, suggestedQuery, suggestQuery, runAudit, reset } = useGeoAudit();
 
   const [domainInput, setDomainInput]       = useState('');
   const [queryInput, setQueryInput]         = useState('');
@@ -523,8 +530,7 @@ export function GeoAudit() {
     setDomainError('');
     const query = queryInput.trim();
     setSubmittedQuery(query);
-    runAudit(domain);
-    if (query) runQuery(domain, query);
+    runAudit(domain, query || undefined);
   }
 
   function handleReset() {

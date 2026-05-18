@@ -41,6 +41,7 @@ interface GeoScore {
   confidence:            'high' | 'medium' | 'low'
   source_type_breakdown: SourceTypeBreakdown
   retrieval_dominance:   string
+  brand_aliases:         string[]
 }
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
@@ -242,27 +243,33 @@ Return JSON only, no preamble, no markdown:
     // ── Second call: source type breakdown (Haiku, non-blocking) ─────────────
     let source_type_breakdown: SourceTypeBreakdown = { editorial: 40, community: 20, aggregator: 20, expert: 10, base_model: 10 }
     let retrieval_dominance = 'mixed'
+    let brand_aliases: string[] = []
     try {
       const breakdownRes = await fetch(ANTHROPIC_API, {
         method:  'POST',
         headers: { 'x-api-key': anthropicKey, 'anthropic-version': '2023-06-01', 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model:      HAIKU_MODEL,
-          max_tokens: 150,
-          system:     'You are an AI retrieval analyst. Given a GEO audit verdict and dimension scores, estimate what percentage of an AI engine\'s answer about this brand/category would be drawn from each source type: editorial reviews, community discussions (Reddit/forums), aggregator sites, expert/clinical sources, and base model priors. Return JSON only. Percentages must sum to 100.',
+          max_tokens: 250,
+          system:     'You are an AI retrieval analyst. Given a GEO audit verdict and dimension scores, return three things: (1) estimated percentage of an AI engine\'s answer drawn from each source type — percentages must sum to 100, (2) the dominant source type, (3) the brand name and any product line names mentioned in the verdict. Return JSON only.',
           messages: [{
             role:    'user',
-            content: `Verdict: ${score.verdict}\n\nScores: entity_clarity=${score.dimensions.entity_clarity}, claim_specificity=${score.dimensions.claim_specificity}, structure_legibility=${score.dimensions.structure_legibility}, citation_worthiness=${score.dimensions.citation_worthiness}, comparison_anchoring=${score.dimensions.comparison_anchoring}\n\nReturn JSON: { "source_type_breakdown": { "editorial": number, "community": number, "aggregator": number, "expert": number, "base_model": number }, "retrieval_dominance": "editorial" | "community" | "aggregator" | "mixed" }`,
+            content: `Verdict: ${score.verdict}\n\nScores: entity_clarity=${score.dimensions.entity_clarity}, claim_specificity=${score.dimensions.claim_specificity}, structure_legibility=${score.dimensions.structure_legibility}, citation_worthiness=${score.dimensions.citation_worthiness}, comparison_anchoring=${score.dimensions.comparison_anchoring}\n\nReturn JSON: { "source_type_breakdown": { "editorial": number, "community": number, "aggregator": number, "expert": number, "base_model": number }, "retrieval_dominance": "editorial" | "community" | "aggregator" | "mixed", "brand_aliases": string[] (brand name and product lines from verdict, max 4 items) }`,
           }],
         }),
       })
       if (breakdownRes.ok) {
         const bd = await breakdownRes.json() as { content?: Array<{ text: string }> }
-        const bdRaw = bd.content?.[0]?.text?.trim() ?? ''
+        const bdRaw     = bd.content?.[0]?.text?.trim() ?? ''
         const bdCleaned = bdRaw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
-        const bdParsed = JSON.parse(bdCleaned) as { source_type_breakdown: SourceTypeBreakdown; retrieval_dominance: string }
+        const bdParsed  = JSON.parse(bdCleaned) as {
+          source_type_breakdown: SourceTypeBreakdown
+          retrieval_dominance:   string
+          brand_aliases:         string[]
+        }
         source_type_breakdown = bdParsed.source_type_breakdown
         retrieval_dominance   = bdParsed.retrieval_dominance
+        brand_aliases         = Array.isArray(bdParsed.brand_aliases) ? bdParsed.brand_aliases.slice(0, 4) : []
       }
     } catch (err) {
       console.error('[geo-score] breakdown call failed, using defaults:', err)
@@ -270,6 +277,7 @@ Return JSON only, no preamble, no markdown:
 
     score.source_type_breakdown = source_type_breakdown
     score.retrieval_dominance   = retrieval_dominance
+    score.brand_aliases         = brand_aliases
 
     await writeUsageLog({ tokensIn, tokensOut, status: 'success', durationMs, errorMessage: null })
 
