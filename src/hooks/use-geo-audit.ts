@@ -16,12 +16,29 @@ export interface GeoScore {
   confidence: 'high' | 'medium' | 'low';
 }
 
+export interface QueryResult {
+  engine: string;
+  cited: boolean;
+  citations: string[];
+  snippet: string;
+  top_alternatives: string[];
+  error?: string;
+}
+
 export type AuditStage = 'discovering' | 'fetching' | 'scoring';
 
 type AuditState =
   | { status: 'idle' }
   | { status: 'loading'; stage: AuditStage }
   | { status: 'complete'; domain: string; score: GeoScore }
+  | { status: 'error'; message: string };
+
+type QueryState =
+  | { status: 'idle' }
+  | { status: 'suggesting' }
+  | { status: 'ready'; suggestedQuery: string }
+  | { status: 'running' }
+  | { status: 'done'; query: string; results: QueryResult[] }
   | { status: 'error'; message: string };
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
@@ -38,13 +55,15 @@ const STAGE_LABELS: Record<AuditStage, string> = {
 // ─── HOOK ─────────────────────────────────────────────────────────────────────
 
 export function useGeoAudit() {
-  const [state, setState] = useState<AuditState>({ status: 'idle' });
+  const [state, setState]             = useState<AuditState>({ status: 'idle' });
+  const [queryState, setQueryState]   = useState<QueryState>({ status: 'idle' });
 
   const stageLabel =
     state.status === 'loading' ? STAGE_LABELS[state.stage] : null;
 
   async function runAudit(domain: string) {
     setState({ status: 'loading', stage: 'discovering' });
+    setQueryState({ status: 'idle' });
 
     try {
       // ── Step 1: geo-crawl ──────────────────────────────────────────────────
@@ -93,15 +112,53 @@ export function useGeoAudit() {
       }
 
       setState({ status: 'complete', domain, score: scoreData.score });
+
+      // ── Step 3: suggest query (non-blocking) ──────────────────────────────
+      setQueryState({ status: 'suggesting' });
+      try {
+        const suggestRes = await fetch(`${FUNCTIONS_URL}/geo-suggest`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ domain, verdict: scoreData.score.verdict }),
+        });
+        const suggestData = await suggestRes.json() as { success: boolean; query?: string };
+        const suggestedQuery = suggestData.success && suggestData.query
+          ? suggestData.query
+          : '';
+        setQueryState({ status: 'ready', suggestedQuery });
+      } catch {
+        setQueryState({ status: 'ready', suggestedQuery: '' });
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
       setState({ status: 'error', message });
     }
   }
 
-  function reset() {
-    setState({ status: 'idle' });
+  async function runQuery(domain: string, query: string) {
+    setQueryState({ status: 'running' });
+    try {
+      const res = await fetch(`${FUNCTIONS_URL}/geo-query`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ domain, query }),
+      });
+      const data = await res.json() as { success: boolean; results?: QueryResult[]; error?: string };
+      if (!data.success || !data.results) {
+        setQueryState({ status: 'error', message: data.error ?? 'Query failed. Please try again.' });
+        return;
+      }
+      setQueryState({ status: 'done', query, results: data.results });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
+      setQueryState({ status: 'error', message });
+    }
   }
 
-  return { state, stageLabel, runAudit, reset };
+  function reset() {
+    setState({ status: 'idle' });
+    setQueryState({ status: 'idle' });
+  }
+
+  return { state, stageLabel, queryState, runQuery, runAudit, reset };
 }
