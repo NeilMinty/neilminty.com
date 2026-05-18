@@ -43,6 +43,36 @@ function countWords(text: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length
 }
 
+// Cookie/consent noise patterns — if these dominate, the page didn't load properly
+const NOISE_PATTERNS = [
+  /\bcookies?\b/i,
+  /\bconsent\b/i,
+  /\baccept all\b/i,
+  /\bprivacy preference/i,
+  /\bwe use cookies\b/i,
+]
+
+function isConsentNoise(text: string): boolean {
+  // Count sentences (split on . ! ?)
+  const sentences = text
+    .split(/[.!?]+/)
+    .map(s => s.trim())
+    .filter(s => s.length > 15)
+
+  const unique = new Set(sentences.map(s => s.toLowerCase()))
+  if (unique.size < 3) return true
+
+  // Count noise-pattern matches in first 500 chars (where banners dominate)
+  const head = text.slice(0, 500).toLowerCase()
+  const noiseHits = NOISE_PATTERNS.filter(re => re.test(head)).length
+  const totalWords = countWords(text)
+
+  // More than 2 noise signals in the first 500 chars on a short page → exclude
+  if (noiseHits >= 2 && totalWords < 300) return true
+
+  return false
+}
+
 // ─── USAGE LOG ────────────────────────────────────────────────────────────────
 
 async function writeUsageLog(params: {
@@ -183,7 +213,20 @@ Deno.serve(async (req) => {
         const scrapeRes = await fetch(`${FIRECRAWL_BASE}/scrape`, {
           method:  'POST',
           headers: { 'Authorization': `Bearer ${firecrawlKey}`, 'Content-Type': 'application/json' },
-          body:    JSON.stringify({ url, formats: ['markdown'], onlyMainContent: true }),
+          body:    JSON.stringify({
+            url,
+            formats: ['markdown'],
+            onlyMainContent: true,
+            waitFor: 2000,
+            removeTags: [
+              '#cookie-banner',
+              '.cookie-consent',
+              '[class*="cookie"]',
+              '[id*="cookie"]',
+              '[class*="consent"]',
+              '[id*="consent"]',
+            ],
+          }),
         })
 
         if (!scrapeRes.ok) {
@@ -197,6 +240,11 @@ Deno.serve(async (req) => {
 
         if (wordCount < WORD_FLOOR) {
           console.log(`[geo-crawl] skip ${url} — ${wordCount} words`)
+          continue
+        }
+
+        if (isConsentNoise(content)) {
+          console.log(`[geo-crawl] skip ${url} — consent/cookie noise detected`)
           continue
         }
 
