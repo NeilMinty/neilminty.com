@@ -130,6 +130,10 @@ function QueryCard({ result }: { result: QueryResult }) {
           </ul>
         </div>
       )}
+
+      {!hasError && result.citations.length === 0 && (
+        <p className="text-xs text-slate-400">No sources returned</p>
+      )}
     </div>
   );
 }

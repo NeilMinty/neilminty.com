@@ -15,6 +15,19 @@ interface QueryResult {
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
+function stripMarkdown(text: string): string {
+  return text
+    .replace(/#{1,6}\s+/g, '')
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/\*(.+?)\*/g, '$1')
+    .replace(/__(.+?)__/g, '$1')
+    .replace(/_(.+?)_/g, '$1')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/^\s*[-*+]\s+/gm, '')
+    .trim()
+}
+
 function isCited(domain: string, citations: string[]): boolean {
   const d = domain.replace(/^https?:\/\//, '').replace(/^www\./, '').toLowerCase().replace(/\/$/, '')
   return citations.some(url => url.toLowerCase().includes(d))
@@ -58,9 +71,10 @@ async function queryPerplexity(query: string, domain: string): Promise<QueryResu
 
   const text      = data.choices?.[0]?.message?.content ?? ''
   const citations = data.citations ?? []
-  const snippet   = text.slice(0, 200)
+  const snippet   = stripMarkdown(text).slice(0, 200)
 
   console.log(`[geo-query] Perplexity: ${citations.length} citations, cited=${isCited(domain, citations)}`)
+  console.log(`[geo-query] Perplexity citations:`, JSON.stringify(citations))
 
   return {
     engine:    'Perplexity',
@@ -116,7 +130,8 @@ async function queryOpenAI(query: string, domain: string): Promise<QueryResult> 
     }
   }
 
-  const snippet = text.slice(0, 200)
+  const snippet = stripMarkdown(text).slice(0, 200)
+  console.log(`[geo-query] ChatGPT raw response:`, JSON.stringify(data))
   console.log(`[geo-query] ChatGPT: ${citationUrls.length} citations, cited=${isCited(domain, citationUrls)}`)
 
   return {
