@@ -73,8 +73,8 @@ async function queryPerplexity(query: string, domain: string): Promise<QueryResu
   const citations = data.citations ?? []
   const snippet   = stripMarkdown(text).slice(0, 400)
 
-  console.log(`[geo-query] Perplexity: ${citations.length} citations, cited=${isCited(domain, citations)}`)
-  console.log(`[geo-query] Perplexity citations:`, JSON.stringify(citations))
+  console.info(`[geo-query] Perplexity: ${citations.length} citations, cited=${isCited(domain, citations)}`)
+  console.info(`[geo-query] Perplexity citations:`, JSON.stringify(citations))
 
   return {
     engine:    'Perplexity',
@@ -91,7 +91,7 @@ async function queryOpenAI(query: string, domain: string): Promise<QueryResult> 
   if (!apiKey) return { engine: 'ChatGPT', cited: false, citations: [], snippet: '', error: 'API key not configured' }
 
   const OPENAI_MODEL = 'gpt-4o'
-  console.log(`[geo-query] ChatGPT using model: ${OPENAI_MODEL}`)
+  console.info(`[geo-query] ChatGPT using model: ${OPENAI_MODEL}`)
 
   const response = await fetch('https://api.openai.com/v1/responses', {
     method:  'POST',
@@ -134,8 +134,8 @@ async function queryOpenAI(query: string, domain: string): Promise<QueryResult> 
   }
 
   const snippet = stripMarkdown(text).slice(0, 400)
-  console.log(`[geo-query] ChatGPT raw response:`, JSON.stringify(data))
-  console.log(`[geo-query] ChatGPT: ${citationUrls.length} citations, cited=${isCited(domain, citationUrls)}`)
+  console.info(`[geo-query] ChatGPT raw response:`, JSON.stringify(data))
+  console.info(`[geo-query] ChatGPT: ${citationUrls.length} citations, cited=${isCited(domain, citationUrls)}`)
 
   return {
     engine:    'ChatGPT',
@@ -162,7 +162,7 @@ Deno.serve(async (req) => {
       )
     }
 
-    console.log(`[geo-query] domain=${domain} query="${query}"`)
+    console.info(`[geo-query] domain=${domain} query="${query}"`)
 
     const [perplexity, openai] = await Promise.allSettled([
       queryPerplexity(query, domain),
