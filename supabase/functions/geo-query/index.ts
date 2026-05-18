@@ -90,11 +90,14 @@ async function queryOpenAI(query: string, domain: string): Promise<QueryResult> 
   const apiKey = Deno.env.get('Chat_GPT_API_Key')
   if (!apiKey) return { engine: 'ChatGPT', cited: false, citations: [], snippet: '', error: 'API key not configured' }
 
+  const OPENAI_MODEL = 'gpt-4o'
+  console.log(`[geo-query] ChatGPT using model: ${OPENAI_MODEL}`)
+
   const response = await fetch('https://api.openai.com/v1/responses', {
     method:  'POST',
     headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
     body:    JSON.stringify({
-      model: 'gpt-4o-search-preview',
+      model: OPENAI_MODEL,
       tools: [{ type: 'web_search_preview' }],
       input: query,
     }),
