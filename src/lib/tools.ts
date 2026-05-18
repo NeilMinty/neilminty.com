@@ -48,4 +48,10 @@ export const TOOLS: ToolDefinition[] = [
     path: '/tools/taxonomy-builder',
     cta: 'Build your taxonomy →',
   },
+  {
+    name: 'GEO Readiness Audit',
+    description: "How visible is your site to AI engines? Enter a domain and get a GEO readiness score across five dimensions — entity clarity, claim specificity, structure, citation worthiness, and comparison anchoring.",
+    path: '/tools/geo-audit',
+    cta: 'Audit your site →',
+  },
 ];
