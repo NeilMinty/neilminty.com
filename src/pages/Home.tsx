@@ -127,12 +127,20 @@ export function Home() {
       <footer className="mt-16 py-8 border-t border-slate-200">
         <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-between">
           <p className="text-sm text-slate-400">© Neil Minty {new Date().getFullYear()}</p>
-          <Link
-            to="/about"
-            className="text-sm text-slate-400 hover:text-slate-600 no-underline hover:underline transition-colors"
-          >
-            About
-          </Link>
+          <div className="flex gap-4">
+            <Link
+              to="/about"
+              className="text-sm text-slate-400 hover:text-slate-600 no-underline hover:underline transition-colors"
+            >
+              About
+            </Link>
+            <Link
+              to="/growth-room-privacy"
+              className="text-sm text-slate-400 hover:text-slate-600 no-underline hover:underline transition-colors"
+            >
+              Growth Room Privacy Policy
+            </Link>
+          </div>
         </div>
       </footer>
     </div>
