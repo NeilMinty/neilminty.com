@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { ToolLayout } from '@/components/ToolLayout';
 import { SectionLabel } from '@/components/SectionLabel';
 import { useGeoAudit } from '@/hooks/use-geo-audit';
-import type { GeoScore, QueryResult } from '@/hooks/use-geo-audit';
+import type { GeoScore, QueryResult, SignalCoverageResult } from '@/hooks/use-geo-audit';
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
@@ -49,12 +49,41 @@ function confidenceBadge(c: GeoScore['confidence']): string {
   return 'bg-slate-100 text-slate-500 border-slate-200';
 }
 
+function coveragePill(level: 'strong' | 'partial' | 'absent'): string {
+  if (level === 'strong')  return 'bg-green-50 text-green-700 border-green-200';
+  if (level === 'partial') return 'bg-amber-50 text-amber-700 border-amber-200';
+  return 'bg-red-50 text-red-600 border-red-200';
+}
+
 const DIMENSION_LABELS: Record<keyof GeoScore['dimensions'], string> = {
   entity_clarity:       'Entity Clarity',
   claim_specificity:    'Claim Specificity',
   structure_legibility: 'Structure Legibility',
   citation_worthiness:  'Citation Worthiness',
   comparison_anchoring: 'Comparison Anchoring',
+};
+
+const SOURCE_TYPE_COLOURS: Record<string, string> = {
+  editorial:  'bg-blue-500',
+  community:  'bg-amber-400',
+  aggregator: 'bg-violet-400',
+  expert:     'bg-green-500',
+  base_model: 'bg-slate-300',
+};
+
+const SOURCE_TYPE_LABELS: Record<string, string> = {
+  editorial:  'Editorial',
+  community:  'Community',
+  aggregator: 'Aggregator',
+  expert:     'Expert',
+  base_model: 'Base model',
+};
+
+const SOURCE_TYPE_BADGE: Record<string, string> = {
+  editorial:  'bg-blue-50 text-blue-700 border-blue-200',
+  community:  'bg-amber-50 text-amber-700 border-amber-200',
+  aggregator: 'bg-violet-50 text-violet-700 border-violet-200',
+  expert:     'bg-green-50 text-green-700 border-green-200',
 };
 
 // ─── SCORE BAR ────────────────────────────────────────────────────────────────
@@ -120,6 +149,168 @@ function ScoreInterpretation() {
   );
 }
 
+// ─── SOURCE TYPE BREAKDOWN ────────────────────────────────────────────────────
+
+function SourceTypeBreakdown({ breakdown, dominance }: {
+  breakdown: NonNullable<GeoScore['source_type_breakdown']>;
+  dominance?: string;
+}) {
+  const keys = ['editorial', 'community', 'aggregator', 'expert', 'base_model'] as const;
+
+  return (
+    <div>
+      <SectionLabel>Where AI looks for answers</SectionLabel>
+      <div className="bg-white border border-slate-200 rounded-lg px-5 py-5 shadow-card space-y-4">
+        {/* Stacked bar */}
+        <div className="h-5 rounded-full overflow-hidden flex">
+          {keys.map(key => (
+            breakdown[key] > 0 && (
+              <div
+                key={key}
+                className={SOURCE_TYPE_COLOURS[key]}
+                style={{ width: `${breakdown[key]}%` }}
+                title={`${SOURCE_TYPE_LABELS[key]}: ${breakdown[key]}%`}
+              />
+            )
+          ))}
+        </div>
+
+        {/* Legend */}
+        <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+          {keys.map(key => (
+            breakdown[key] > 0 && (
+              <div key={key} className="flex items-center gap-1.5">
+                <span className={`w-2.5 h-2.5 rounded-sm flex-shrink-0 ${SOURCE_TYPE_COLOURS[key]}`} />
+                <span className="text-xs text-slate-600">{SOURCE_TYPE_LABELS[key]}</span>
+                <span className="text-xs font-medium text-slate-700 tabular-nums">{breakdown[key]}%</span>
+              </div>
+            )
+          ))}
+        </div>
+
+        <p className="text-xs text-slate-500 leading-relaxed pt-1 border-t border-slate-100">
+          {dominance && dominance !== 'mixed'
+            ? `${SOURCE_TYPE_LABELS[dominance] ?? dominance} content dominates AI answers in this category — not your site directly.`
+            : 'AI engines draw from multiple source types in this category — not from your site directly.'
+          }
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ─── SIGNAL COVERAGE ──────────────────────────────────────────────────────────
+
+function SignalCoverageSection({
+  signalState,
+}: {
+  signalState: ReturnType<typeof useGeoAudit>['signalState'];
+}) {
+  return (
+    <div>
+      <SectionLabel>Third-party signal coverage</SectionLabel>
+
+      {signalState.status === 'loading' && (
+        <div className="bg-white border border-slate-200 rounded-lg px-5 py-5 shadow-card space-y-4 animate-pulse">
+          <div className="flex gap-3">
+            <div className="h-7 w-24 bg-slate-100 rounded-full" />
+            <div className="h-7 w-24 bg-slate-100 rounded-full" />
+            <div className="h-7 w-24 bg-slate-100 rounded-full" />
+          </div>
+          <div className="h-3 w-48 bg-slate-100 rounded" />
+          <div className="space-y-2 pt-2 border-t border-slate-100">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="flex items-center gap-3">
+                <div className="h-4 w-16 bg-slate-100 rounded" />
+                <div className="h-3 flex-1 bg-slate-100 rounded" />
+                <div className="h-3 w-16 bg-slate-100 rounded" />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {signalState.status === 'error' && (
+        <div className="border border-red-200 bg-red-50 rounded-lg px-4 py-3">
+          <p className="text-sm text-red-700">{signalState.message}</p>
+        </div>
+      )}
+
+      {signalState.status === 'done' && (
+        <SignalCoverageResults result={signalState.result} />
+      )}
+    </div>
+  );
+}
+
+function SignalCoverageResults({ result }: { result: SignalCoverageResult }) {
+  const { signal_summary, brand_mentions, category } = result;
+
+  const coverageItems: Array<{ label: string; level: 'strong' | 'partial' | 'absent' }> = [
+    { label: 'Editorial',  level: signal_summary.editorial_coverage },
+    { label: 'Community',  level: signal_summary.community_coverage },
+    { label: 'Expert',     level: signal_summary.expert_coverage },
+  ];
+
+  return (
+    <div className="bg-white border border-slate-200 rounded-lg px-5 py-5 shadow-card space-y-5">
+      {/* Category badge + coverage pills */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs text-slate-400">Category: <span className="text-slate-600 font-medium">{category}</span></span>
+        <span className="text-slate-200">·</span>
+        {coverageItems.map(({ label, level }) => (
+          <span key={label} className={`text-xs font-medium px-2.5 py-1 rounded-full border ${coveragePill(level)}`}>
+            {label}: {level}
+          </span>
+        ))}
+      </div>
+
+      {/* Top competitors */}
+      {signal_summary.top_competitors_by_frequency.length > 0 && (
+        <div>
+          <p className="text-xs font-medium text-slate-500 mb-2">Top competitors appearing in AI sources</p>
+          <div className="flex flex-wrap gap-1.5">
+            {signal_summary.top_competitors_by_frequency.map(name => (
+              <span key={name} className="text-xs px-2.5 py-1 bg-slate-100 text-slate-700 rounded-full capitalize">
+                {name}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Source list */}
+      <div className="space-y-2 pt-2 border-t border-slate-100">
+        <p className="text-xs font-medium text-slate-500">Sources checked</p>
+        {brand_mentions.map(m => {
+          let displayUrl = m.url;
+          try { displayUrl = new URL(m.url).hostname.replace(/^www\./, '') + new URL(m.url).pathname; } catch { /* leave as-is */ }
+          if (displayUrl.length > 60) displayUrl = displayUrl.slice(0, 60) + '…';
+          return (
+            <div key={m.url} className="flex items-start gap-2.5 text-xs">
+              <span className={`mt-0.5 px-1.5 py-0.5 rounded border text-[10px] font-medium flex-shrink-0 ${SOURCE_TYPE_BADGE[m.source_type] ?? 'bg-slate-50 text-slate-500 border-slate-200'}`}>
+                {m.source_type}
+              </span>
+              <span className="text-slate-500 truncate flex-1 min-w-0">{displayUrl}</span>
+              <span className={`flex-shrink-0 font-medium ${m.mentioned ? 'text-green-600' : 'text-slate-400'}`}>
+                {m.mentioned ? 'Mentioned' : 'Not mentioned'}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {signal_summary.editorial_coverage === 'absent' &&
+       signal_summary.community_coverage === 'absent' &&
+       signal_summary.expert_coverage === 'absent' && (
+        <p className="text-xs text-slate-400 pt-1 border-t border-slate-100">
+          No sources found could be scraped — search returned no accessible pages for this category.
+        </p>
+      )}
+    </div>
+  );
+}
+
 // ─── CITATION RESULTS ─────────────────────────────────────────────────────────
 
 function citationMessage(results: QueryResult[]): string {
@@ -143,10 +334,7 @@ function SnippetText({ text }: { text: string }) {
 
   return (
     <div>
-      <p
-        ref={ref}
-        className={`text-xs text-slate-500 leading-relaxed ${expanded ? '' : 'line-clamp-3'}`}
-      >
+      <p ref={ref} className={`text-xs text-slate-500 leading-relaxed ${expanded ? '' : 'line-clamp-3'}`}>
         {text}
       </p>
       {(clamped || expanded) && (
@@ -170,27 +358,17 @@ function QueryCard({ result }: { result: QueryResult }) {
       <div className="flex items-center justify-between">
         <span className="text-sm font-semibold text-slate-900">{result.engine}</span>
         {hasError ? (
-          <span className="text-xs px-2 py-0.5 rounded border bg-slate-100 text-slate-400 border-slate-200">
-            unavailable
-          </span>
+          <span className="text-xs px-2 py-0.5 rounded border bg-slate-100 text-slate-400 border-slate-200">unavailable</span>
         ) : hasCited ? (
-          <span className="text-xs px-2 py-0.5 rounded border bg-green-50 text-green-700 border-green-200 font-medium">
-            cited ✓
-          </span>
+          <span className="text-xs px-2 py-0.5 rounded border bg-green-50 text-green-700 border-green-200 font-medium">cited ✓</span>
         ) : (
-          <span className="text-xs px-2 py-0.5 rounded border bg-red-50 text-red-600 border-red-200 font-medium">
-            not cited
-          </span>
+          <span className="text-xs px-2 py-0.5 rounded border bg-red-50 text-red-600 border-red-200 font-medium">not cited</span>
         )}
       </div>
 
-      {hasError && (
-        <p className="text-xs text-slate-400">{result.error}</p>
-      )}
+      {hasError && <p className="text-xs text-slate-400">{result.error}</p>}
 
-      {!hasError && result.snippet && (
-        <SnippetText text={result.snippet} />
-      )}
+      {!hasError && result.snippet && <SnippetText text={result.snippet} />}
 
       {!hasError && hasCited && result.citations.length > 0 && (
         <div>
@@ -199,9 +377,7 @@ function QueryCard({ result }: { result: QueryResult }) {
             {result.citations.slice(0, 3).map(url => {
               let host = url;
               try { host = new URL(url).hostname.replace(/^www\./, ''); } catch { /* leave as-is */ }
-              return (
-                <li key={url} className="text-xs text-green-700 font-medium truncate">{host}</li>
-              );
+              return <li key={url} className="text-xs text-green-700 font-medium truncate">{host}</li>;
             })}
           </ul>
         </div>
@@ -283,7 +459,10 @@ function CitationResultsSection({
 
 // ─── LOADING SECTION ──────────────────────────────────────────────────────────
 
-function AuditLoadingSection({ stageLabel, stage }: { stageLabel: string | null; stage: 'discovering' | 'fetching' | 'scoring' }) {
+function AuditLoadingSection({ stageLabel, stage }: {
+  stageLabel: string | null;
+  stage: 'discovering' | 'fetching' | 'scoring';
+}) {
   return (
     <div className="border border-slate-200 bg-slate-50 rounded-lg px-5 py-5">
       <div className="flex items-center gap-3">
@@ -296,9 +475,9 @@ function AuditLoadingSection({ stageLabel, stage }: { stageLabel: string | null;
       </div>
       <div className="mt-4 space-y-2">
         {(['discovering', 'fetching', 'scoring'] as const).map((s) => {
-          const order   = { discovering: 0, fetching: 1, scoring: 2 };
-          const done    = order[s] < order[stage];
-          const active  = order[s] === order[stage];
+          const order  = { discovering: 0, fetching: 1, scoring: 2 };
+          const done   = order[s] < order[stage];
+          const active = order[s] === order[stage];
           return (
             <div key={s} className="flex items-center gap-2">
               <span className={`w-4 text-center text-xs ${done ? 'text-green-600' : active ? 'text-slate-700' : 'text-slate-300'}`}>
@@ -318,19 +497,16 @@ function AuditLoadingSection({ stageLabel, stage }: { stageLabel: string | null;
 // ─── PAGE ─────────────────────────────────────────────────────────────────────
 
 export function GeoAudit() {
-  const { state, stageLabel, queryState, suggestedQuery, suggestQuery, runQuery, runAudit, reset } = useGeoAudit();
+  const { state, stageLabel, queryState, signalState, suggestedQuery, suggestQuery, runQuery, runAudit, reset } = useGeoAudit();
 
-  const [domainInput, setDomainInput]   = useState('');
-  const [queryInput, setQueryInput]     = useState('');
+  const [domainInput, setDomainInput]       = useState('');
+  const [queryInput, setQueryInput]         = useState('');
   const [userTypedQuery, setUserTypedQuery] = useState(false);
   const [submittedQuery, setSubmittedQuery] = useState('');
-  const [domainError, setDomainError]   = useState('');
+  const [domainError, setDomainError]       = useState('');
 
-  // Pre-fill query from suggestion unless user has already typed
   useEffect(() => {
-    if (suggestedQuery && !userTypedQuery) {
-      setQueryInput(suggestedQuery);
-    }
+    if (suggestedQuery && !userTypedQuery) setQueryInput(suggestedQuery);
   }, [suggestedQuery, userTypedQuery]);
 
   function handleDomainBlur() {
@@ -375,8 +551,6 @@ export function GeoAudit() {
       {!isActive && (
         <div className="space-y-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-            {/* Domain */}
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Your domain</label>
               <div className="flex items-stretch border border-slate-200 rounded bg-white focus-within:border-slate-400 transition-colors">
@@ -398,7 +572,6 @@ export function GeoAudit() {
               <p className="text-xs text-slate-400">Paste a full URL — https:// will be stripped</p>
             </div>
 
-            {/* Query */}
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Search query</label>
               <input
@@ -410,7 +583,9 @@ export function GeoAudit() {
                 className="border border-slate-200 rounded bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-400 transition-colors"
               />
               <p className="text-xs text-slate-400">
-                {queryInput && !userTypedQuery ? 'Suggested from your domain — edit if needed' : 'Optional — leave blank to skip citation check'}
+                {queryInput && !userTypedQuery
+                  ? 'Suggested from your domain — edit if needed'
+                  : 'Optional — leave blank to skip citation check'}
               </p>
             </div>
           </div>
@@ -488,6 +663,19 @@ export function GeoAudit() {
                   <p className="text-sm text-slate-700 leading-relaxed">{score.verdict}</p>
                 </div>
               </div>
+
+              {/* Source type breakdown */}
+              {score.source_type_breakdown && (
+                <SourceTypeBreakdown
+                  breakdown={score.source_type_breakdown}
+                  dominance={score.retrieval_dominance}
+                />
+              )}
+
+              {/* Signal coverage */}
+              {signalState.status !== 'idle' && (
+                <SignalCoverageSection signalState={signalState} />
+              )}
 
               {/* Interpretation */}
               <ScoreInterpretation />

@@ -5,9 +5,10 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 }
 
-const ANTHROPIC_API = 'https://api.anthropic.com/v1/messages'
-const MODEL         = 'claude-sonnet-4-20250514'
-const CONTENT_CAP   = 600 // words per page sent to Claude
+const ANTHROPIC_API  = 'https://api.anthropic.com/v1/messages'
+const MODEL          = 'claude-sonnet-4-20250514'
+const HAIKU_MODEL    = 'claude-haiku-4-5-20251001'
+const CONTENT_CAP    = 600 // words per page sent to Claude
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
@@ -16,6 +17,14 @@ interface Page {
   type:      string
   content:   string
   wordCount: number
+}
+
+interface SourceTypeBreakdown {
+  editorial:  number
+  community:  number
+  aggregator: number
+  expert:     number
+  base_model: number
 }
 
 interface GeoScore {
@@ -27,9 +36,11 @@ interface GeoScore {
     citation_worthiness:   number
     comparison_anchoring:  number
   }
-  verdict:       string
-  pages_scored:  number
-  confidence:    'high' | 'medium' | 'low'
+  verdict:               string
+  pages_scored:          number
+  confidence:            'high' | 'medium' | 'low'
+  source_type_breakdown: SourceTypeBreakdown
+  retrieval_dominance:   string
 }
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
@@ -227,6 +238,38 @@ Return JSON only, no preamble, no markdown:
         { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       )
     }
+
+    // ── Second call: source type breakdown (Haiku, non-blocking) ─────────────
+    let source_type_breakdown: SourceTypeBreakdown = { editorial: 40, community: 20, aggregator: 20, expert: 10, base_model: 10 }
+    let retrieval_dominance = 'mixed'
+    try {
+      const breakdownRes = await fetch(ANTHROPIC_API, {
+        method:  'POST',
+        headers: { 'x-api-key': anthropicKey, 'anthropic-version': '2023-06-01', 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model:      HAIKU_MODEL,
+          max_tokens: 150,
+          system:     'You are an AI retrieval analyst. Given a GEO audit verdict and dimension scores, estimate what percentage of an AI engine\'s answer about this brand/category would be drawn from each source type: editorial reviews, community discussions (Reddit/forums), aggregator sites, expert/clinical sources, and base model priors. Return JSON only. Percentages must sum to 100.',
+          messages: [{
+            role:    'user',
+            content: `Verdict: ${score.verdict}\n\nScores: entity_clarity=${score.dimensions.entity_clarity}, claim_specificity=${score.dimensions.claim_specificity}, structure_legibility=${score.dimensions.structure_legibility}, citation_worthiness=${score.dimensions.citation_worthiness}, comparison_anchoring=${score.dimensions.comparison_anchoring}\n\nReturn JSON: { "source_type_breakdown": { "editorial": number, "community": number, "aggregator": number, "expert": number, "base_model": number }, "retrieval_dominance": "editorial" | "community" | "aggregator" | "mixed" }`,
+          }],
+        }),
+      })
+      if (breakdownRes.ok) {
+        const bd = await breakdownRes.json() as { content?: Array<{ text: string }> }
+        const bdRaw = bd.content?.[0]?.text?.trim() ?? ''
+        const bdCleaned = bdRaw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
+        const bdParsed = JSON.parse(bdCleaned) as { source_type_breakdown: SourceTypeBreakdown; retrieval_dominance: string }
+        source_type_breakdown = bdParsed.source_type_breakdown
+        retrieval_dominance   = bdParsed.retrieval_dominance
+      }
+    } catch (err) {
+      console.error('[geo-score] breakdown call failed, using defaults:', err)
+    }
+
+    score.source_type_breakdown = source_type_breakdown
+    score.retrieval_dominance   = retrieval_dominance
 
     await writeUsageLog({ tokensIn, tokensOut, status: 'success', durationMs, errorMessage: null })
 

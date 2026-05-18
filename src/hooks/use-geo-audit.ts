@@ -14,6 +14,14 @@ export interface GeoScore {
   verdict: string;
   pages_scored: number;
   confidence: 'high' | 'medium' | 'low';
+  source_type_breakdown?: {
+    editorial: number;
+    community: number;
+    aggregator: number;
+    expert: number;
+    base_model: number;
+  };
+  retrieval_dominance?: string;
 }
 
 export interface QueryResult {
@@ -23,6 +31,26 @@ export interface QueryResult {
   snippet: string;
   top_alternatives: string[];
   error?: string;
+}
+
+export interface BrandMention {
+  url: string;
+  source_type: 'editorial' | 'community' | 'aggregator' | 'expert';
+  mentioned: boolean;
+  context: string | null;
+  competitors_on_page: string[];
+}
+
+export interface SignalCoverageResult {
+  category: string;
+  sources_checked: number;
+  brand_mentions: BrandMention[];
+  signal_summary: {
+    editorial_coverage: 'strong' | 'partial' | 'absent';
+    community_coverage: 'strong' | 'partial' | 'absent';
+    expert_coverage: 'strong' | 'partial' | 'absent';
+    top_competitors_by_frequency: string[];
+  };
 }
 
 export type AuditStage = 'discovering' | 'fetching' | 'scoring';
@@ -37,6 +65,12 @@ type QueryState =
   | { status: 'idle' }
   | { status: 'running' }
   | { status: 'done'; query: string; results: QueryResult[] }
+  | { status: 'error'; message: string };
+
+type SignalState =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'done'; result: SignalCoverageResult }
   | { status: 'error'; message: string };
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
@@ -55,13 +89,35 @@ const STAGE_LABELS: Record<AuditStage, string> = {
 export function useGeoAudit() {
   const [state, setState]                   = useState<AuditState>({ status: 'idle' });
   const [queryState, setQueryState]         = useState<QueryState>({ status: 'idle' });
+  const [signalState, setSignalState]       = useState<SignalState>({ status: 'idle' });
   const [suggestedQuery, setSuggestedQuery] = useState('');
 
   const stageLabel =
     state.status === 'loading' ? STAGE_LABELS[state.stage] : null;
 
+  async function runSignalCoverage(domain: string, verdict: string) {
+    setSignalState({ status: 'loading' });
+    try {
+      const res = await fetch(`${FUNCTIONS_URL}/geo-signal-coverage`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ domain, verdict }),
+      });
+      const data = await res.json() as { success: boolean; result?: SignalCoverageResult; error?: string };
+      if (!data.success || !data.result) {
+        setSignalState({ status: 'error', message: data.error ?? 'Signal coverage check failed.' });
+        return;
+      }
+      setSignalState({ status: 'done', result: data.result });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Something went wrong.';
+      setSignalState({ status: 'error', message });
+    }
+  }
+
   async function runAudit(domain: string) {
     setState({ status: 'loading', stage: 'discovering' });
+    setSignalState({ status: 'idle' });
 
     try {
       // ── Step 1: geo-crawl ──────────────────────────────────────────────────
@@ -110,6 +166,9 @@ export function useGeoAudit() {
       }
 
       setState({ status: 'complete', domain, score: scoreData.score });
+
+      // ── Step 3: signal coverage (non-blocking) ────────────────────────────
+      runSignalCoverage(domain, scoreData.score.verdict);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
       setState({ status: 'error', message });
@@ -153,8 +212,19 @@ export function useGeoAudit() {
   function reset() {
     setState({ status: 'idle' });
     setQueryState({ status: 'idle' });
+    setSignalState({ status: 'idle' });
     setSuggestedQuery('');
   }
 
-  return { state, stageLabel, queryState, suggestedQuery, suggestQuery, runQuery, runAudit, reset };
+  return {
+    state,
+    stageLabel,
+    queryState,
+    signalState,
+    suggestedQuery,
+    suggestQuery,
+    runQuery,
+    runAudit,
+    reset,
+  };
 }
