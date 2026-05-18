@@ -18,6 +18,19 @@ function isValidDomain(s: string): boolean {
   return /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?\.[a-zA-Z]{2,}$/.test(s);
 }
 
+function overallScoreColour(n: number): string {
+  if (n >= 80) return 'text-green-700';
+  if (n >= 65) return 'text-amber-600';
+  return 'text-red-600';
+}
+
+function overallScoreLabel(n: number): string {
+  if (n >= 80) return 'Strong GEO readiness';
+  if (n >= 65) return 'Moderate — gaps remain';
+  if (n >= 50) return 'Low — significant work needed';
+  return 'Not AI-visible';
+}
+
 function scoreColour(n: number): string {
   if (n >= 70) return 'text-green-700';
   if (n >= 50) return 'text-amber-600';
@@ -58,6 +71,50 @@ function ScoreBar({ label, score }: { label: string; score: number }) {
           className={`h-full rounded-full transition-all ${barColour(score)}`}
           style={{ width: `${score}%` }}
         />
+      </div>
+    </div>
+  );
+}
+
+// ─── SCORE INTERPRETATION ─────────────────────────────────────────────────────
+
+const INTERPRETATION_ITEMS = [
+  {
+    title: 'Brand authority gap',
+    explanation: 'AI engines weight established brands more heavily than content quality alone.',
+    fix: 'Build cited mentions on high-authority sites like Healthline, Forbes Health, or specialist publications in your category.',
+  },
+  {
+    title: 'Training data coverage',
+    explanation: "If your brand isn't discussed across the web, AI models won't know you exist regardless of your on-page content.",
+    fix: 'PR, affiliate content, and review aggregators (Trustpilot, Google Reviews) all contribute to training data presence.',
+  },
+  {
+    title: 'Category competition',
+    explanation: 'In high-competition categories, AI defaults to known aggregators and authority sites before individual brands.',
+    fix: 'Target lower-competition queries where aggregators are absent — specific ingredients, conditions, or use cases rather than broad category terms.',
+  },
+  {
+    title: 'No llms.txt',
+    explanation: "Without an llms.txt file, AI crawlers have no structured description of what your brand sells or stands for.",
+    fix: 'Add an llms.txt to your root domain with a specific brand description, product list, and catalogue URL.',
+  },
+] as const;
+
+function ScoreInterpretation() {
+  return (
+    <div>
+      <SectionLabel>Why a good score doesn't guarantee visibility</SectionLabel>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {INTERPRETATION_ITEMS.map(item => (
+          <div key={item.title} className="bg-slate-50 border border-slate-200 rounded-lg px-4 py-4">
+            <p className="text-sm font-medium text-slate-800 mb-1">{item.title}</p>
+            <p className="text-xs text-slate-500 leading-relaxed">{item.explanation}</p>
+            <p className="text-xs text-slate-400 leading-relaxed mt-2">
+              <span className="font-medium text-slate-500">Fix: </span>{item.fix}
+            </p>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -297,14 +354,12 @@ function ResultsView({
       <div>
         <SectionLabel>GEO Readiness Score</SectionLabel>
         <div className="bg-white border border-slate-200 rounded-lg px-6 py-6 shadow-card flex items-center gap-5">
-          <span className={`text-6xl font-semibold tracking-tight tabular-nums leading-none ${scoreColour(score.overall)}`}>
+          <span className={`text-6xl font-semibold tracking-tight tabular-nums leading-none ${overallScoreColour(score.overall)}`}>
             {score.overall}
           </span>
           <div>
             <p className="text-sm font-medium text-slate-700">out of 100</p>
-            <p className="text-xs text-slate-400 mt-0.5">
-              {score.overall >= 70 ? 'Strong GEO readiness' : score.overall >= 50 ? 'Moderate GEO readiness' : 'Low GEO readiness'}
-            </p>
+            <p className="text-xs text-slate-400 mt-0.5">{overallScoreLabel(score.overall)}</p>
           </div>
         </div>
       </div>
@@ -327,14 +382,17 @@ function ResultsView({
         </div>
       </div>
 
-      {/* 5. Citation query */}
+      {/* 5. Score interpretation */}
+      <ScoreInterpretation />
+
+      {/* 6. Citation query */}
       <CitationQuerySection
         domain={domain}
         queryState={queryState}
         onRunQuery={onRunQuery}
       />
 
-      {/* 6. CTA */}
+      {/* 7. CTA */}
       <div className="border border-slate-200 rounded-lg px-6 py-6 bg-white shadow-card">
         <h2 className="text-base font-semibold text-slate-900 mb-2">Want the full picture?</h2>
         <p className="text-sm text-slate-500 leading-relaxed mb-5">
