@@ -18,10 +18,14 @@ function classifyUrl(raw: string): PageType {
   try {
     const { pathname } = new URL(raw)
     const p = pathname.toLowerCase()
-    if (/\/(products?|item|pd)\/[^/]/.test(p))                                          return 'product'
-    if (/\/(collections?|categor(y|ies)|cat)\/[^/]/.test(p))                            return 'collection'
-    if (/\/(blog|articles?|news|posts?|learn|guides?|resources?)\/[^/]/.test(p))        return 'content'
-    if (p === '/' || /^\/(about|contact|faq|faqs?|pricing|our-story|how-it-works)(\/|$)/.test(p)) return 'core'
+    // Products
+    if (/\/(products?|item|pd)\/[^/]/.test(p)) return 'product'
+    // Collections / categories
+    if (/\/(collections?|categor(y|ies)|cat)\/[^/]/.test(p)) return 'collection'
+    // Content — /blog/, /blogs/, /articles/, /news/, /posts/, /learn/, /guides/, /resources/, /journal/
+    if (/\/(blogs?|articles?|news|posts?|learn|guides?|resources?|journal)\/[^/]/.test(p)) return 'content'
+    // Core — bare paths and Shopify /pages/* convention
+    if (p === '/' || /^\/(pages\/)?(about|contact|faq|faqs?|pricing|our-story|how-it-works|who-we-are)(\/|$)/.test(p)) return 'core'
     return 'other'
   } catch {
     return 'other'
@@ -186,6 +190,15 @@ Deno.serve(async (req) => {
       classified.push({ url, type: classifyUrl(url) })
     }
 
+    // Full classification breakdown for debugging
+    const classBreakdown: Record<string, string[]> = { product: [], collection: [], content: [], core: [], other: [] }
+    for (const { url, type } of classified) classBreakdown[type].push(url)
+    console.log(`[geo-crawl] classification breakdown: ${JSON.stringify(Object.fromEntries(Object.entries(classBreakdown).map(([k, v]) => [k, v.length])))}`)
+    console.log(`[geo-crawl] product urls: ${JSON.stringify(classBreakdown.product.slice(0, 5))}`)
+    console.log(`[geo-crawl] content urls: ${JSON.stringify(classBreakdown.content.slice(0, 5))}`)
+    console.log(`[geo-crawl] core urls: ${JSON.stringify(classBreakdown.core.slice(0, 5))}`)
+    console.log(`[geo-crawl] other sample: ${JSON.stringify(classBreakdown.other.slice(0, 10))}`)
+
     // ── Step 3: sample — first N per type in sitemap order ───────────────────
     const counts: Record<string, number> = { product: 0, collection: 0, content: 0, core: 0 }
     const sampled: { url: string; type: PageType }[] = []
@@ -273,7 +286,17 @@ Deno.serve(async (req) => {
 
     console.log(`[geo-crawl] returning response with ${pages.length} pages, ${skipped.length} skipped`)
     return new Response(
-      JSON.stringify({ success: true, pages, skipped }),
+      JSON.stringify({
+        success: true,
+        pages,
+        skipped,
+        debug: {
+          raw_link_count: rawLinks.length,
+          classified: Object.fromEntries(Object.entries(classBreakdown).map(([k, v]) => [k, v.length])),
+          sampled_urls: sampled.map(s => ({ url: s.url, type: s.type })),
+          other_sample: classBreakdown.other.slice(0, 15),
+        },
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     )
   } catch (error) {
