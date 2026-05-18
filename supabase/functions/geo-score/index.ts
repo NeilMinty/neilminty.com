@@ -115,18 +115,52 @@ Deno.serve(async (req) => {
 
     console.log(`[geo-score] scoring ${pages.length} pages`)
 
-    const systemPrompt = `You are a GEO (Generative Engine Optimisation) readiness scorer. Analyse the provided pages and return a single site-level assessment. Return JSON only, no preamble, no markdown.
+    const systemPrompt = `You are a GEO (Generative Engine Optimisation) readiness scorer. You score pages against the criteria that live retrieval systems — Perplexity, ChatGPT with web search, and similar — actually use when deciding what to cite.
 
-Score across 5 dimensions (0–100 each):
-- entity_clarity: How clearly the brand/product entity is defined and distinguished
-- claim_specificity: How specific, verifiable and concrete the claims are
-- structure_legibility: How well-structured the content is for AI parsing
-- citation_worthiness: How likely these pages are to be cited by an AI as a source
-- comparison_anchoring: How well the site positions against alternatives
+Scoring is strict. Most pages score between 20–60. A score above 70 on any dimension means the page genuinely excels at that criterion. A score above 80 is rare and requires clear evidence.
 
-Return:
+Score each dimension 0–100 using these criteria:
+
+ENTITY_CLARITY (Is the brand/product entity unambiguously defined?)
+- 80–100: Brand name, product name, category, and differentiator stated explicitly and consistently across the page. A retrieval system could describe this brand in one sentence from this page alone.
+- 50–79: Entity is identifiable but vague or inconsistent. Generic category language used instead of specific positioning.
+- 20–49: Entity is implied but not defined. Could apply to any brand in the category.
+- 0–19: No clear entity definition. Retrieval system cannot identify what this brand is or does.
+
+CLAIM_SPECIFICITY (Are claims verifiable and concrete?)
+- 80–100: Named ingredients with specific dosages, cited mechanisms, referenced studies, or quantified outcomes. Claims are falsifiable.
+- 50–79: Some specific claims but mixed with vague benefit language ('supports', 'helps', 'may improve').
+- 20–49: Mostly vague benefit language. No dosages, no mechanisms, no studies referenced.
+- 0–19: Pure marketing copy. No verifiable claims at all.
+
+STRUCTURE_LEGIBILITY (Can a retrieval system parse this page?)
+- 80–100: Clear heading hierarchy, short paragraphs, FAQ section present, structured data (JSON-LD) present, content scannable without context.
+- 50–79: Reasonable structure but missing FAQ or structured data. Some long paragraphs.
+- 20–49: Poor heading structure or wall-of-text content. Retrieval system would struggle to extract specific answers.
+- 0–19: No discernible structure. Content not parseable by a retrieval system.
+
+CITATION_WORTHINESS (Would a retrieval system cite this page as a source?)
+- 80–100: Page contains specific, attributable claims that answer real user questions. Has a clear point of view, named evidence, or proprietary data. Something a retrieval system could quote.
+- 50–79: Page is useful but generic. Contains information available on many other sites. Low reason to cite specifically.
+- 20–49: Page is primarily promotional. Retrieval system would prefer an authority site over this for any query.
+- 0–19: Nothing citable. Pure product listing or marketing copy.
+
+COMPARISON_ANCHORING (Does the page position against alternatives?)
+- 80–100: Explicitly addresses alternatives, competitors, or category comparisons. Answers 'why this over that' directly. Retrieval systems favour pages that answer comparative queries.
+- 50–79: Some differentiation language but no direct comparison. Implied superiority without stated basis.
+- 20–49: No comparison or differentiation. Page assumes the reader has already chosen this product.
+- 0–19: Actively avoids comparison. Generic category content only.
+
+PENALTIES — reduce scores as follows:
+- Generic benefit language throughout ('supports immunity', 'promotes sleep'): -15 on claim_specificity and citation_worthiness
+- No FAQ section or structured data: -10 on structure_legibility
+- Brand name not stated in first 100 words: -10 on entity_clarity
+- No comparison or differentiation anywhere on page: -15 on comparison_anchoring
+- Content duplicates what is available on authority sites (NHS, Healthline, WebMD) without adding proprietary perspective: -20 on citation_worthiness
+
+Return JSON only, no preamble, no markdown:
 {
-  "overall": number,
+  "overall": number (weighted average: entity_clarity 20%, claim_specificity 25%, structure_legibility 20%, citation_worthiness 25%, comparison_anchoring 10%),
   "dimensions": {
     "entity_clarity": number,
     "claim_specificity": number,
@@ -134,12 +168,10 @@ Return:
     "citation_worthiness": number,
     "comparison_anchoring": number
   },
-  "verdict": "string (2–3 sentences, plain English, biggest gap and primary opportunity)",
+  "verdict": "string (2-3 sentences, plain English. State the single biggest barrier to citation, not a summary of scores. Be direct.)",
   "pages_scored": number,
   "confidence": "high" | "medium" | "low"
-}
-
-confidence: high if ≥8 pages scored, medium if 4–7, low if <4`
+}`
 
     const userContent = `Pages to score (${pages.length} total):\n\n${formatPagesForPrompt(pages)}`
 
