@@ -13,6 +13,7 @@ import { PaybackPeriod } from '@/pages/tools/PaybackPeriod';
 import { SupportCostLeakage } from '@/pages/tools/SupportCostLeakage';
 import { TaxonomyBuilder } from '@/pages/tools/TaxonomyBuilder';
 import { GrowthRoomPrivacy } from '@/pages/GrowthRoomPrivacy';
+import { GrowthRoomTerms } from '@/pages/GrowthRoomTerms';
 
 export default function App() {
   return (
@@ -32,6 +33,7 @@ export default function App() {
           <Route path="/tools/support-cost-leakage" element={<SupportCostLeakage />} />
           <Route path="/tools/taxonomy-builder" element={<TaxonomyBuilder />} />
           <Route path="/growth-room-privacy" element={<GrowthRoomPrivacy />} />
+          <Route path="/growth-room-terms" element={<GrowthRoomTerms />} />
         </Routes>
       </main>
       <footer className="py-8 border-t border-slate-200">
@@ -40,6 +42,7 @@ export default function App() {
           <div className="flex gap-4">
             <Link to="/about" className="text-sm text-slate-400 hover:text-slate-600 no-underline hover:underline transition-colors">About</Link>
             <Link to="/growth-room-privacy" className="text-sm text-slate-400 hover:text-slate-600 no-underline hover:underline transition-colors">Growth Room Privacy Policy</Link>
+            <Link to="/growth-room-terms" className="text-sm text-slate-400 hover:text-slate-600 no-underline hover:underline transition-colors">Growth Room T&Cs</Link>
           </div>
         </div>
       </footer>
