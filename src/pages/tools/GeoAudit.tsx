@@ -120,7 +120,7 @@ function ScoreInterpretation() {
   );
 }
 
-// ─── CITATION QUERY SECTION ───────────────────────────────────────────────────
+// ─── CITATION RESULTS ─────────────────────────────────────────────────────────
 
 function citationMessage(results: QueryResult[]): string {
   const citedCount = results.filter(r => r.cited && !r.error).length;
@@ -162,8 +162,8 @@ function SnippetText({ text }: { text: string }) {
 }
 
 function QueryCard({ result }: { result: QueryResult }) {
-  const hasCited  = result.cited && !result.error;
-  const hasError  = !!result.error;
+  const hasCited = result.cited && !result.error;
+  const hasError = !!result.error;
 
   return (
     <div className="bg-white border border-slate-200 rounded-lg px-5 py-5 shadow-card flex flex-col gap-3">
@@ -225,70 +225,31 @@ function QueryCard({ result }: { result: QueryResult }) {
   );
 }
 
-function CitationQuerySection({
-  domain,
+function CitationResultsSection({
   queryState,
-  onRunQuery,
+  query,
 }: {
-  domain: string;
   queryState: ReturnType<typeof useGeoAudit>['queryState'];
-  onRunQuery: (domain: string, query: string) => void;
+  query: string;
 }) {
-  const [queryInput, setQueryInput] = useState('');
-  const [prefilled, setPrefilled]   = useState(false);
-
-  // Pre-fill input when suggested query arrives
-  useEffect(() => {
-    if (queryState.status === 'ready' && queryState.suggestedQuery && !prefilled) {
-      setQueryInput(queryState.suggestedQuery);
-      setPrefilled(true);
-    }
-  }, [queryState, prefilled]);
-
-  const isRunning = queryState.status === 'running' || queryState.status === 'suggesting';
-
-  function handleRun() {
-    if (!queryInput.trim()) return;
-    onRunQuery(domain, queryInput.trim());
-  }
-
   const results  = queryState.status === 'done' ? queryState.results : null;
   const message  = results ? citationMessage(results) : null;
   const citedAny = results ? results.some(r => r.cited && !r.error) : false;
 
   return (
-    <div className="pt-10 border-t border-slate-200 space-y-6">
-      <div>
-        <SectionLabel>Test Your AI Visibility</SectionLabel>
-        <p className="text-sm text-slate-500 leading-relaxed">
-          Enter a search query your customers would use to see whether your site appears in AI engine responses.
-        </p>
-      </div>
+    <div className="space-y-4">
+      <SectionLabel>Test Your AI Visibility</SectionLabel>
 
-      <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-slate-700">Search query</label>
-        <div className="flex gap-3 flex-col sm:flex-row">
-          <input
-            type="text"
-            value={queryInput}
-            onChange={e => setQueryInput(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') handleRun(); }}
-            placeholder="e.g. best natural supplements for sleep"
-            disabled={isRunning}
-            className="flex-1 border border-slate-200 rounded bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-400 transition-colors disabled:opacity-50 min-w-0"
-          />
-          <button
-            onClick={handleRun}
-            disabled={isRunning || !queryInput.trim()}
-            className="bg-slate-900 text-white px-6 py-2.5 rounded text-sm font-medium hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-          >
-            {isRunning ? 'Running…' : 'Run Query'}
-          </button>
+      {queryState.status === 'running' && (
+        <div className="border border-slate-200 bg-slate-50 rounded-lg px-4 py-4 flex items-center gap-3">
+          <div className="flex gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+          </div>
+          <p className="text-sm text-slate-600">Checking AI citations for "{query}"…</p>
         </div>
-        {queryState.status === 'suggesting' && (
-          <p className="text-xs text-slate-400">Suggesting a query…</p>
-        )}
-      </div>
+      )}
 
       {queryState.status === 'error' && (
         <div className="border border-red-200 bg-red-50 rounded-lg px-4 py-3">
@@ -297,11 +258,10 @@ function CitationQuerySection({
       )}
 
       {results && (
-        <div className="space-y-4">
+        <>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {results.map(r => <QueryCard key={r.engine} result={r} />)}
           </div>
-
           {message && (
             <div className="border border-slate-200 rounded-lg px-5 py-5 bg-white shadow-card">
               <p className="text-sm text-slate-700 leading-relaxed mb-4">{message}</p>
@@ -315,107 +275,42 @@ function CitationQuerySection({
               )}
             </div>
           )}
-        </div>
+        </>
       )}
     </div>
   );
 }
 
-// ─── RESULTS VIEW ─────────────────────────────────────────────────────────────
+// ─── LOADING SECTION ──────────────────────────────────────────────────────────
 
-function ResultsView({
-  domain,
-  score,
-  queryState,
-  onRunQuery,
-  onReset,
-}: {
-  domain: string;
-  score: GeoScore;
-  queryState: ReturnType<typeof useGeoAudit>['queryState'];
-  onRunQuery: (domain: string, query: string) => void;
-  onReset: () => void;
-}) {
+function AuditLoadingSection({ stageLabel, stage }: { stageLabel: string | null; stage: 'discovering' | 'fetching' | 'scoring' }) {
   return (
-    <div className="space-y-8">
-
-      {/* 1. Domain + meta */}
-      <div className="flex flex-wrap items-center gap-3">
-        <span className="text-sm font-medium text-slate-700">{domain}</span>
-        <span className="text-slate-300">·</span>
-        <span className="text-sm text-slate-500">{score.pages_scored} page{score.pages_scored !== 1 ? 's' : ''} scored</span>
-        <span className="text-slate-300">·</span>
-        <span className={`text-xs font-medium px-2 py-0.5 rounded border ${confidenceBadge(score.confidence)}`}>
-          {score.confidence} confidence
-        </span>
-      </div>
-
-      {/* 2. Overall score */}
-      <div>
-        <SectionLabel>GEO Readiness Score</SectionLabel>
-        <div className="bg-white border border-slate-200 rounded-lg px-6 py-6 shadow-card flex items-center gap-5">
-          <span className={`text-6xl font-semibold tracking-tight tabular-nums leading-none ${overallScoreColour(score.overall)}`}>
-            {score.overall}
-          </span>
-          <div>
-            <p className="text-sm font-medium text-slate-700">out of 100</p>
-            <p className="text-xs text-slate-400 mt-0.5">{overallScoreLabel(score.overall)}</p>
-          </div>
+    <div className="border border-slate-200 bg-slate-50 rounded-lg px-5 py-5">
+      <div className="flex items-center gap-3">
+        <div className="flex gap-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+          <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+          <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '300ms' }} />
         </div>
+        <p className="text-sm text-slate-600">{stageLabel}</p>
       </div>
-
-      {/* 3. Dimension bars */}
-      <div>
-        <SectionLabel>Dimensions</SectionLabel>
-        <div className="bg-white border border-slate-200 rounded-lg px-5 py-5 shadow-card space-y-4">
-          {(Object.entries(score.dimensions) as [keyof GeoScore['dimensions'], number][]).map(([key, val]) => (
-            <ScoreBar key={key} label={DIMENSION_LABELS[key]} score={val} />
-          ))}
-        </div>
+      <div className="mt-4 space-y-2">
+        {(['discovering', 'fetching', 'scoring'] as const).map((s) => {
+          const order   = { discovering: 0, fetching: 1, scoring: 2 };
+          const done    = order[s] < order[stage];
+          const active  = order[s] === order[stage];
+          return (
+            <div key={s} className="flex items-center gap-2">
+              <span className={`w-4 text-center text-xs ${done ? 'text-green-600' : active ? 'text-slate-700' : 'text-slate-300'}`}>
+                {done ? '✓' : active ? '›' : '·'}
+              </span>
+              <span className={`text-sm ${done ? 'text-slate-400' : active ? 'text-slate-700 font-medium' : 'text-slate-300'}`}>
+                {s === 'discovering' ? 'Discovering pages' : s === 'fetching' ? 'Fetching content' : 'Scoring'}
+              </span>
+            </div>
+          );
+        })}
       </div>
-
-      {/* 4. Verdict */}
-      <div>
-        <SectionLabel>Verdict</SectionLabel>
-        <div className="border border-slate-200 bg-slate-50 rounded-lg p-4">
-          <p className="text-sm text-slate-700 leading-relaxed">{score.verdict}</p>
-        </div>
-      </div>
-
-      {/* 5. Score interpretation */}
-      <ScoreInterpretation />
-
-      {/* 6. Citation query */}
-      <CitationQuerySection
-        domain={domain}
-        queryState={queryState}
-        onRunQuery={onRunQuery}
-      />
-
-      {/* 7. CTA */}
-      <div className="border border-slate-200 rounded-lg px-6 py-6 bg-white shadow-card">
-        <h2 className="text-base font-semibold text-slate-900 mb-2">Want the full picture?</h2>
-        <p className="text-sm text-slate-500 leading-relaxed mb-5">
-          This audit scores surface-level GEO signals. A full audit goes deeper: per-page rewrite briefs, JSON-LD schema implementation, llms.txt generation, Citation Share tracking against competitors, and benchmark scoring against the top-ranking sites in your category.
-        </p>
-        <a
-          href="mailto:neil@personaify.io?subject=GEO Audit Request"
-          className="inline-block bg-slate-900 text-white px-6 py-2.5 rounded text-sm font-medium hover:bg-slate-800 transition-colors"
-        >
-          Apply for a full audit →
-        </a>
-      </div>
-
-      {/* Reset */}
-      <div className="flex sm:justify-end pt-2 border-t border-slate-200">
-        <button
-          onClick={onReset}
-          className="w-full sm:w-auto border border-slate-200 text-slate-700 px-6 py-2.5 rounded text-sm font-medium hover:bg-slate-50 hover:border-slate-300 transition-colors"
-        >
-          Audit another domain
-        </button>
-      </div>
-
     </div>
   );
 }
@@ -423,34 +318,51 @@ function ResultsView({
 // ─── PAGE ─────────────────────────────────────────────────────────────────────
 
 export function GeoAudit() {
-  const { state, stageLabel, queryState, runAudit, runQuery, reset } = useGeoAudit();
-  const [input, setInput]         = useState('');
-  const [domainError, setDomainError] = useState('');
+  const { state, stageLabel, queryState, suggestedQuery, suggestQuery, runQuery, runAudit, reset } = useGeoAudit();
 
+  const [domainInput, setDomainInput]   = useState('');
+  const [queryInput, setQueryInput]     = useState('');
+  const [userTypedQuery, setUserTypedQuery] = useState(false);
+  const [submittedQuery, setSubmittedQuery] = useState('');
+  const [domainError, setDomainError]   = useState('');
+
+  // Pre-fill query from suggestion unless user has already typed
   useEffect(() => {
-    console.log('[geo-audit] VITE_NEILMINTY_SUPABASE_URL:', import.meta.env.VITE_NEILMINTY_SUPABASE_URL);
-    console.log('[geo-audit] VITE_NEILMINTY_SUPABASE_ANON_KEY present:', !!import.meta.env.VITE_NEILMINTY_SUPABASE_ANON_KEY);
-  }, []);
+    if (suggestedQuery && !userTypedQuery) {
+      setQueryInput(suggestedQuery);
+    }
+  }, [suggestedQuery, userTypedQuery]);
+
+  function handleDomainBlur() {
+    const domain = normaliseDomain(domainInput);
+    if (isValidDomain(domain)) suggestQuery(domain);
+  }
 
   function handleSubmit() {
-    const domain = normaliseDomain(input);
+    const domain = normaliseDomain(domainInput);
     if (!isValidDomain(domain)) {
       setDomainError('Enter a valid domain, e.g. example.com');
       return;
     }
     setDomainError('');
+    const query = queryInput.trim();
+    setSubmittedQuery(query);
     runAudit(domain);
+    if (query) runQuery(domain, query);
   }
 
   function handleReset() {
     reset();
-    setInput('');
+    setDomainInput('');
+    setQueryInput('');
+    setUserTypedQuery(false);
+    setSubmittedQuery('');
     setDomainError('');
   }
 
-  function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === 'Enter') handleSubmit();
-  }
+  const isActive = state.status === 'loading' || state.status === 'complete';
+  const domain   = state.status === 'complete' ? state.domain : normaliseDomain(domainInput);
+  const score    = state.status === 'complete' ? state.score : null;
 
   return (
     <ToolLayout
@@ -458,38 +370,57 @@ export function GeoAudit() {
       description="How visible is your site to AI engines? Enter a domain to get a GEO readiness score across five dimensions — entity clarity, claim specificity, structure legibility, citation worthiness, and comparison anchoring."
       metaDescription="Free GEO readiness audit. Score your site across five generative engine optimisation dimensions — entity clarity, claim specificity, structure, citation worthiness, and comparison anchoring."
     >
-      {/* ── Input ─────────────────────────────────────────────────────────── */}
-      {(state.status === 'idle' || state.status === 'error') && (
-        <div className="space-y-6">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-slate-700">Domain</label>
-            <div className="flex gap-3 flex-col sm:flex-row">
-              <div className="flex-1 flex items-stretch border border-slate-200 rounded bg-white focus-within:border-slate-400 transition-colors">
+
+      {/* ── Input form ────────────────────────────────────────────────────── */}
+      {!isActive && (
+        <div className="space-y-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+            {/* Domain */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-slate-700">Your domain</label>
+              <div className="flex items-stretch border border-slate-200 rounded bg-white focus-within:border-slate-400 transition-colors">
                 <span className="px-3 text-sm text-slate-400 border-r border-slate-200 flex items-center bg-slate-50 rounded-l select-none shrink-0">
                   https://
                 </span>
                 <input
                   type="text"
-                  value={input}
-                  onChange={(e) => { setInput(e.target.value); setDomainError(''); }}
-                  onKeyDown={handleKeyDown}
+                  value={domainInput}
+                  onChange={(e) => { setDomainInput(e.target.value); setDomainError(''); }}
+                  onBlur={handleDomainBlur}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit(); }}
                   placeholder="example.com"
                   className="flex-1 px-3 py-2 text-sm text-slate-900 bg-transparent outline-none min-w-0"
                   autoFocus
                 />
               </div>
-              <button
-                onClick={handleSubmit}
-                className="bg-slate-900 text-white px-6 py-2.5 rounded text-sm font-medium hover:bg-slate-800 transition-colors whitespace-nowrap"
-              >
-                Run GEO Audit
-              </button>
+              {domainError && <p className="text-xs text-red-600">{domainError}</p>}
+              <p className="text-xs text-slate-400">Paste a full URL — https:// will be stripped</p>
             </div>
-            {domainError && (
-              <p className="text-xs text-red-600">{domainError}</p>
-            )}
-            <p className="text-xs text-slate-400">Paste a full URL — https:// will be stripped automatically</p>
+
+            {/* Query */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-slate-700">Search query</label>
+              <input
+                type="text"
+                value={queryInput}
+                onChange={(e) => { setQueryInput(e.target.value); setUserTypedQuery(true); }}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit(); }}
+                placeholder="e.g. best supplements for sleep UK"
+                className="border border-slate-200 rounded bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-400 transition-colors"
+              />
+              <p className="text-xs text-slate-400">
+                {queryInput && !userTypedQuery ? 'Suggested from your domain — edit if needed' : 'Optional — leave blank to skip citation check'}
+              </p>
+            </div>
           </div>
+
+          <button
+            onClick={handleSubmit}
+            className="bg-slate-900 text-white px-6 py-2.5 rounded text-sm font-medium hover:bg-slate-800 transition-colors"
+          >
+            Run Audit
+          </button>
 
           {state.status === 'error' && (
             <div className="border border-red-200 bg-red-50 rounded-lg px-4 py-3">
@@ -499,73 +430,104 @@ export function GeoAudit() {
         </div>
       )}
 
-      {/* ── Loading ───────────────────────────────────────────────────────── */}
-      {state.status === 'loading' && (
-        <div className="space-y-6">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-slate-700">Domain</label>
-            <div className="flex gap-3 flex-col sm:flex-row">
-              <div className="flex-1 flex items-stretch border border-slate-200 rounded bg-white opacity-50">
-                <span className="px-3 text-sm text-slate-400 border-r border-slate-200 flex items-center bg-slate-50 rounded-l select-none shrink-0">
-                  https://
+      {/* ── Active view ───────────────────────────────────────────────────── */}
+      {isActive && (
+        <div className="space-y-8">
+
+          {/* Domain + meta */}
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-sm font-medium text-slate-700">{domain}</span>
+            {score && (
+              <>
+                <span className="text-slate-300">·</span>
+                <span className="text-sm text-slate-500">{score.pages_scored} page{score.pages_scored !== 1 ? 's' : ''} scored</span>
+                <span className="text-slate-300">·</span>
+                <span className={`text-xs font-medium px-2 py-0.5 rounded border ${confidenceBadge(score.confidence)}`}>
+                  {score.confidence} confidence
                 </span>
-                <input
-                  type="text"
-                  value={input}
-                  readOnly
-                  className="flex-1 px-3 py-2 text-sm text-slate-900 bg-transparent outline-none min-w-0"
-                />
-              </div>
-              <button
-                disabled
-                className="bg-slate-900 text-white px-6 py-2.5 rounded text-sm font-medium opacity-50 cursor-not-allowed whitespace-nowrap"
-              >
-                Run GEO Audit
-              </button>
-            </div>
+              </>
+            )}
           </div>
 
-          <div className="border border-slate-200 bg-slate-50 rounded-lg px-5 py-5">
-            <div className="flex items-center gap-3">
-              <div className="flex gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-                <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '150ms' }} />
-                <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '300ms' }} />
-              </div>
-              <p className="text-sm text-slate-600">{stageLabel}</p>
-            </div>
-            <div className="mt-4 space-y-2">
-              {(['discovering', 'fetching', 'scoring'] as const).map((stage) => {
-                const stageOrder   = { discovering: 0, fetching: 1, scoring: 2 };
-                const currentOrder = stageOrder[state.stage];
-                const thisOrder    = stageOrder[stage];
-                const done         = thisOrder < currentOrder;
-                const active       = thisOrder === currentOrder;
-                return (
-                  <div key={stage} className="flex items-center gap-2">
-                    <span className={`w-4 text-center text-xs ${done ? 'text-green-600' : active ? 'text-slate-700' : 'text-slate-300'}`}>
-                      {done ? '✓' : active ? '›' : '·'}
-                    </span>
-                    <span className={`text-sm ${done ? 'text-slate-400' : active ? 'text-slate-700 font-medium' : 'text-slate-300'}`}>
-                      {stage === 'discovering' ? 'Discovering pages' : stage === 'fetching' ? 'Fetching content' : 'Scoring'}
-                    </span>
+          {/* Audit: loading */}
+          {state.status === 'loading' && (
+            <AuditLoadingSection stageLabel={stageLabel} stage={state.stage} />
+          )}
+
+          {/* Audit: results */}
+          {score && (
+            <>
+              {/* Overall score */}
+              <div>
+                <SectionLabel>GEO Readiness Score</SectionLabel>
+                <div className="bg-white border border-slate-200 rounded-lg px-6 py-6 shadow-card flex items-center gap-5">
+                  <span className={`text-6xl font-semibold tracking-tight tabular-nums leading-none ${overallScoreColour(score.overall)}`}>
+                    {score.overall}
+                  </span>
+                  <div>
+                    <p className="text-sm font-medium text-slate-700">out of 100</p>
+                    <p className="text-xs text-slate-400 mt-0.5">{overallScoreLabel(score.overall)}</p>
                   </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
+                </div>
+              </div>
 
-      {/* ── Results ───────────────────────────────────────────────────────── */}
-      {state.status === 'complete' && (
-        <ResultsView
-          domain={state.domain}
-          score={state.score}
-          queryState={queryState}
-          onRunQuery={runQuery}
-          onReset={handleReset}
-        />
+              {/* Dimensions */}
+              <div>
+                <SectionLabel>Dimensions</SectionLabel>
+                <div className="bg-white border border-slate-200 rounded-lg px-5 py-5 shadow-card space-y-4">
+                  {(Object.entries(score.dimensions) as [keyof GeoScore['dimensions'], number][]).map(([key, val]) => (
+                    <ScoreBar key={key} label={DIMENSION_LABELS[key]} score={val} />
+                  ))}
+                </div>
+              </div>
+
+              {/* Verdict */}
+              <div>
+                <SectionLabel>Verdict</SectionLabel>
+                <div className="border border-slate-200 bg-slate-50 rounded-lg p-4">
+                  <p className="text-sm text-slate-700 leading-relaxed">{score.verdict}</p>
+                </div>
+              </div>
+
+              {/* Interpretation */}
+              <ScoreInterpretation />
+            </>
+          )}
+
+          {/* Citation results — independent of audit state */}
+          {submittedQuery && queryState.status !== 'idle' && (
+            <div className="pt-2 border-t border-slate-200">
+              <CitationResultsSection queryState={queryState} query={submittedQuery} />
+            </div>
+          )}
+
+          {/* CTA */}
+          {score && (
+            <div className="border border-slate-200 rounded-lg px-6 py-6 bg-white shadow-card">
+              <h2 className="text-base font-semibold text-slate-900 mb-2">Want the full picture?</h2>
+              <p className="text-sm text-slate-500 leading-relaxed mb-5">
+                This audit scores surface-level GEO signals. A full audit goes deeper: per-page rewrite briefs, JSON-LD schema implementation, llms.txt generation, Citation Share tracking against competitors, and benchmark scoring against the top-ranking sites in your category.
+              </p>
+              <a
+                href="mailto:neil@personaify.io?subject=GEO Audit Request"
+                className="inline-block bg-slate-900 text-white px-6 py-2.5 rounded text-sm font-medium hover:bg-slate-800 transition-colors"
+              >
+                Apply for a full audit →
+              </a>
+            </div>
+          )}
+
+          {/* Reset */}
+          <div className="flex sm:justify-end pt-2 border-t border-slate-200">
+            <button
+              onClick={handleReset}
+              className="w-full sm:w-auto border border-slate-200 text-slate-700 px-6 py-2.5 rounded text-sm font-medium hover:bg-slate-50 hover:border-slate-300 transition-colors"
+            >
+              Audit another domain
+            </button>
+          </div>
+
+        </div>
       )}
     </ToolLayout>
   );

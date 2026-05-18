@@ -35,8 +35,6 @@ type AuditState =
 
 type QueryState =
   | { status: 'idle' }
-  | { status: 'suggesting' }
-  | { status: 'ready'; suggestedQuery: string }
   | { status: 'running' }
   | { status: 'done'; query: string; results: QueryResult[] }
   | { status: 'error'; message: string };
@@ -55,15 +53,15 @@ const STAGE_LABELS: Record<AuditStage, string> = {
 // ─── HOOK ─────────────────────────────────────────────────────────────────────
 
 export function useGeoAudit() {
-  const [state, setState]             = useState<AuditState>({ status: 'idle' });
-  const [queryState, setQueryState]   = useState<QueryState>({ status: 'idle' });
+  const [state, setState]                   = useState<AuditState>({ status: 'idle' });
+  const [queryState, setQueryState]         = useState<QueryState>({ status: 'idle' });
+  const [suggestedQuery, setSuggestedQuery] = useState('');
 
   const stageLabel =
     state.status === 'loading' ? STAGE_LABELS[state.stage] : null;
 
   async function runAudit(domain: string) {
     setState({ status: 'loading', stage: 'discovering' });
-    setQueryState({ status: 'idle' });
 
     try {
       // ── Step 1: geo-crawl ──────────────────────────────────────────────────
@@ -112,26 +110,23 @@ export function useGeoAudit() {
       }
 
       setState({ status: 'complete', domain, score: scoreData.score });
-
-      // ── Step 3: suggest query (non-blocking) ──────────────────────────────
-      setQueryState({ status: 'suggesting' });
-      try {
-        const suggestRes = await fetch(`${FUNCTIONS_URL}/geo-suggest`, {
-          method:  'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({ domain, verdict: scoreData.score.verdict }),
-        });
-        const suggestData = await suggestRes.json() as { success: boolean; query?: string };
-        const suggestedQuery = suggestData.success && suggestData.query
-          ? suggestData.query
-          : '';
-        setQueryState({ status: 'ready', suggestedQuery });
-      } catch {
-        setQueryState({ status: 'ready', suggestedQuery: '' });
-      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
       setState({ status: 'error', message });
+    }
+  }
+
+  async function suggestQuery(domain: string) {
+    try {
+      const res = await fetch(`${FUNCTIONS_URL}/geo-suggest`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ domain, verdict: 'a brand website' }),
+      });
+      const data = await res.json() as { success: boolean; query?: string };
+      if (data.success && data.query) setSuggestedQuery(data.query);
+    } catch {
+      // silently ignore
     }
   }
 
@@ -158,7 +153,8 @@ export function useGeoAudit() {
   function reset() {
     setState({ status: 'idle' });
     setQueryState({ status: 'idle' });
+    setSuggestedQuery('');
   }
 
-  return { state, stageLabel, queryState, runQuery, runAudit, reset };
+  return { state, stageLabel, queryState, suggestedQuery, suggestQuery, runQuery, runAudit, reset };
 }
