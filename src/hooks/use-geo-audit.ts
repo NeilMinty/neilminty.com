@@ -14,6 +14,7 @@ export interface GeoScore {
   verdict: string;
   pages_scored: number;
   confidence: 'high' | 'medium' | 'low';
+  confidence_note?: string | null;
   source_type_breakdown?: {
     editorial: number;
     community: number;
@@ -127,6 +128,7 @@ export function useGeoAudit() {
 
   async function runAudit(domain: string, query?: string) {
     setState({ status: 'loading', stage: 'discovering' });
+    setQueryState({ status: 'idle' });
     setSignalState({ status: 'idle' });
 
     try {
@@ -140,6 +142,7 @@ export function useGeoAudit() {
       const crawlData = await crawlRes.json() as {
         success: boolean;
         pages?: { url: string; type: string; content: string; wordCount: number }[];
+        confidence_note?: string | null;
         error?: string;
       };
 
@@ -149,6 +152,7 @@ export function useGeoAudit() {
       }
 
       const pages = crawlData.pages ?? [];
+      const confidenceNote = crawlData.confidence_note ?? null;
 
       if (pages.length === 0) {
         setState({ status: 'error', message: 'No pages met the content threshold. The site may be too thin to audit.' });
@@ -175,14 +179,20 @@ export function useGeoAudit() {
         return;
       }
 
-      setState({ status: 'complete', domain, score: scoreData.score });
+      const score = scoreData.score;
+      if (confidenceNote) {
+        score.confidence      = 'low';
+        score.confidence_note = confidenceNote;
+      }
+
+      setState({ status: 'complete', domain, score });
 
       // ── Step 3: signal coverage + query (non-blocking, post-score) ────────
-      const aliases = (scoreData.score.brand_aliases && scoreData.score.brand_aliases.length > 0)
-        ? scoreData.score.brand_aliases
+      const aliases = (score.brand_aliases && score.brand_aliases.length > 0)
+        ? score.brand_aliases
         : aliasesFromDomain(domain);
 
-      runSignalCoverage(domain, scoreData.score.verdict);
+      runSignalCoverage(domain, score.verdict);
       if (query) runQuery(domain, query, aliases);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Something went wrong. Please try again.';

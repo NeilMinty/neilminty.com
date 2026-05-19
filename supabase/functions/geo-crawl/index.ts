@@ -10,7 +10,7 @@ const WORD_FLOOR     = 120
 const PAGE_HARD_CAP  = 15
 
 const SAMPLE_LIMITS = { product: 3, collection: 2, content: 3, core: 3 } as const
-type PageType = keyof typeof SAMPLE_LIMITS | 'other'
+type PageType = keyof typeof SAMPLE_LIMITS | 'other' | 'skip'
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
@@ -18,14 +18,33 @@ function classifyUrl(raw: string): PageType {
   try {
     const { pathname } = new URL(raw)
     const p = pathname.toLowerCase()
-    // Products
-    if (/\/(products?|item|pd)\/[^/]/.test(p)) return 'product'
-    // Collections / categories
-    if (/\/(collections?|categor(y|ies)|cat)\/[^/]/.test(p)) return 'collection'
-    // Content — /blog/, /blogs/, /articles/, /news/, /posts/, /learn/, /guides/, /resources/, /journal/
-    if (/\/(blogs?|articles?|news|posts?|learn|guides?|resources?|journal)\/[^/]/.test(p)) return 'content'
-    // Core — bare paths and Shopify /pages/* convention
-    if (p === '/' || /^\/(pages\/)?(about|contact|faq|faqs?|pricing|our-story|how-it-works|who-we-are)(\/|$)/.test(p)) return 'core'
+
+    // Pass 1 — explicit exclusions
+    if (/\/(account|login|logout|cart|checkout|wishlist|bag)\b/.test(p)) return 'skip'
+    if (/\/(legal|terms|privacy|cookies|gdpr)\b/.test(p)) return 'skip'
+    if (/\/(press|newsroom|investors?|careers?|jobs|hiring)\b/.test(p)) return 'skip'
+    if (/\/(sitemap|robots)/.test(p)) return 'skip'
+    if (/\.(xml|pdf|jpg|jpeg|png|gif|svg|webp|css|js|ico)(\?|$)/.test(p)) return 'skip'
+    if (/\/(supplier|corporate)\b/.test(p)) return 'skip'
+
+    // Pass 2 — positive classification
+    if (/\/(products?|item|pd|sku)\/[^/]/.test(p)) return 'product'
+    if (/\/p\/[a-z0-9]/.test(p)) return 'product'
+    if (/\/t\/[a-z0-9]/.test(p)) return 'product'
+    if (/\/shop\/[a-z0-9]/.test(p)) return 'product'
+
+    if (/\/(collections?|categor(y|ies)|cat|department|browse)\/[^/]/.test(p)) return 'collection'
+    if (/\/c\/[a-z0-9]/.test(p)) return 'collection'
+    if (/\/w\/[a-z0-9]/.test(p)) return 'collection'
+
+    if (/\/(blogs?|articles?|posts?|learn|guides?|journal|stories|editorial|magazine)\/[^/]/.test(p)) return 'content'
+    if (/\/news\/[^/]/.test(p)) return 'content'
+    if (/\/resources?\/[^/]/.test(p)) return 'content'
+    if (/\/\/[^/]+\/[a-z]{2}\/a\/[^/]/.test(raw.toLowerCase())) return 'content'  // locale/a/ pattern e.g. /fr/a/slug
+
+    if (p === '/' || /^\/(pages\/)?(about(-us)?|contact|faq s?|pricing|our-story|how-it-works|who-we-are|sustainability)(\/|$)/.test(p)) return 'core'
+
+    // Pass 3 — unrecognised, kept as "other" (sampled as last resort)
     return 'other'
   } catch {
     return 'other'
@@ -47,7 +66,6 @@ function countWords(text: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length
 }
 
-// Cookie/consent noise patterns — if these dominate, the page didn't load properly
 const NOISE_PATTERNS = [
   /\bcookies?\b/i,
   /\bconsent\b/i,
@@ -56,31 +74,119 @@ const NOISE_PATTERNS = [
   /\bwe use cookies\b/i,
 ]
 
-// Returns a reason string if the page should be excluded, null if it passes
 function getNoiseReason(text: string, url: string): string | null {
-  const sentences = text
-    .split(/[.!?]+/)
-    .map(s => s.trim())
-    .filter(s => s.length > 15)
-
-  const unique = new Set(sentences.map(s => s.toLowerCase()))
+  const sentences = text.split(/[.!?]+/).map(s => s.trim()).filter(s => s.length > 15)
+  const unique    = new Set(sentences.map(s => s.toLowerCase()))
   const totalWords = countWords(text)
 
   console.log(`[geo-crawl] quality check ${url} — unique sentences: ${unique.size}, words: ${totalWords}`)
   console.log(`[geo-crawl] first 200 chars: ${text.slice(0, 200).replace(/\n/g, ' ')}`)
 
-  if (unique.size < 3) {
-    return `unique sentences ${unique.size} < 3`
-  }
+  if (unique.size < 3) return `unique sentences ${unique.size} < 3`
 
   const head = text.slice(0, 500).toLowerCase()
   const matchedPatterns = NOISE_PATTERNS.filter(re => re.test(head)).map(re => re.toString())
-
   if (matchedPatterns.length >= 2 && totalWords < 300) {
     return `noise patterns [${matchedPatterns.join(', ')}] on short page (${totalWords} words)`
   }
 
   return null
+}
+
+// ─── LOCALE FILTER ────────────────────────────────────────────────────────────
+
+const NON_ENGLISH_PATH_LOCALES = new Set([
+  'fr', 'de', 'es', 'it', 'ja', 'zh', 'pt', 'nl', 'ko', 'ar', 'ru', 'pl', 'sv', 'da', 'fi',
+  'at', 'lu', 'ro', 'be', 'ch',
+  'fr-fr', 'de-de', 'es-es', 'zh-cn', 'zh-tw', 'de-ch', 'fr-ch', 'fr-be', 'nl-be',
+])
+
+const ENGLISH_PATH_LOCALES = new Set([
+  'en', 'en-gb', 'en-us', 'en-au', 'en-ca', 'en-in', 'us', 'uk', 'gb',
+])
+
+const NON_ENGLISH_SUBDOMAINS = new Set(['fr', 'de', 'es', 'it', 'ja', 'zh', 'pt', 'nl'])
+
+function isNonEnglishUrl(url: string): boolean {
+  try {
+    const { hostname, pathname } = new URL(url)
+    const h = hostname.toLowerCase()
+    const p = pathname.toLowerCase()
+
+    // Non-English subdomain: fr.example.com, de.example.com, etc.
+    const hostParts = h.split('.')
+    if (hostParts.length >= 3 && NON_ENGLISH_SUBDOMAINS.has(hostParts[0])) return true
+
+    // Path segments: if any segment is explicitly English, allow through
+    const segments = p.split('/').filter(Boolean)
+    if (segments.some(s => ENGLISH_PATH_LOCALES.has(s))) return false
+    if (segments.some(s => NON_ENGLISH_PATH_LOCALES.has(s))) return true
+
+    return false
+  } catch {
+    return false
+  }
+}
+
+// ─── SITEMAP INDEX DETECTION + PARSING ───────────────────────────────────────
+
+function isSitemapIndexResult(links: string[]): boolean {
+  if (links.length === 0) return false
+  const xmlCount = links.filter(u => /sitemap[^/]*\.xml/i.test(u)).length
+  return xmlCount / links.length >= 0.3
+}
+
+function extractLocsFromXml(xml: string): string[] {
+  const matches = [...xml.matchAll(/<loc>\s*(https?:\/\/[^<\s]+)\s*<\/loc>/g)]
+  return matches.map(m => m[1].trim())
+}
+
+function isChildSitemapUrl(url: string): boolean {
+  return /sitemap[^/]*\.xml/i.test(url)
+}
+
+// Prioritise: product > collection > content > page; deprioritise: image, video, news
+function scoreChildSitemapUrl(url: string): number {
+  const lower = url.toLowerCase()
+  if (lower.includes('product'))    return 4
+  if (lower.includes('collection')) return 3
+  if (lower.includes('content') || lower.includes('article') || lower.includes('blog')) return 2
+  if (lower.includes('page'))       return 1
+  if (lower.includes('image') || lower.includes('video') || lower.includes('news')) return -1
+  return 0
+}
+
+async function fetchChildSitemapUrls(
+  childSitemapUrls: string[],
+  maxChildren: number,
+): Promise<string[]> {
+  const sorted = [...childSitemapUrls].sort((a, b) => scoreChildSitemapUrl(b) - scoreChildSitemapUrl(a))
+  const toFetch = sorted.slice(0, maxChildren)
+
+  const pageUrls: string[] = []
+
+  for (const sitemapUrl of toFetch) {
+    try {
+      console.log(`[geo-crawl] fetching child sitemap: ${sitemapUrl}`)
+      const res = await fetch(sitemapUrl, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; GeoAuditBot/1.0)' },
+        signal:  AbortSignal.timeout(10_000),
+      })
+      if (!res.ok) {
+        console.log(`[geo-crawl] child sitemap ${res.status}: ${sitemapUrl}`)
+        continue
+      }
+      const xml  = await res.text()
+      const locs = extractLocsFromXml(xml)
+      // Filter out nested sitemap index entries — keep only page URLs
+      pageUrls.push(...locs.filter(u => !isChildSitemapUrl(u)))
+      console.log(`[geo-crawl] child sitemap ${sitemapUrl}: ${locs.length} locs, ${pageUrls.length} total page urls so far`)
+    } catch (err) {
+      console.log(`[geo-crawl] child sitemap fetch error ${sitemapUrl}:`, err)
+    }
+  }
+
+  return pageUrls
 }
 
 // ─── USAGE LOG ────────────────────────────────────────────────────────────────
@@ -142,7 +248,6 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Normalise domain to a full URL
     let siteUrl = domain.trim().replace(/\/$/, '')
     if (!siteUrl.startsWith('http://') && !siteUrl.startsWith('https://')) {
       siteUrl = `https://${siteUrl}`
@@ -167,17 +272,45 @@ Deno.serve(async (req) => {
       )
     }
 
-    const mapData = await mapRes.json() as { links?: string[] }
-    const rawLinks: string[] = mapData.links ?? []
-    console.log(`[geo-crawl] map returned ${rawLinks.length} raw links`)
+    const mapData  = await mapRes.json() as { links?: string[] }
+    const mapLinks: string[] = mapData.links ?? []
+    console.log(`[geo-crawl] map returned ${mapLinks.length} raw links`)
+    console.log('[geo-crawl] urls_returned:', mapLinks.length)
+    console.log('[geo-crawl] first_10_urls:', JSON.stringify(mapLinks.slice(0, 10)))
+    console.log('[geo-crawl] xml_url_count:', mapLinks.filter(u => u.endsWith('.xml')).length)
+    console.log('[geo-crawl] sitemap_type_detected:', isSitemapIndexResult(mapLinks) ? 'index' : 'standard')
 
-    if (rawLinks.length === 0) {
+    if (mapLinks.length === 0) {
       await writeUsageLog({ status: 'failed', durationMs: Date.now() - startedAt, errorMessage: 'map returned 0 links' })
       return new Response(
         JSON.stringify({ success: false, error: 'No pages found for this domain. The site may not have a discoverable sitemap.' }),
         { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       )
     }
+
+    // ── Step 1b: sitemap index detection + resolution ─────────────────────────
+    let rawLinks: string[]
+    let sitemapType: 'index' | 'standard'
+
+    if (isSitemapIndexResult(mapLinks)) {
+      console.log(`[geo-crawl] sitemap index detected (${mapLinks.filter(u => /sitemap[^/]*\.xml/i.test(u)).length} XML entries in ${mapLinks.length} links)`)
+      sitemapType = 'index'
+      const childSitemaps = mapLinks.filter(isChildSitemapUrl)
+      console.log(`[geo-crawl] following ${Math.min(childSitemaps.length, 4)} child sitemaps`)
+      rawLinks = await fetchChildSitemapUrls(childSitemaps, 4)
+      console.log(`[geo-crawl] resolved ${rawLinks.length} page URLs from child sitemaps`)
+      if (rawLinks.length === 0) {
+        // Fallback: treat original map links as page URLs (better than nothing)
+        rawLinks = mapLinks
+        console.log('[geo-crawl] child sitemap fetch yielded 0 URLs, falling back to map links')
+      }
+    } else {
+      sitemapType = 'standard'
+      rawLinks    = mapLinks
+      console.log(`[geo-crawl] standard sitemap, ${rawLinks.length} links`)
+    }
+
+    const urlsDiscovered = rawLinks.length
 
     // ── Step 2: deduplicate + classify ────────────────────────────────────────
     const seen = new Set<string>()
@@ -190,26 +323,77 @@ Deno.serve(async (req) => {
       classified.push({ url, type: classifyUrl(url) })
     }
 
-    // Full classification breakdown for debugging
-    const classBreakdown: Record<string, string[]> = { product: [], collection: [], content: [], core: [], other: [] }
+    const classBreakdown: Record<string, string[]> = { product: [], collection: [], content: [], core: [], other: [], skip: [] }
     for (const { url, type } of classified) classBreakdown[type].push(url)
-    console.log(`[geo-crawl] classification breakdown: ${JSON.stringify(Object.fromEntries(Object.entries(classBreakdown).map(([k, v]) => [k, v.length])))}`)
+
+    const classificationSummary = {
+      product:    classBreakdown.product.length,
+      collection: classBreakdown.collection.length,
+      content:    classBreakdown.content.length,
+      core:       classBreakdown.core.length,
+      skip:       classBreakdown.skip.length,
+      fallback:   classBreakdown.other.length,
+    }
+    console.log('[geo-crawl] classification_summary:', JSON.stringify(classificationSummary))
     console.log(`[geo-crawl] product urls: ${JSON.stringify(classBreakdown.product.slice(0, 5))}`)
+    console.log(`[geo-crawl] collection urls: ${JSON.stringify(classBreakdown.collection.slice(0, 5))}`)
     console.log(`[geo-crawl] content urls: ${JSON.stringify(classBreakdown.content.slice(0, 5))}`)
     console.log(`[geo-crawl] core urls: ${JSON.stringify(classBreakdown.core.slice(0, 5))}`)
-    console.log(`[geo-crawl] other sample: ${JSON.stringify(classBreakdown.other.slice(0, 10))}`)
+    console.log(`[geo-crawl] other (fallback) sample: ${JSON.stringify(classBreakdown.other.slice(0, 10))}`)
 
-    // ── Step 3: sample — first N per type in sitemap order ───────────────────
+    // ── Step 2b: locale filter ────────────────────────────────────────────────
+    const FILTERABLE_POOLS = ['product', 'collection', 'content', 'core'] as const
+    const relaxedPools: string[] = []
+    const localeFilterLog: Record<string, number | string[]> = {}
+
+    for (const pool of FILTERABLE_POOLS) {
+      const before = classBreakdown[pool]
+      localeFilterLog[`${pool}_before`] = before.length
+      const filtered = before.filter(url => !isNonEnglishUrl(url))
+      if (filtered.length >= 2 || before.length === 0) {
+        classBreakdown[pool] = filtered
+        localeFilterLog[`${pool}_after`] = filtered.length
+      } else {
+        // Too few English pages — relax filter entirely for this pool
+        relaxedPools.push(pool)
+        localeFilterLog[`${pool}_after`] = before.length
+      }
+    }
+    localeFilterLog['relaxed_pools'] = relaxedPools
+
+    console.log('[geo-crawl] locale_filter:', JSON.stringify(localeFilterLog))
+
+    // Build allow-sets for O(1) lookup in sampler
+    const localeAllowed: Record<string, Set<string>> = {}
+    for (const pool of FILTERABLE_POOLS) {
+      localeAllowed[pool] = new Set(classBreakdown[pool])
+    }
+
+    // ── Step 3: sample ────────────────────────────────────────────────────────
     const counts: Record<string, number> = { product: 0, collection: 0, content: 0, core: 0 }
     const sampled: { url: string; type: PageType }[] = []
 
     for (const entry of classified) {
       if (sampled.length >= PAGE_HARD_CAP) break
-      if (entry.type === 'other') continue
+      if (entry.type === 'other' || entry.type === 'skip') continue
+      if (!localeAllowed[entry.type]?.has(entry.url)) continue
       const limit = SAMPLE_LIMITS[entry.type as keyof typeof SAMPLE_LIMITS]
       if (counts[entry.type] < limit) {
         sampled.push(entry)
         counts[entry.type]++
+      }
+    }
+
+    // Last-resort fallback: pull from "other" if fewer than 3 typed pages found
+    if (sampled.length < 3) {
+      for (const entry of classified) {
+        if (sampled.length >= Math.min(PAGE_HARD_CAP, 5)) break
+        if (entry.type !== 'other') continue
+        sampled.push({ url: entry.url, type: 'product' })
+        counts['product']++
+      }
+      if (classBreakdown.other.length > 0) {
+        console.log(`[geo-crawl] fallback: pulled ${sampled.length} pages from "other" pool`)
       }
     }
 
@@ -256,9 +440,9 @@ Deno.serve(async (req) => {
         }
 
         const scrapeData = await scrapeRes.json() as { data?: { markdown?: string } }
-        const content = scrapeData.data?.markdown ?? ''
-        const wordCount = countWords(content)
-        const preview = content.slice(0, 200).replace(/\n/g, ' ')
+        const content    = scrapeData.data?.markdown ?? ''
+        const wordCount  = countWords(content)
+        const preview    = content.slice(0, 200).replace(/\n/g, ' ')
 
         if (wordCount < WORD_FLOOR) {
           console.log(`[geo-crawl] skip ${url} — ${wordCount} words`)
@@ -282,19 +466,36 @@ Deno.serve(async (req) => {
 
     console.log(`[geo-crawl] ${pages.length} pages above confidence floor`)
 
+    // ── Step 5: confidence note ───────────────────────────────────────────────
+    const confidenceNotes: string[] = []
+    if (relaxedPools.length > 0) {
+      confidenceNotes.push('Limited English-language content — sample includes localised pages')
+    }
+    if (pages.length < 8 && urlsDiscovered > 500) {
+      confidenceNotes.push('Large site — sample may not be representative')
+    }
+    const confidenceNote: string | null = confidenceNotes.length > 0 ? confidenceNotes.join('. ') : null
+
+    if (confidenceNote) {
+      console.log(`[geo-crawl] confidence note: ${confidenceNote} (pages=${pages.length}, urls_discovered=${urlsDiscovered})`)
+    }
+
     await writeUsageLog({ status: 'success', durationMs: Date.now() - startedAt, errorMessage: null })
 
-    console.log(`[geo-crawl] returning response with ${pages.length} pages, ${skipped.length} skipped`)
+    console.log(`[geo-crawl] returning ${pages.length} pages, ${skipped.length} skipped, sitemap_type=${sitemapType}`)
     return new Response(
       JSON.stringify({
         success: true,
         pages,
         skipped,
+        urls_discovered:  urlsDiscovered,
+        sitemap_type:     sitemapType,
+        confidence_note:  confidenceNote,
         debug: {
-          raw_link_count: rawLinks.length,
-          classified: Object.fromEntries(Object.entries(classBreakdown).map(([k, v]) => [k, v.length])),
-          sampled_urls: sampled.map(s => ({ url: s.url, type: s.type })),
-          other_sample: classBreakdown.other.slice(0, 15),
+          raw_link_count:         mapLinks.length,
+          classification_summary: classificationSummary,
+          sampled_urls:           sampled.map(s => ({ url: s.url, type: s.type })),
+          other_sample:           classBreakdown.other.slice(0, 15),
         },
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },

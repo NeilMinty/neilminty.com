@@ -585,7 +585,7 @@ export function GeoAudit() {
                 value={queryInput}
                 onChange={(e) => { setQueryInput(e.target.value); setUserTypedQuery(true); }}
                 onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit(); }}
-                placeholder="e.g. best supplements for sleep UK"
+                placeholder="e.g. best running shoes for beginners"
                 className="border border-slate-200 rounded bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-400 transition-colors"
               />
               <p className="text-xs text-slate-400">
@@ -616,17 +616,22 @@ export function GeoAudit() {
         <div className="space-y-8">
 
           {/* Domain + meta */}
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="text-sm font-medium text-slate-700">{domain}</span>
-            {score && (
-              <>
-                <span className="text-slate-300">·</span>
-                <span className="text-sm text-slate-500">{score.pages_scored} page{score.pages_scored !== 1 ? 's' : ''} scored</span>
-                <span className="text-slate-300">·</span>
-                <span className={`text-xs font-medium px-2 py-0.5 rounded border ${confidenceBadge(score.confidence)}`}>
-                  {score.confidence} confidence
-                </span>
-              </>
+          <div className="space-y-1.5">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-sm font-medium text-slate-700">{domain}</span>
+              {score && (
+                <>
+                  <span className="text-slate-300">·</span>
+                  <span className="text-sm text-slate-500">{score.pages_scored} page{score.pages_scored !== 1 ? 's' : ''} scored</span>
+                  <span className="text-slate-300">·</span>
+                  <span className={`text-xs font-medium px-2 py-0.5 rounded border ${confidenceBadge(score.confidence)}`}>
+                    {score.confidence} confidence
+                  </span>
+                </>
+              )}
+            </div>
+            {score?.confidence_note && (
+              <p className="text-xs text-slate-400">{score.confidence_note}</p>
             )}
           </div>
 
