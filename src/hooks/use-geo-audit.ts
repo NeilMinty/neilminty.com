@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
@@ -94,11 +94,12 @@ export function useGeoAudit() {
   const [queryState, setQueryState]         = useState<QueryState>({ status: 'idle' });
   const [signalState, setSignalState]       = useState<SignalState>({ status: 'idle' });
   const [suggestedQuery, setSuggestedQuery] = useState('');
+  const runIdRef                            = useRef(0);
 
   const stageLabel =
     state.status === 'loading' ? STAGE_LABELS[state.stage] : null;
 
-  async function runSignalCoverage(domain: string, verdict: string) {
+  async function runSignalCoverage(domain: string, verdict: string, runId: number) {
     setSignalState({ status: 'loading' });
     try {
       const res = await fetch(`${FUNCTIONS_URL}/geo-signal-coverage`, {
@@ -107,12 +108,14 @@ export function useGeoAudit() {
         body:    JSON.stringify({ domain, verdict }),
       });
       const data = await res.json() as { success: boolean; result?: SignalCoverageResult; error?: string };
+      if (runIdRef.current !== runId) return;
       if (!data.success || !data.result) {
         setSignalState({ status: 'error', message: data.error ?? 'Signal coverage check failed.' });
         return;
       }
       setSignalState({ status: 'done', result: data.result });
     } catch (err) {
+      if (runIdRef.current !== runId) return;
       const message = err instanceof Error ? err.message : 'Something went wrong.';
       setSignalState({ status: 'error', message });
     }
@@ -127,6 +130,7 @@ export function useGeoAudit() {
   }
 
   async function runAudit(domain: string, query?: string) {
+    const runId = ++runIdRef.current;
     setState({ status: 'loading', stage: 'discovering' });
     setQueryState({ status: 'idle' });
     setSignalState({ status: 'idle' });
@@ -192,8 +196,8 @@ export function useGeoAudit() {
         ? score.brand_aliases
         : aliasesFromDomain(domain);
 
-      runSignalCoverage(domain, score.verdict);
-      if (query) runQuery(domain, query, aliases);
+      runSignalCoverage(domain, score.verdict, runId);
+      if (query) runQuery(domain, query, aliases, runId);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
       setState({ status: 'error', message });
@@ -214,21 +218,23 @@ export function useGeoAudit() {
     }
   }
 
-  async function runQuery(domain: string, query: string, aliases?: string[]) {
+  async function runQuery(domain: string, query: string, aliases: string[], runId: number) {
     setQueryState({ status: 'running' });
     try {
       const res = await fetch(`${FUNCTIONS_URL}/geo-query`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ domain, query, brand_aliases: aliases ?? [] }),
+        body:    JSON.stringify({ domain, query, brand_aliases: aliases }),
       });
       const data = await res.json() as { success: boolean; results?: QueryResult[]; error?: string };
+      if (runIdRef.current !== runId) return;
       if (!data.success || !data.results) {
         setQueryState({ status: 'error', message: data.error ?? 'Query failed. Please try again.' });
         return;
       }
       setQueryState({ status: 'done', query, results: data.results });
     } catch (err) {
+      if (runIdRef.current !== runId) return;
       const message = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
       setQueryState({ status: 'error', message });
     }
