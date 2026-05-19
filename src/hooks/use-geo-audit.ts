@@ -147,6 +147,7 @@ export function useGeoAudit() {
         success: boolean;
         pages?: { url: string; type: string; content: string; wordCount: number }[];
         confidence_note?: string | null;
+        confidence_tier?: 'medium' | 'low' | null;
         error?: string;
       };
 
@@ -157,6 +158,7 @@ export function useGeoAudit() {
 
       const pages = crawlData.pages ?? [];
       const confidenceNote = crawlData.confidence_note ?? null;
+      const confidenceTier = crawlData.confidence_tier ?? null;
 
       if (pages.length === 0) {
         setState({ status: 'error', message: 'No pages met the content threshold. The site may be too thin to audit.' });
@@ -186,7 +188,7 @@ export function useGeoAudit() {
       const score = scoreData.score;
       console.log('[geo-audit] breakdown_raw:', JSON.stringify(score.source_type_breakdown));
       if (confidenceNote) {
-        score.confidence      = 'low';
+        score.confidence      = confidenceTier ?? 'low';
         score.confidence_note = confidenceNote;
       }
 

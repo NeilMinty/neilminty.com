@@ -467,18 +467,27 @@ Deno.serve(async (req) => {
     console.log(`[geo-crawl] ${pages.length} pages above confidence floor`)
     console.log('[geo-crawl] sampled_urls:', pages.map(p => p.url))
 
-    // ── Step 5: confidence note ───────────────────────────────────────────────
+    // ── Step 5: confidence ────────────────────────────────────────────────────
     const confidenceNotes: string[] = []
+    let confidenceTier: 'medium' | 'low' | null = null
+
     if (relaxedPools.length > 0) {
       confidenceNotes.push('Limited English-language content — sample includes localised pages')
+      confidenceTier = 'low'
     }
-    if (pages.length < 8 && urlsDiscovered > 500) {
-      confidenceNotes.push('Large site — sample may not be representative')
+
+    if (urlsDiscovered > 1000 && pages.length < 15) {
+      confidenceNotes.push('Very large catalogue — score is indicative only')
+      confidenceTier = 'low'
+    } else if (urlsDiscovered > 200 && pages.length < 15) {
+      confidenceNotes.push(`Large catalogue — sample covers ${pages.length} of ${urlsDiscovered} pages`)
+      if (confidenceTier === null) confidenceTier = 'medium'
     }
+
     const confidenceNote: string | null = confidenceNotes.length > 0 ? confidenceNotes.join('. ') : null
 
     if (confidenceNote) {
-      console.log(`[geo-crawl] confidence note: ${confidenceNote} (pages=${pages.length}, urls_discovered=${urlsDiscovered})`)
+      console.log(`[geo-crawl] confidence: note="${confidenceNote}" tier=${confidenceTier} pages=${pages.length} urls_discovered=${urlsDiscovered}`)
     }
 
     await writeUsageLog({ status: 'success', durationMs: Date.now() - startedAt, errorMessage: null })
@@ -492,6 +501,7 @@ Deno.serve(async (req) => {
         urls_discovered:  urlsDiscovered,
         sitemap_type:     sitemapType,
         confidence_note:  confidenceNote,
+        confidence_tier:  confidenceTier,
         debug: {
           raw_link_count:         mapLinks.length,
           classification_summary: classificationSummary,
