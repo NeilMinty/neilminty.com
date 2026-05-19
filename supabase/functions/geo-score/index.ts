@@ -162,6 +162,8 @@ CITATION_WORTHINESS (Would a retrieval system cite this page as a source?)
 - 20–49: Page is primarily promotional. Retrieval system would prefer an authority site over this for any query.
 - 0–19: Nothing citable. Pure product listing or marketing copy.
 
+Score based on whether the page contains extractable, citable facts — specific claims with context, mechanism, or quantification that a retrieval system could pull as a direct answer to a user query. A page with ingredient concentrations in a product title but no surrounding explanation of mechanism or outcome should score 20–35. A page with structured explanations of how specific ingredients work at specific concentrations should score 60+.
+
 COMPARISON_ANCHORING (Does the page position against alternatives?)
 - 80–100: Explicitly addresses alternatives, competitors, or category comparisons. Answers 'why this over that' directly. Retrieval systems favour pages that answer comparative queries.
 - 50–79: Some differentiation language but no direct comparison. Implied superiority without stated basis.
@@ -185,7 +187,7 @@ Return JSON only, no preamble, no markdown:
     "citation_worthiness": number,
     "comparison_anchoring": number
   },
-  "verdict": "string (2-3 sentences, plain English. State the single biggest barrier to citation, not a summary of scores. Be direct.)",
+  "verdict": "string (2-3 sentences identifying the single biggest barrier to AI citation. Distinguish between: (1) claim absence — the content makes no specific verifiable assertions such as percentages, mechanisms, clinical outcomes, or named ingredients with concentrations; or (2) claim formatting — specific claims exist but are embedded in marketing copy, product titles, or visual hierarchy that retrieval systems cannot parse as structured facts. Name which failure mode applies and be specific about what is present versus what is missing. Do not use generic phrases like 'vague benefit language' without identifying what specific structured element is absent. Plain English, no jargon.)",
   "pages_scored": number,
   "confidence": "high" | "medium" | "low"
 }`
