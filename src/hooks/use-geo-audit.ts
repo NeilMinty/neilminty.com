@@ -184,6 +184,7 @@ export function useGeoAudit() {
       }
 
       const score = scoreData.score;
+      console.log('[geo-audit] breakdown_raw:', JSON.stringify(score.source_type_breakdown));
       if (confidenceNote) {
         score.confidence      = 'low';
         score.confidence_note = confidenceNote;

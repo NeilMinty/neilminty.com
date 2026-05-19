@@ -155,25 +155,27 @@ Deno.serve(async (req) => {
     }
 
     // ── Step 1: Infer category ─────────────────────────────────────────────
-    let category = await anthropicCall(
-      'What is the single primary commercial category of this brand? Identify the dominant revenue category only — ignore incidental product mentions, lifestyle content, or secondary ranges. If the brand sells across multiple categories, return the one most central to its commercial identity. Examples: "athletic footwear", "nutritional supplements", "skincare", "outdoor apparel". Maximum 3 words. Return the category only, no punctuation, no preamble.',
+    const stripMarkdown = (s: string) => s.replace(/\*\*/g, '').replace(/\*/g, '').replace(/`/g, '').trim()
+
+    let category = stripMarkdown(await anthropicCall(
+      'What is the single primary commercial category of this brand? Identify the dominant revenue category only — ignore incidental product mentions, lifestyle content, or secondary ranges. If the brand sells across multiple categories, return the one most central to its commercial identity. Examples: "athletic footwear", "nutritional supplements", "skincare", "outdoor apparel". Maximum 3 words. Return the category only, no punctuation, no preamble. Return plain text only. No markdown, no bold, no asterisks.',
       `Verdict: "${verdict}"`,
       anthropicKey,
       20,
-    )
+    ))
 
     // Guard: retry if response is too generic (e.g. "Home goods retail")
     let retryFired = false
     if (/\b(retail|goods|products|store|shop)\b/i.test(category)) {
       retryFired = true
       console.info(`[geo-signal] category "${category}" too generic, retrying`)
-      const retry = await anthropicCall(
-        'Name the specific product type this brand sells. One noun phrase, maximum 3 words, no retail/commerce words.',
+      const retry = stripMarkdown(await anthropicCall(
+        'Name the specific product type this brand sells. One noun phrase, maximum 3 words, no retail/commerce words. Return plain text only. No markdown, no bold, no asterisks.',
         `Verdict: "${verdict}"`,
         anthropicKey,
         20,
-      )
-      if (retry.trim()) category = retry.trim()
+      ))
+      if (retry) category = retry
     }
 
     console.info('[geo-signal-coverage] category_extracted:', category)

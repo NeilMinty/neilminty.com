@@ -465,6 +465,7 @@ Deno.serve(async (req) => {
     }
 
     console.log(`[geo-crawl] ${pages.length} pages above confidence floor`)
+    console.log('[geo-crawl] sampled_urls:', pages.map(p => p.url))
 
     // ── Step 5: confidence note ───────────────────────────────────────────────
     const confidenceNotes: string[] = []
