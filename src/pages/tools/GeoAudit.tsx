@@ -15,7 +15,7 @@ function normaliseDomain(input: string): string {
 }
 
 function isValidDomain(s: string): boolean {
-  return /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?\.[a-zA-Z]{2,}$/.test(s);
+  return /^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/.test(s);
 }
 
 function overallScoreColour(n: number): string {
