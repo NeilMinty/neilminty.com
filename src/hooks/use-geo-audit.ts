@@ -196,6 +196,7 @@ export function useGeoAudit() {
         ? score.brand_aliases
         : aliasesFromDomain(domain);
 
+      console.log('[geo-audit] calling runSignalCoverage', { domain, runId, verdictSnippet: score.verdict.slice(0, 80) });
       runSignalCoverage(domain, score.verdict, runId);
       if (query) runQuery(domain, query, aliases, runId);
     } catch (err) {
