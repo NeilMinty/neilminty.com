@@ -48,7 +48,8 @@ function classifyUrl(url: string): SourceType {
     return 'community'
   if (lower.includes('examine.com') || lower.includes('healthline.com') || lower.includes('webmd.com') ||
       lower.includes('nhs.uk') || lower.includes('pubmed') || lower.includes('mayoclinic') ||
-      lower.includes('nih.gov') || lower.includes('cochrane'))
+      lower.includes('nih.gov') || lower.includes('cochrane') || lower.includes('aad.org') ||
+      lower.includes('skincancer.org') || lower.includes('dermnetnz.org'))
     return 'expert'
   if (lower.includes('amazon.com') || lower.includes('trustpilot') || lower.includes('tripadvisor') ||
       lower.includes('yelp.com') || lower.includes('google.com/shopping') || lower.includes('iherb'))
@@ -71,6 +72,16 @@ function coverageLevel(mentions: BrandMention[], type: SourceType): CoverageLeve
   const ofType = mentions.filter(m => m.source_type === type)
   if (ofType.length === 0) return 'absent'
   return ofType.some(m => m.mentioned) ? 'strong' : 'partial'
+}
+
+function getExpertQuery(category: string): string {
+  if (/skincare|spf|sunscreen|suntan|\buv\b/i.test(category))
+    return `dermatologist recommended ${category} site:aad.org OR site:skincancer.org OR dermatologist review`
+  if (/supplement|vitamin|nutrition/i.test(category))
+    return `clinical evidence ${category} site:examine.com OR site:nih.gov OR registered dietitian`
+  if (/footwear|running|sport/i.test(category))
+    return `podiatrist OR sports medicine ${category} review`
+  return `expert review ${category} clinical evidence`
 }
 
 // ─── ANTHROPIC ────────────────────────────────────────────────────────────────
@@ -182,19 +193,16 @@ Deno.serve(async (req) => {
     console.info('[geo-signal-coverage] retry_fired:', retryFired)
     console.info(`[geo-signal] domain=${domain} category="${category}"`)
 
-    const brandName         = extractBrandName(domain)
-    const isHealthCategory  = /supplement|vitamin|health|nutrition|fitness|protein|sleep|wellness|herbal|remedy|remedies|probiotic|clinical/i.test(category)
-    const year              = new Date().getFullYear()
+    const brandName = extractBrandName(domain)
+    const year      = new Date().getFullYear()
 
     // ── Step 2: Build and run searches in parallel ─────────────────────────
     const searchConfigs: Array<{ query: string; limit: number }> = [
-      { query: `best ${category} ${year} review`,              limit: 2 },
-      { query: `top ${category} brands recommended`,           limit: 1 },
-      { query: `reddit ${category} which brand recommend`,     limit: 2 },
+      { query: `best ${category} ${year} review`,          limit: 2 },
+      { query: `top ${category} brands recommended`,       limit: 1 },
+      { query: `reddit ${category} which brand recommend`, limit: 2 },
+      { query: getExpertQuery(category),                   limit: 2 },
     ]
-    if (isHealthCategory) {
-      searchConfigs.push({ query: `${category} evidence review healthline examine`, limit: 1 })
-    }
 
     const searchSettled = await Promise.allSettled(
       searchConfigs.map(({ query, limit }) => firecrawlSearch(query, limit, firecrawlKey)),
