@@ -157,35 +157,44 @@ function SourceTypeBreakdown({ breakdown, dominance }: {
 }) {
   const keys = ['editorial', 'community', 'aggregator', 'expert', 'base_model'] as const;
 
+  const midpoint = (key: typeof keys[number]) =>
+    Math.round((breakdown[key].min + breakdown[key].max) / 2);
+
   return (
     <div>
-      <SectionLabel>Where AI looks for answers</SectionLabel>
+      <SectionLabel>Estimated AI answer sources</SectionLabel>
       <div className="bg-white border border-slate-200 rounded-lg px-5 py-5 shadow-card space-y-4">
         {/* Stacked bar */}
         <div className="h-5 rounded-full overflow-hidden flex">
-          {keys.map(key => (
-            breakdown[key] > 0 && (
+          {keys.map(key => {
+            const mid = midpoint(key);
+            return mid > 0 ? (
               <div
                 key={key}
                 className={SOURCE_TYPE_COLOURS[key]}
-                style={{ width: `${breakdown[key]}%` }}
-                title={`${SOURCE_TYPE_LABELS[key]}: ${breakdown[key]}%`}
+                style={{ width: `${mid}%` }}
+                title={`${SOURCE_TYPE_LABELS[key]}: estimated ${breakdown[key].min}–${breakdown[key].max}%`}
               />
-            )
-          ))}
+            ) : null;
+          })}
         </div>
 
         {/* Legend */}
         <div className="flex flex-wrap gap-x-4 gap-y-1.5">
-          {keys.map(key => (
-            breakdown[key] > 0 && (
-              <div key={key} className="flex items-center gap-1.5">
+          {keys.map(key => {
+            const mid = midpoint(key);
+            return mid > 0 ? (
+              <div
+                key={key}
+                className="flex items-center gap-1.5"
+                title={`Estimated ${breakdown[key].min}–${breakdown[key].max}%`}
+              >
                 <span className={`w-2.5 h-2.5 rounded-sm flex-shrink-0 ${SOURCE_TYPE_COLOURS[key]}`} />
                 <span className="text-xs text-slate-600">{SOURCE_TYPE_LABELS[key]}</span>
-                <span className="text-xs font-medium text-slate-700 tabular-nums">{breakdown[key]}%</span>
+                <span className="text-xs font-medium text-slate-700 tabular-nums">~{mid}%</span>
               </div>
-            )
-          ))}
+            ) : null;
+          })}
         </div>
 
         <p className="text-xs text-slate-500 leading-relaxed pt-1 border-t border-slate-100">

@@ -16,11 +16,11 @@ export interface GeoScore {
   confidence: 'high' | 'medium' | 'low';
   confidence_note?: string | null;
   source_type_breakdown?: {
-    editorial: number;
-    community: number;
-    aggregator: number;
-    expert: number;
-    base_model: number;
+    editorial:  { min: number; max: number };
+    community:  { min: number; max: number };
+    aggregator: { min: number; max: number };
+    expert:     { min: number; max: number };
+    base_model: { min: number; max: number };
   };
   retrieval_dominance?: string;
   brand_aliases?: string[];

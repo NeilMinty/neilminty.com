@@ -19,12 +19,17 @@ interface Page {
   wordCount: number
 }
 
+interface SourceTypeRange {
+  min: number
+  max: number
+}
+
 interface SourceTypeBreakdown {
-  editorial:  number
-  community:  number
-  aggregator: number
-  expert:     number
-  base_model: number
+  editorial:  SourceTypeRange
+  community:  SourceTypeRange
+  aggregator: SourceTypeRange
+  expert:     SourceTypeRange
+  base_model: SourceTypeRange
 }
 
 interface GeoScore {
@@ -241,20 +246,55 @@ Return JSON only, no preamble, no markdown:
     }
 
     // ── Second call: source type breakdown (Haiku, non-blocking) ─────────────
-    let source_type_breakdown: SourceTypeBreakdown = { editorial: 40, community: 20, aggregator: 20, expert: 10, base_model: 10 }
+    let source_type_breakdown: SourceTypeBreakdown = {
+      editorial:  { min: 30, max: 50 },
+      community:  { min: 15, max: 25 },
+      aggregator: { min: 15, max: 25 },
+      expert:     { min: 5,  max: 15 },
+      base_model: { min: 5,  max: 15 },
+    }
     let retrieval_dominance = 'mixed'
     let brand_aliases: string[] = []
     try {
+      const { entity_clarity, claim_specificity, structure_legibility, citation_worthiness, comparison_anchoring } = score.dimensions
       const breakdownRes = await fetch(ANTHROPIC_API, {
         method:  'POST',
         headers: { 'x-api-key': anthropicKey, 'anthropic-version': '2023-06-01', 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model:      HAIKU_MODEL,
-          max_tokens: 250,
-          system:     'You are an AI retrieval analyst. Given a GEO audit verdict and dimension scores, return three things: (1) estimated percentage of an AI engine\'s answer drawn from each source type — percentages must sum to 100, (2) the dominant source type, (3) the brand name and any product line names mentioned in the verdict. Return JSON only.',
+          max_tokens: 350,
+          system:     'You are an AI retrieval analyst. Given a GEO audit verdict and dimension scores, estimate how an AI engine would construct its answer for queries about this brand. Return JSON only, no preamble.',
           messages: [{
             role:    'user',
-            content: `Verdict: ${score.verdict}\n\nScores: entity_clarity=${score.dimensions.entity_clarity}, claim_specificity=${score.dimensions.claim_specificity}, structure_legibility=${score.dimensions.structure_legibility}, citation_worthiness=${score.dimensions.citation_worthiness}, comparison_anchoring=${score.dimensions.comparison_anchoring}\n\nReturn JSON: { "source_type_breakdown": { "editorial": number, "community": number, "aggregator": number, "expert": number, "base_model": number }, "retrieval_dominance": "editorial" | "community" | "aggregator" | "mixed", "brand_aliases": string[] (brand name and product lines from verdict, max 4 items) }`,
+            content: `Verdict: ${score.verdict}
+
+Dimension scores (0-100):
+- Entity Clarity: ${entity_clarity}
+- Claim Specificity: ${claim_specificity}
+- Structure Legibility: ${structure_legibility}
+- Citation Worthiness: ${citation_worthiness}
+- Comparison Anchoring: ${comparison_anchoring}
+
+Use these scores to calibrate your estimates:
+- Low Citation Worthiness (< 40) correlates with lower editorial coverage and higher aggregator/community weight
+- Low Claim Specificity (< 40) suggests base model and aggregator sources dominate over expert/clinical
+- High Comparison Anchoring (> 60) suggests stronger community signal (comparison content originates in forums and Reddit)
+
+For each source type return a min and max percentage reflecting your confidence interval. Use narrow ranges (±5) for high-confidence estimates and wider ranges (±10-15) for uncertain ones. The midpoint of each range must sum to 100.
+
+Return JSON only:
+{
+  "source_type_breakdown": {
+    "editorial":  { "min": number, "max": number },
+    "community":  { "min": number, "max": number },
+    "aggregator": { "min": number, "max": number },
+    "expert":     { "min": number, "max": number },
+    "base_model": { "min": number, "max": number }
+  },
+  "retrieval_dominance": "editorial" | "community" | "aggregator" | "mixed",
+  "brand_aliases": string[]
+}
+brand_aliases: brand name and product lines from the verdict, max 4 items.`,
           }],
         }),
       })
