@@ -7,10 +7,11 @@ interface ToolLayoutProps {
   title: string;
   description: string;
   metaDescription?: string;
+  wide?: boolean;
   children: React.ReactNode;
 }
 
-export function ToolLayout({ title, description, metaDescription, children }: ToolLayoutProps) {
+export function ToolLayout({ title, description, metaDescription, wide, children }: ToolLayoutProps) {
   useEffect(() => {
     document.title = `${title} | Neil Minty`;
     return () => { document.title = 'Neil Minty — DTC Operator Tools'; };
@@ -24,7 +25,7 @@ export function ToolLayout({ title, description, metaDescription, children }: To
     return () => { tag.content = prev; };
   }, [metaDescription]);
   return (
-    <div className="max-w-3xl mx-auto px-6 py-12">
+    <div className={`${wide ? 'max-w-5xl' : 'max-w-3xl'} mx-auto px-6 py-12`}>
       <div className="mb-8 pb-6 border-b border-slate-200">
         <h1 className="text-2xl font-semibold text-slate-900 tracking-tight mb-2">
           {title}

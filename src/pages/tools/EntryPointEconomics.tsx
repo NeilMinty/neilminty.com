@@ -471,18 +471,18 @@ function CellInput({
 
 // ─── DESKTOP GRID ─────────────────────────────────────────────────────────────
 
-// name | vol | rpr | full% | email% | promo% | mkdn% | ltv90 | ltv180 | cac | gm% | ×
-const GRID_COLS = '1fr 4rem 5rem 5rem 5.5rem 5.5rem 5rem 5rem 5rem 4rem 4rem 2rem';
+// name | vol | rpr | FP% | EM% | PR% | MK% | ltv90 | ltv180 | cac | gm% | ×
+const GRID_COLS = '1fr 4rem 5rem 3.5rem 3.5rem 3.5rem 3.5rem 5rem 5rem 4rem 4rem 2rem';
 const GRID_COL_COUNT = GRID_COLS.split(' ').length;
 
 const COLUMN_HEADERS: { label: string; align: 'left' | 'right' }[] = [
   { label: 'Product name', align: 'left' },
   { label: 'Volume', align: 'right' },
-  { label: '90d RPR %', align: 'right' },
-  { label: 'Full price %', align: 'right' },
-  { label: 'Email 10–15%', align: 'right' },
-  { label: 'Promo 20–25%', align: 'right' },
-  { label: 'Mkdn 30%+', align: 'right' },
+  { label: '90d RPR', align: 'right' },
+  { label: 'FP%', align: 'right' },
+  { label: 'EM%', align: 'right' },
+  { label: 'PR%', align: 'right' },
+  { label: 'MK%', align: 'right' },
   { label: 'LTV 90d', align: 'right' },
   { label: 'LTV 180d', align: 'right' },
   { label: 'CAC *', align: 'right' },
@@ -687,7 +687,7 @@ function InputForm({ rows, onChange }: InputFormProps) {
       <div className="hidden sm:block overflow-x-auto">
         <div
           className="grid gap-2 mb-2"
-          style={{ gridTemplateColumns: GRID_COLS, minWidth: '960px' }}
+          style={{ gridTemplateColumns: GRID_COLS, minWidth: '880px' }}
         >
           {COLUMN_HEADERS.map((h, i) => (
             <span
@@ -702,7 +702,7 @@ function InputForm({ rows, onChange }: InputFormProps) {
           ))}
         </div>
 
-        <div className="space-y-1" style={{ minWidth: '960px' }}>
+        <div className="space-y-1" style={{ minWidth: '880px' }}>
           {rows.map((row, idx) => {
             const tierError = discountTierError(row);
             return (
@@ -798,6 +798,11 @@ function InputForm({ rows, onChange }: InputFormProps) {
         </div>
       </div>
 
+      {/* Discount tier legend (desktop only) */}
+      <p className="hidden sm:block mt-2 text-xs text-slate-400" style={{ minWidth: '880px' }}>
+        FP% = Full price · EM% = Email exchange 10–15% · PR% = Promotional 20–25% · MK% = Markdown 30%+
+      </p>
+
       {/* Add product button */}
       <div className="mt-3">
         <button
@@ -840,6 +845,7 @@ export function EntryPointEconomics() {
       title="Entry Point Economics (EPE)"
       description="Understand which products are building your business and which are building a leaky funnel."
       metaDescription="Diagnose which first purchases are building long-term value and which are filling a leaky funnel. Free tool for DTC operators."
+      wide
     >
       {viewState.view === 'input' ? (
         <div className="space-y-4">
