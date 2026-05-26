@@ -760,7 +760,7 @@ export function PaybackPeriod() {
           className="group flex items-start justify-between gap-4 bg-white border border-slate-200 rounded-lg px-5 py-4 hover:border-slate-300 transition-colors shadow-card"
         >
           <div>
-            <p className="text-sm font-semibold text-slate-900 mb-1 group-hover:text-slate-700 transition-colors">First Purchase Predictor</p>
+            <p className="text-sm font-semibold text-slate-900 mb-1 group-hover:text-slate-700 transition-colors">Entry Point Economics</p>
             <p className="text-sm text-slate-500">LTV is shaped by which product customers buy first. See which one produces the strongest repeat buyers.</p>
           </div>
           <span className="text-sm text-slate-400 group-hover:text-slate-900 transition-colors whitespace-nowrap mt-0.5">Open →</span>

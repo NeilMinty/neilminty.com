@@ -7,10 +7,10 @@ export interface ToolDefinition {
 
 export const TOOLS: ToolDefinition[] = [
   {
-    name: 'First Purchase Predictor',
-    description: "Which product should you acquire customers on? Ranks your catalogue by retention strength, adjusted for volume and discount dependency.",
+    name: 'Entry Point Economics',
+    description: "Understand which products are building your business and which are building a leaky funnel.",
     path: '/tools/first-purchase',
-    cta: 'Rank your catalogue →',
+    cta: 'Analyse your entry points →',
   },
   {
     name: 'Promotions Profitability',

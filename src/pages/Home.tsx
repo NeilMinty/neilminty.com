@@ -36,7 +36,7 @@ export function Home() {
         <div className="px-5 pt-4 pb-3 border-b border-slate-100">
           <div className="flex items-center justify-between gap-4">
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Example output</p>
-            <p className="text-xs text-slate-400">First Purchase Predictor</p>
+            <p className="text-xs text-slate-400">Entry Point Economics</p>
           </div>
           <p className="text-xs text-slate-400 mt-1.5">8 SKUs · 6 months of orders · Mid-range fashion brand</p>
         </div>

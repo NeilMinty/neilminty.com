@@ -5,7 +5,7 @@ import { Home } from '@/pages/Home';
 import { About } from '@/pages/About';
 import { Notes } from '@/pages/Notes';
 import { NoteDetail } from '@/pages/NoteDetail';
-import { FirstPurchase } from '@/pages/tools/FirstPurchase';
+import { EntryPointEconomics } from '@/pages/tools/EntryPointEconomics';
 import { Promotions } from '@/pages/tools/Promotions';
 import { MarginLeakage } from '@/pages/tools/MarginLeakage';
 import { ReturnsCost } from '@/pages/tools/ReturnsCost';
@@ -26,7 +26,7 @@ export default function App() {
           <Route path="/about" element={<About />} />
           <Route path="/notes" element={<Notes />} />
           <Route path="/notes/:slug" element={<NoteDetail />} />
-          <Route path="/tools/first-purchase" element={<FirstPurchase />} />
+          <Route path="/tools/first-purchase" element={<EntryPointEconomics />} />
           <Route path="/tools/promotions" element={<Promotions />} />
           <Route path="/tools/margin-leakage" element={<MarginLeakage />} />
           <Route path="/tools/returns-cost" element={<ReturnsCost />} />
