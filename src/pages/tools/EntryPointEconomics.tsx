@@ -798,11 +798,6 @@ function InputForm({ rows, onChange }: InputFormProps) {
         </div>
       </div>
 
-      {/* Discount tier legend (desktop only) */}
-      <p className="hidden sm:block mt-2 text-xs text-slate-400" style={{ minWidth: '880px' }}>
-        FP% = Full price · EM% = Email exchange 10–15% · PR% = Promotional 20–25% · MK% = Markdown 30%+
-      </p>
-
       {/* Add product button */}
       <div className="mt-3">
         <button
@@ -849,6 +844,12 @@ export function EntryPointEconomics() {
     >
       {viewState.view === 'input' ? (
         <div className="space-y-4">
+          <div className="hidden sm:block -mb-1">
+            <p className="text-xs text-slate-500">
+              <span className="font-semibold text-slate-400 uppercase tracking-widest mr-2">Column key</span>
+              FP% = Full price · EM% = Email exchange 10–15% · PR% = Promotional 20–25% · MK% = Markdown 30%+
+            </p>
+          </div>
           <InputForm rows={rows} onChange={setRows} />
           <p className="text-xs text-slate-400">
             Rows without a product name and volume are excluded from analysis.
