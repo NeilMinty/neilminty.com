@@ -198,8 +198,55 @@ function epeBand(score: number): {
 
 // ─── RESULT SECTIONS ─────────────────────────────────────────────────────────
 
-function BlendedScore({ score }: { score: number }) {
+function BlendedScore({
+  score,
+  products,
+  totalVolume,
+}: {
+  score: number;
+  products: ResultRow[];
+  totalVolume: number;
+}) {
   const band = epeBand(score);
+
+  // Volume-weighted actual contribution for each score component
+  const rprContrib = totalVolume > 0
+    ? products.reduce((s, p) => s + p.rpr90d * 0.5 * (p.volume / totalVolume), 0)
+    : 0;
+  const dqsContrib = totalVolume > 0
+    ? products.reduce((s, p) => s + p.discountQualityScore * 0.35 * (p.volume / totalVolume), 0)
+    : 0;
+  const velContrib = totalVolume > 0
+    ? products.reduce((s, p) => s + p.ltvVelocity * 0.15 * (p.volume / totalVolume), 0)
+    : 0;
+
+  // Efficiency = actual contribution / maximum possible — identifies the primary drag
+  const rprEff = rprContrib / 50;
+  const dqsEff = dqsContrib / 35;
+  const velEff = velContrib / 15;
+
+  const drag =
+    rprEff <= dqsEff && rprEff <= velEff ? 'rpr'
+    : dqsEff <= velEff ? 'dqs'
+    : 'velocity';
+
+  const sentence1 =
+    drag === 'rpr'
+      ? 'Repeat rate is the main factor holding your score down — low 90-day return rates across your entry products are compressing the EPE score regardless of your discount mix.'
+      : drag === 'dqs'
+      ? 'Your discount mix is the main factor holding your score down — a high share of promotional and markdown volume at entry is suppressing the quality signal even where repeat rates are reasonable.'
+      : 'LTV compounding between 90 and 180 days is the main factor holding your score down — customers are not deepening their spend quickly enough after the first purchase.';
+
+  const highestVol = products.length > 0
+    ? products.reduce((max, p) => (p.volume > max.volume ? p : max), products[0])
+    : null;
+
+  const sentence2 = highestVol
+    ? highestVol.epeScore < score
+      ? `Your highest volume entry product, ${highestVol.name}, is scoring below the blended average at ${highestVol.epeScore.toFixed(0)} — it is pulling the overall number down and is the priority to address.`
+      : `Your highest volume entry product, ${highestVol.name}, is holding up at ${highestVol.epeScore.toFixed(0)} — the drag is coming from lower volume products in the mix.`
+    : null;
+
   return (
     <div className={cn('rounded-lg border p-6', band.border, band.bg)}>
       <div className="flex items-baseline gap-2">
@@ -209,6 +256,10 @@ function BlendedScore({ score }: { score: number }) {
         <span className="text-xl text-slate-400 font-normal">/ 100</span>
       </div>
       <p className={cn('mt-2 text-sm font-medium', band.text)}>{band.label}</p>
+      <p className="mt-3 text-xs text-slate-500 leading-relaxed">{sentence1}</p>
+      {sentence2 && (
+        <p className="mt-1.5 text-xs text-slate-500 leading-relaxed">{sentence2}</p>
+      )}
     </div>
   );
 }
@@ -918,7 +969,11 @@ export function EntryPointEconomics() {
           {/* 1 — Blended EPE score */}
           <div>
             <SectionLabel>Blended EPE score</SectionLabel>
-            <BlendedScore score={viewState.results.blendedEpeScore} />
+            <BlendedScore
+              score={viewState.results.blendedEpeScore}
+              products={viewState.results.products}
+              totalVolume={viewState.results.totalVolume}
+            />
           </div>
 
           {/* 2 — Insights */}
@@ -930,6 +985,10 @@ export function EntryPointEconomics() {
           {/* 3 — Per product EPE scores */}
           <div>
             <SectionLabel>Per product EPE scores</SectionLabel>
+            <p className="text-xs text-slate-500 mb-3">
+              Disc. Quality: 0–100 score weighted by discount tier mix — higher means more full-price and email exchange volume.{' '}
+              LTV Velocity: 0–100 score measuring how fast LTV compounds from 90 to 180 days — higher means stronger compounding.
+            </p>
             <ProductTable products={viewState.results.products} />
           </div>
 
