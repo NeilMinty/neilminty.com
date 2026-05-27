@@ -215,8 +215,7 @@ function BlendedScore({ score }: { score: number }) {
 
 function ProductTable({ products }: { products: ResultRow[] }) {
   return (
-    <div className="border border-slate-200 rounded-lg overflow-hidden shadow-card">
-      <div className="overflow-x-auto">
+    <div className="border border-slate-200 rounded-lg overflow-x-auto shadow-card">
         <table className="w-full text-sm">
           <thead className="bg-white border-b border-slate-200">
             <tr>
@@ -260,7 +259,6 @@ function ProductTable({ products }: { products: ResultRow[] }) {
             })}
           </tbody>
         </table>
-      </div>
     </div>
   );
 }
@@ -272,8 +270,7 @@ function PaybackTable({ products }: { products: ResultRow[] }) {
   return (
     <div>
       <SectionLabel>Payback period</SectionLabel>
-      <div className="border border-slate-200 rounded-lg overflow-hidden shadow-card">
-        <div className="overflow-x-auto">
+      <div className="border border-slate-200 rounded-lg overflow-x-auto shadow-card">
           <table className="w-full text-sm">
             <thead className="bg-white border-b border-slate-200">
               <tr>
@@ -334,7 +331,6 @@ function PaybackTable({ products }: { products: ResultRow[] }) {
               })}
             </tbody>
           </table>
-        </div>
       </div>
     </div>
   );
@@ -350,9 +346,6 @@ function FlaggedInsight({
   if (products.length < 2) return null;
 
   const highestVol = products.reduce((max, p) => (p.volume > max.volume ? p : max), products[0]);
-  const lowestEpe = products.reduce((min, p) => (p.epeScore < min.epeScore ? p : min), products[0]);
-
-  if (highestVol.name !== lowestEpe.name) return null;
 
   const pct = Math.round((highestVol.volume / totalVolume) * 100);
 
@@ -410,12 +403,26 @@ function TierSummary({
           </div>
         ))}
       </div>
-      {promoAndMarkdown >= 50 && (
-        <p className="mt-3 text-sm text-slate-600 border-l-2 border-red-400 pl-3">
-          More than half your acquisition volume is promotion-driven. This will suppress repeat
-          rates and inflate long-term CAC.
-        </p>
-      )}
+      {(() => {
+        const { text, accent } =
+          promoAndMarkdown >= 50
+            ? {
+                text: 'More than half your acquisition volume is promotion-driven. This will suppress repeat rates and inflate long-term CAC.',
+                accent: 'border-red-400',
+              }
+            : promoAndMarkdown >= 30
+            ? {
+                text: 'A significant share of your acquisition volume is promotion-driven. Monitor repeat rates by discount tier.',
+                accent: 'border-amber-400',
+              }
+            : {
+                text: 'Your acquisition mix is weighted toward full price and email exchange. This supports stronger repeat rate and LTV.',
+                accent: 'border-emerald-400',
+              };
+        return (
+          <p className={`mt-3 text-sm text-slate-600 border-l-2 ${accent} pl-3`}>{text}</p>
+        );
+      })()}
     </div>
   );
 }
@@ -873,20 +880,20 @@ export function EntryPointEconomics() {
             <BlendedScore score={viewState.results.blendedEpeScore} />
           </div>
 
-          {/* 2 — Per product EPE scores */}
+          {/* 2 — Flagged insight */}
+          <FlaggedInsight
+            products={viewState.results.products}
+            totalVolume={viewState.results.totalVolume}
+          />
+
+          {/* 3 — Per product EPE scores */}
           <div>
             <SectionLabel>Per product EPE scores</SectionLabel>
             <ProductTable products={viewState.results.products} />
           </div>
 
-          {/* 3 — Payback period */}
+          {/* 4 — Payback period */}
           <PaybackTable products={viewState.results.products} />
-
-          {/* 4 — Flagged insight */}
-          <FlaggedInsight
-            products={viewState.results.products}
-            totalVolume={viewState.results.totalVolume}
-          />
 
           {/* 5 — Discount tier summary */}
           <TierSummary
