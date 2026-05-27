@@ -336,30 +336,92 @@ function PaybackTable({ products }: { products: ResultRow[] }) {
   );
 }
 
-function FlaggedInsight({
+function InsightsBlock({
   products,
   totalVolume,
 }: {
   products: ResultRow[];
   totalVolume: number;
 }) {
-  if (products.length < 2) return null;
+  const w = (field: keyof Pick<ResultRow, 'fullPricePct' | 'emailExchangePct' | 'promotionalPct' | 'markdownPct'>) =>
+    totalVolume > 0 ? products.reduce((s, p) => s + p[field] * p.volume, 0) / totalVolume : 0;
 
-  const highestVol = products.reduce((max, p) => (p.volume > max.volume ? p : max), products[0]);
+  const promotional = w('promotionalPct');
+  const markdown = w('markdownPct');
+  const promoAndMarkdown = promotional + markdown;
 
-  const pct = Math.round((highestVol.volume / totalVolume) * 100);
+  const highestVol = products.length > 0
+    ? products.reduce((max, p) => (p.volume > max.volume ? p : max), products[0])
+    : null;
+
+  const volPct = highestVol && totalVolume > 0
+    ? Math.round((highestVol.volume / totalVolume) * 100)
+    : 0;
+
+  const amberPayback = products.find(
+    (p) => p.payback !== null && p.payback.days >= 120 && p.payback.days < 180
+  );
+
+  const insights: string[] = [];
+
+  // Insight 1 — flagged product
+  if (products.length >= 2 && highestVol) {
+    insights.push(
+      `${highestVol.name} drives ${volPct}% of your first purchase volume but has your lowest EPE score at ${highestVol.epeScore.toFixed(0)}. Is this driven by discount depth, low repeat rate, or both? Check the per product breakdown below.`
+    );
+  }
+
+  // Insight 2A — discount mix 50%+
+  if (promoAndMarkdown >= 50) {
+    insights.push(
+      'More than half your acquisition volume is promotion-driven. You may be training customers to wait for the next sale rather than buying at full price. Review promotional frequency and check whether repeat purchases are happening at full price or only during promotions.'
+    );
+  } else if (promoAndMarkdown >= 30) {
+    // Insight 2B — 30–49%
+    insights.push(
+      'A significant share of your acquisition volume is promotion-driven. Monitor whether repeat purchases are occurring at full price or clustering around promotional windows — the pattern will tell you whether discounting is acquiring customers or just renting them.'
+    );
+  }
+
+  // Insight 2C — markdown > 20% (independent of 2A/2B)
+  if (markdown > 20) {
+    insights.push(
+      'Your markdown volume is material. Before drawing conclusions, segment these buyers by product mix. A markdown first-purchaser who cross-sells into full price product is a different customer to one who only ever buys on sale.'
+    );
+  }
+
+  // Insight 3 — RPR drag on highest volume product
+  if (highestVol && highestVol.rpr90d < 35) {
+    insights.push(
+      `${highestVol.name} is your highest volume entry point but only ${highestVol.rpr90d.toFixed(1)}% of first-time buyers return within 90 days. At this repeat rate your blended CAC is working harder than it needs to. Investigate whether the post-purchase experience matches the acquisition promise.`
+    );
+  }
+
+  // Insight 4 — amber payback (120–179 days)
+  if (amberPayback) {
+    insights.push(
+      `${amberPayback.name} has a ${Math.round(amberPayback.payback!.days)}-day payback period. Not critical yet but worth monitoring — any increase in CAC or softening of early LTV will push this into problem territory.`
+    );
+  }
 
   return (
     <div>
-      <SectionLabel>Flagged insight</SectionLabel>
-      <div className="border-l-2 border-amber-400 bg-amber-50 rounded-r-lg px-4 py-3">
-        <p className="text-sm text-slate-700">
-          <span className="font-medium">{highestVol.name}</span> drives{' '}
-          <span className="font-medium tabular-nums">{pct}%</span> of your first purchase volume
-          but has your lowest EPE score at{' '}
-          <span className="font-medium tabular-nums">{highestVol.epeScore.toFixed(0)}</span>.
-          Review your acquisition mix.
-        </p>
+      <SectionLabel>Insights</SectionLabel>
+      <div className="space-y-3">
+        {insights.length === 0 ? (
+          <div className="border-l-2 border-emerald-400 bg-emerald-50 rounded-r-lg px-4 py-3">
+            <p className="text-sm text-slate-700">
+              Your entry point economics are working. Monitor discount tier mix and repeat rates as
+              you scale acquisition volume.
+            </p>
+          </div>
+        ) : (
+          insights.map((text, i) => (
+            <div key={i} className="border-l-2 border-amber-400 bg-amber-50 rounded-r-lg px-4 py-3">
+              <p className="text-sm text-slate-700">{text}</p>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
@@ -381,7 +443,6 @@ function TierSummary({
   const emailExchange = w('emailExchangePct');
   const promotional = w('promotionalPct');
   const markdown = w('markdownPct');
-  const promoAndMarkdown = promotional + markdown;
 
   const tiers = [
     { label: 'Full price', value: fullPrice },
@@ -402,51 +463,6 @@ function TierSummary({
             </span>
           </div>
         ))}
-      </div>
-      {/* Part 1 — Per tier context */}
-      <div className="mt-6 space-y-5">
-        <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Tier commentary</p>
-        {[
-          {
-            name: 'Full price',
-            copy: 'The strongest entry signal. If full price accounts for more than 30% of your acquisition volume you have genuine brand pull that most brands don\'t. Protect it — promotional activity that grows overall volume but erodes this share is a net negative.',
-          },
-          {
-            name: 'Email exchange 10–15%',
-            copy: 'Treat this as an acquisition cost, not a discount. The margin you give up is buying a customer relationship and an owned channel. This cohort behaves close to full price in repeat rate terms and should be managed accordingly.',
-          },
-          {
-            name: 'Promotional 20–25%',
-            copy: 'Watch cohort behaviour carefully at this tier. The risk is training customers to wait for promotional windows rather than buying at full price. If your promotional cadence is frequent, you may be creating the problem your next promotion is trying to solve.',
-          },
-          {
-            name: 'Markdown 30%+',
-            copy: 'Do not write off this cohort without segmenting it first. A markdown buyer who cross-sells into full price coordinates is a different customer to one who only ever buys on sale. Check product mix breadth before drawing conclusions about long-term value.',
-          },
-        ].map(({ name, copy }) => (
-          <div key={name}>
-            <p className="text-xs text-slate-400 mb-1">{name}</p>
-            <p className="text-sm text-slate-600 leading-relaxed">{copy}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Part 2 — Behavioural flags */}
-      <div className="mt-6 space-y-4">
-        <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Behavioural flags</p>
-        <p className="text-sm text-slate-600 leading-relaxed">
-          Promotional frequency matters as much as promotional depth. Customers who only see your
-          brand during sale periods will come to expect it. Review how often each discount tier
-          appears in your acquisition calendar.
-        </p>
-        {markdown > 15 && (
-          <p className="text-sm text-slate-600 leading-relaxed">
-            Your markdown volume is high enough to warrant a cohort split in your order data.
-            Identify whether markdown first-purchasers buy across multiple price points over time
-            or remain single-tier buyers — the answer changes your retention strategy
-            significantly.
-          </p>
-        )}
       </div>
     </div>
   );
@@ -905,8 +921,8 @@ export function EntryPointEconomics() {
             <BlendedScore score={viewState.results.blendedEpeScore} />
           </div>
 
-          {/* 2 — Flagged insight */}
-          <FlaggedInsight
+          {/* 2 — Insights */}
+          <InsightsBlock
             products={viewState.results.products}
             totalVolume={viewState.results.totalVolume}
           />
