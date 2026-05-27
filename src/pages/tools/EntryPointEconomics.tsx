@@ -403,26 +403,51 @@ function TierSummary({
           </div>
         ))}
       </div>
-      {(() => {
-        const { text, accent } =
-          promoAndMarkdown >= 50
-            ? {
-                text: 'More than half your acquisition volume is promotion-driven. This will suppress repeat rates and inflate long-term CAC.',
-                accent: 'border-red-400',
-              }
-            : promoAndMarkdown >= 30
-            ? {
-                text: 'A significant share of your acquisition volume is promotion-driven. Monitor repeat rates by discount tier.',
-                accent: 'border-amber-400',
-              }
-            : {
-                text: 'Your acquisition mix is weighted toward full price and email exchange. This supports stronger repeat rate and LTV.',
-                accent: 'border-emerald-400',
-              };
-        return (
-          <p className={`mt-3 text-sm text-slate-600 border-l-2 ${accent} pl-3`}>{text}</p>
-        );
-      })()}
+      {/* Part 1 — Per tier context */}
+      <div className="mt-6 space-y-5">
+        <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Tier commentary</p>
+        {[
+          {
+            name: 'Full price',
+            copy: 'The strongest entry signal. If full price accounts for more than 30% of your acquisition volume you have genuine brand pull that most brands don\'t. Protect it — promotional activity that grows overall volume but erodes this share is a net negative.',
+          },
+          {
+            name: 'Email exchange 10–15%',
+            copy: 'Treat this as an acquisition cost, not a discount. The margin you give up is buying a customer relationship and an owned channel. This cohort behaves close to full price in repeat rate terms and should be managed accordingly.',
+          },
+          {
+            name: 'Promotional 20–25%',
+            copy: 'Watch cohort behaviour carefully at this tier. The risk is training customers to wait for promotional windows rather than buying at full price. If your promotional cadence is frequent, you may be creating the problem your next promotion is trying to solve.',
+          },
+          {
+            name: 'Markdown 30%+',
+            copy: 'Do not write off this cohort without segmenting it first. A markdown buyer who cross-sells into full price coordinates is a different customer to one who only ever buys on sale. Check product mix breadth before drawing conclusions about long-term value.',
+          },
+        ].map(({ name, copy }) => (
+          <div key={name}>
+            <p className="text-xs text-slate-400 mb-1">{name}</p>
+            <p className="text-sm text-slate-600 leading-relaxed">{copy}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Part 2 — Behavioural flags */}
+      <div className="mt-6 space-y-4">
+        <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Behavioural flags</p>
+        <p className="text-sm text-slate-600 leading-relaxed">
+          Promotional frequency matters as much as promotional depth. Customers who only see your
+          brand during sale periods will come to expect it. Review how often each discount tier
+          appears in your acquisition calendar.
+        </p>
+        {markdown > 15 && (
+          <p className="text-sm text-slate-600 leading-relaxed">
+            Your markdown volume is high enough to warrant a cohort split in your order data.
+            Identify whether markdown first-purchasers buy across multiple price points over time
+            or remain single-tier buyers — the answer changes your retention strategy
+            significantly.
+          </p>
+        )}
+      </div>
     </div>
   );
 }
