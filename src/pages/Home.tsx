@@ -36,48 +36,48 @@ export function Home() {
         <div className="px-5 pt-4 pb-3 border-b border-slate-100">
           <div className="flex items-center justify-between gap-4">
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Example output</p>
-            <p className="text-xs text-slate-400">Entry Point Economics</p>
+            <p className="text-xs text-slate-400">Entry Point Economics (EPE)</p>
           </div>
-          <p className="text-xs text-slate-400 mt-1.5">8 SKUs · 6 months of orders · Mid-range fashion brand</p>
+          <p className="text-xs text-slate-400 mt-1.5">3 products · mid-range fashion brand · blended EPE 61</p>
         </div>
-        <div>
-          <table className="w-full text-sm table-fixed sm:table-auto">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-100">
-                <th className="py-2 pl-4 pr-2 sm:py-2.5 sm:pl-5 sm:pr-3 text-left text-xs uppercase tracking-widest font-semibold text-slate-300 w-6 sm:w-8">#</th>
-                <th className="py-2 px-1.5 sm:py-2.5 sm:px-3 text-left text-xs uppercase tracking-widest font-semibold text-slate-300">Product</th>
-                <th className="py-2 px-1.5 sm:py-2.5 sm:px-3 text-right text-xs uppercase tracking-widest font-semibold text-slate-300 whitespace-nowrap">Retention</th>
-                <th className="py-2 pl-1.5 pr-4 sm:py-2.5 sm:px-3 text-right text-xs uppercase tracking-widest font-semibold text-slate-300 whitespace-nowrap">Volume</th>
-                <th className="py-2.5 pl-3 pr-5 text-right text-xs uppercase tracking-widest font-semibold text-slate-300 hidden sm:table-cell">Disc. dependency</th>
+                <th className="py-2.5 px-4 text-left text-xs uppercase tracking-widest font-semibold text-slate-300">Product</th>
+                <th className="py-2.5 px-3 text-right text-xs uppercase tracking-widest font-semibold text-slate-300 whitespace-nowrap">EPE Score</th>
+                <th className="py-2.5 px-3 text-right text-xs uppercase tracking-widest font-semibold text-slate-300 whitespace-nowrap">90D RPR</th>
+                <th className="py-2.5 px-3 text-right text-xs uppercase tracking-widest font-semibold text-slate-300 whitespace-nowrap hidden sm:table-cell">Disc. Quality</th>
+                <th className="py-2.5 px-4 text-right text-xs uppercase tracking-widest font-semibold text-slate-300 whitespace-nowrap hidden sm:table-cell">LTV Velocity</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               <tr>
-                <td className="py-2 pl-4 pr-2 sm:py-3 sm:pl-5 sm:pr-3 text-slate-400 tabular-nums">1</td>
-                <td className="py-2 px-1.5 sm:py-3 sm:px-3 font-medium text-xs sm:text-sm text-slate-900 whitespace-nowrap">Merino Crew Neck</td>
-                <td className="py-2 px-1.5 sm:py-3 sm:px-3 text-right font-mono tabular-nums text-slate-700 whitespace-nowrap">0.81</td>
-                <td className="py-2 pl-1.5 pr-4 sm:py-3 sm:px-3 text-right text-slate-600 whitespace-nowrap">High</td>
-                <td className="py-3 pl-3 pr-5 text-right text-slate-600 hidden sm:table-cell">Low</td>
+                <td className="py-3 px-4 font-medium text-slate-900 whitespace-nowrap">Merino Crew Neck</td>
+                <td className="py-3 px-3 text-right font-bold tabular-nums text-emerald-700">78</td>
+                <td className="py-3 px-3 text-right tabular-nums text-slate-700 whitespace-nowrap">42.0%</td>
+                <td className="py-3 px-3 text-right tabular-nums text-slate-600 hidden sm:table-cell">91</td>
+                <td className="py-3 px-4 text-right tabular-nums text-slate-600 hidden sm:table-cell">62</td>
               </tr>
               <tr>
-                <td className="py-2 pl-4 pr-2 sm:py-3 sm:pl-5 sm:pr-3 text-slate-400 tabular-nums">2</td>
-                <td className="py-2 px-1.5 sm:py-3 sm:px-3 font-medium text-xs sm:text-sm text-slate-900 whitespace-nowrap">Canvas Tote</td>
-                <td className="py-2 px-1.5 sm:py-3 sm:px-3 text-right font-mono tabular-nums text-slate-700 whitespace-nowrap">0.74</td>
-                <td className="py-2 pl-1.5 pr-4 sm:py-3 sm:px-3 text-right text-slate-600 whitespace-nowrap">Medium</td>
-                <td className="py-3 pl-3 pr-5 text-right text-slate-600 hidden sm:table-cell">Low</td>
+                <td className="py-3 px-4 font-medium text-slate-900 whitespace-nowrap">Canvas Tote</td>
+                <td className="py-3 px-3 text-right font-bold tabular-nums text-amber-700">58</td>
+                <td className="py-3 px-3 text-right tabular-nums text-slate-700 whitespace-nowrap">31.0%</td>
+                <td className="py-3 px-3 text-right tabular-nums text-slate-600 hidden sm:table-cell">74</td>
+                <td className="py-3 px-4 text-right tabular-nums text-slate-600 hidden sm:table-cell">55</td>
               </tr>
               <tr>
-                <td className="py-2 pl-4 pr-2 sm:py-3 sm:pl-5 sm:pr-3 text-slate-400 tabular-nums">3</td>
-                <td className="py-2 px-1.5 sm:py-3 sm:px-3 font-medium text-xs sm:text-sm text-slate-900 whitespace-nowrap">Wool Overshirt</td>
-                <td className="py-2 px-1.5 sm:py-3 sm:px-3 text-right font-mono tabular-nums text-slate-700 whitespace-nowrap">0.68</td>
-                <td className="py-2 pl-1.5 pr-4 sm:py-3 sm:px-3 text-right text-slate-600 whitespace-nowrap">Low</td>
-                <td className="py-3 pl-3 pr-5 text-right text-amber-600 hidden sm:table-cell">Medium</td>
+                <td className="py-3 px-4 font-medium text-slate-900 whitespace-nowrap">Wool Overshirt</td>
+                <td className="py-3 px-3 text-right font-bold tabular-nums text-amber-700">47</td>
+                <td className="py-3 px-3 text-right tabular-nums text-slate-700 whitespace-nowrap">22.0%</td>
+                <td className="py-3 px-3 text-right tabular-nums text-slate-600 hidden sm:table-cell">48</td>
+                <td className="py-3 px-4 text-right tabular-nums text-slate-600 hidden sm:table-cell">71</td>
               </tr>
             </tbody>
           </table>
         </div>
         <div className="px-5 py-4 border-t border-slate-100">
-          <p className="text-sm text-slate-500 italic leading-relaxed">Acquire on the Merino Crew Neck. High retention, no discount crutch, enough volume to trust the signal.</p>
+          <p className="text-sm text-slate-500 italic leading-relaxed">Acquire on the Merino Crew Neck. Strong repeat rate, clean discount mix, EPE score 20 points above the Wool Overshirt.</p>
         </div>
       </div>
 
