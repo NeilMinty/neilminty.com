@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import {
   ComposedChart,
   Line,
@@ -11,6 +11,10 @@ import {
   ReferenceArea,
   ResponsiveContainer,
 } from 'recharts';
+import { ToolLayout } from '@/components/ToolLayout';
+import { ResultCard } from '@/components/ResultCard';
+import { SectionLabel } from '@/components/SectionLabel';
+import { InputField } from '@/components/InputField';
 import { calculateSubscriptionSurvival } from '@/logic/subscriptionSurvivalLogic';
 import type {
   SubscriptionSurvivalInputs,
@@ -27,18 +31,8 @@ const FREQ_OPTIONS: { value: SubscriptionFrequency; label: string }[] = [
   { value: 'every2months', label: 'Every 2 months' },
 ];
 
-const DARK = {
-  bg: '#0F0F0F',
-  surface: 'rgba(255,255,255,0.04)',
-  border: 'rgba(240,238,233,0.12)',
-  borderSubtle: 'rgba(240,238,233,0.08)',
-  text: '#F0EEE9',
-  textMuted: 'rgba(240,238,233,0.5)',
-  textDim: 'rgba(240,238,233,0.3)',
-  accent: '#F59E0B',
-  inputBg: 'rgba(255,255,255,0.04)',
-  inputBorder: 'rgba(240,238,233,0.15)',
-} as const;
+// Accent for the chart activation threshold line — dark amber, readable on white
+const CHART_ACCENT = '#92400E';
 
 // ─── FORM STATE ────────────────────────────────────────────────────────────────
 
@@ -70,96 +64,9 @@ type ViewState =
   | { view: 'input' }
   | { view: 'live'; baseInputs: Pick<SubscriptionSurvivalInputs, 'aov' | 'grossMarginPercent' | 'frequency' | 'cac'> };
 
-// ─── DARK INPUT ────────────────────────────────────────────────────────────────
+// ─── SELECT FIELD ─────────────────────────────────────────────────────────────
 
-function DarkInput({
-  label,
-  value,
-  onChange,
-  prefix,
-  suffix,
-  hint,
-  placeholder = '0',
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  prefix?: string;
-  suffix?: string;
-  hint?: string;
-  placeholder?: string;
-}) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <label style={{ color: DARK.textMuted, fontSize: 13, fontWeight: 500 }}>{label}</label>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'stretch',
-          border: `1px solid ${DARK.inputBorder}`,
-          borderRadius: 6,
-          background: DARK.inputBg,
-        }}
-      >
-        {prefix && (
-          <span
-            style={{
-              padding: '0 10px',
-              display: 'flex',
-              alignItems: 'center',
-              color: DARK.textDim,
-              fontSize: 13,
-              borderRight: `1px solid ${DARK.borderSubtle}`,
-              background: 'rgba(0,0,0,0.2)',
-              borderRadius: '6px 0 0 6px',
-              userSelect: 'none',
-            }}
-          >
-            {prefix}
-          </span>
-        )}
-        <input
-          type="number"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          style={{
-            flex: 1,
-            background: 'transparent',
-            border: 'none',
-            outline: 'none',
-            padding: '8px 12px',
-            color: DARK.text,
-            fontSize: 14,
-            minWidth: 0,
-          }}
-        />
-        {suffix && (
-          <span
-            style={{
-              padding: '0 10px',
-              display: 'flex',
-              alignItems: 'center',
-              color: DARK.textDim,
-              fontSize: 13,
-              borderLeft: `1px solid ${DARK.borderSubtle}`,
-              background: 'rgba(0,0,0,0.2)',
-              borderRadius: '0 6px 6px 0',
-              userSelect: 'none',
-            }}
-          >
-            {suffix}
-          </span>
-        )}
-      </div>
-      {hint && <p style={{ color: DARK.textDim, fontSize: 12 }}>{hint}</p>}
-    </div>
-  );
-}
-
-// ─── DARK SELECT ───────────────────────────────────────────────────────────────
-
-function DarkSelect({
+function SelectField({
   label,
   value,
   onChange,
@@ -171,35 +78,24 @@ function DarkSelect({
   options: { value: string; label: string }[];
 }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <label style={{ color: DARK.textMuted, fontSize: 13, fontWeight: 500 }}>{label}</label>
+    <div className="flex flex-col gap-1.5">
+      <label className="text-sm font-medium text-slate-700">{label}</label>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        style={{
-          background: DARK.inputBg,
-          border: `1px solid ${DARK.inputBorder}`,
-          borderRadius: 6,
-          padding: '8px 12px',
-          color: DARK.text,
-          fontSize: 14,
-          outline: 'none',
-          cursor: 'pointer',
-        }}
+        className="border border-slate-200 rounded bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-400 transition-colors cursor-pointer"
       >
         {options.map((o) => (
-          <option key={o.value} value={o.value} style={{ background: '#1A1A1A', color: DARK.text }}>
-            {o.label}
-          </option>
+          <option key={o.value} value={o.value}>{o.label}</option>
         ))}
       </select>
     </div>
   );
 }
 
-// ─── DARK SLIDER ──────────────────────────────────────────────────────────────
+// ─── SLIDER FIELD ─────────────────────────────────────────────────────────────
 
-function DarkSlider({
+function SliderField({
   label,
   value,
   onChange,
@@ -211,12 +107,10 @@ function DarkSlider({
   hint?: string;
 }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-        <label style={{ color: DARK.textMuted, fontSize: 13, fontWeight: 500 }}>{label}</label>
-        <span style={{ color: DARK.accent, fontFamily: 'ui-monospace, monospace', fontSize: 14, fontWeight: 600 }}>
-          {value}%
-        </span>
+    <div className="flex flex-col gap-1.5">
+      <div className="flex justify-between items-baseline">
+        <label className="text-sm font-medium text-slate-700">{label}</label>
+        <span className="text-sm font-semibold tabular-nums text-slate-900">{value}%</span>
       </div>
       <input
         type="range"
@@ -225,62 +119,9 @@ function DarkSlider({
         step={1}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        style={{ width: '100%', accentColor: DARK.accent, cursor: 'pointer' }}
+        className="w-full accent-slate-900 cursor-pointer"
       />
-      {hint && <p style={{ color: DARK.textDim, fontSize: 12 }}>{hint}</p>}
-    </div>
-  );
-}
-
-// ─── METRIC CARD ──────────────────────────────────────────────────────────────
-
-function MetricCard({
-  label,
-  value,
-  subtext,
-  accent = false,
-}: {
-  label: string;
-  value: string;
-  subtext?: string;
-  accent?: boolean;
-}) {
-  return (
-    <div
-      style={{
-        background: DARK.surface,
-        border: `1px solid ${DARK.border}`,
-        borderRadius: 8,
-        padding: '16px 20px',
-      }}
-    >
-      <p
-        style={{
-          color: DARK.textMuted,
-          fontSize: 11,
-          fontWeight: 600,
-          textTransform: 'uppercase',
-          letterSpacing: '0.08em',
-          marginBottom: 6,
-        }}
-      >
-        {label}
-      </p>
-      <p
-        style={{
-          color: accent ? DARK.accent : DARK.text,
-          fontSize: 24,
-          fontWeight: 600,
-          letterSpacing: '-0.02em',
-          fontFamily: 'ui-monospace, monospace',
-          lineHeight: 1.2,
-        }}
-      >
-        {value}
-      </p>
-      {subtext && (
-        <p style={{ color: DARK.textMuted, fontSize: 13, marginTop: 4 }}>{subtext}</p>
-      )}
+      {hint && <p className="text-xs text-slate-400">{hint}</p>}
     </div>
   );
 }
@@ -298,37 +139,26 @@ function SurvivalChart({ results }: { results: SubscriptionSurvivalResults }) {
 
   const maxMargin = Math.max(...steps.map((s) => s.cumulativeMargin), 1);
 
-  const tooltipStyle = {
-    contentStyle: {
-      background: '#1C1C1C',
-      border: `1px solid ${DARK.border}`,
-      borderRadius: 6,
-      color: DARK.text,
-      fontSize: 12,
-    },
-    labelStyle: { color: DARK.textMuted, marginBottom: 4 },
-  };
-
   return (
     <ResponsiveContainer width="100%" height={320}>
       <ComposedChart data={chartData} margin={{ top: 16, right: 56, left: 0, bottom: 8 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="rgba(240,238,233,0.06)" />
+        <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
         <XAxis
           dataKey="order"
-          stroke="rgba(240,238,233,0.15)"
-          tick={{ fill: 'rgba(240,238,233,0.45)', fontSize: 12 }}
+          stroke="#CBD5E1"
+          tick={{ fill: '#64748B', fontSize: 12 }}
           tickFormatter={(v) => `O${v}`}
         />
         <YAxis
           yAxisId="left"
           domain={[0, 100]}
-          stroke="rgba(240,238,233,0.15)"
-          tick={{ fill: 'rgba(240,238,233,0.45)', fontSize: 12 }}
+          stroke="#CBD5E1"
+          tick={{ fill: '#64748B', fontSize: 12 }}
           label={{
             value: 'Subscribers',
             angle: -90,
             position: 'insideLeft',
-            fill: 'rgba(240,238,233,0.3)',
+            fill: '#94A3B8',
             fontSize: 11,
             dx: 12,
           }}
@@ -337,12 +167,19 @@ function SurvivalChart({ results }: { results: SubscriptionSurvivalResults }) {
           yAxisId="right"
           orientation="right"
           domain={[0, maxMargin * 1.15]}
-          stroke="rgba(240,238,233,0.15)"
-          tick={{ fill: 'rgba(240,238,233,0.45)', fontSize: 12 }}
+          stroke="#CBD5E1"
+          tick={{ fill: '#64748B', fontSize: 12 }}
           tickFormatter={(v: number) => `£${v.toFixed(0)}`}
         />
         <Tooltip
-          {...tooltipStyle}
+          contentStyle={{
+            background: '#fff',
+            border: '1px solid #E2E8F0',
+            borderRadius: 6,
+            color: '#1E293B',
+            fontSize: 12,
+          }}
+          labelStyle={{ color: '#64748B', marginBottom: 4 }}
           labelFormatter={(label) => `Order ${label}`}
           formatter={(value, name) => {
             const n = typeof value === 'number' ? value : 0;
@@ -351,7 +188,7 @@ function SurvivalChart({ results }: { results: SubscriptionSurvivalResults }) {
           }}
         />
         <Legend
-          wrapperStyle={{ color: 'rgba(240,238,233,0.6)', fontSize: 12, paddingTop: 8 }}
+          wrapperStyle={{ color: '#64748B', fontSize: 12, paddingTop: 8 }}
           formatter={(name) =>
             name === 'subscribers' ? 'Subscribers surviving' : 'Cumulative margin'
           }
@@ -363,8 +200,8 @@ function SurvivalChart({ results }: { results: SubscriptionSurvivalResults }) {
             yAxisId="left"
             x1={1}
             x2={10}
-            fill="rgba(220,38,38,0.1)"
-            label={{ value: 'Pre-activation', position: 'insideTopLeft', fill: 'rgba(239,68,68,0.55)', fontSize: 10 }}
+            fill="rgba(220,38,38,0.08)"
+            label={{ value: 'Pre-activation', position: 'insideTopLeft', fill: 'rgba(185,28,28,0.6)', fontSize: 10 }}
           />
         ) : (
           <>
@@ -373,8 +210,8 @@ function SurvivalChart({ results }: { results: SubscriptionSurvivalResults }) {
                 yAxisId="left"
                 x1={1}
                 x2={cacPaybackOrder}
-                fill="rgba(220,38,38,0.1)"
-                label={{ value: 'Pre-activation', position: 'insideTopLeft', fill: 'rgba(239,68,68,0.55)', fontSize: 10 }}
+                fill="rgba(220,38,38,0.08)"
+                label={{ value: 'Pre-activation', position: 'insideTopLeft', fill: 'rgba(185,28,28,0.6)', fontSize: 10 }}
               />
             )}
             {cacPaybackOrder <= 10 && (
@@ -382,20 +219,20 @@ function SurvivalChart({ results }: { results: SubscriptionSurvivalResults }) {
                 yAxisId="left"
                 x1={cacPaybackOrder}
                 x2={10}
-                fill="rgba(22,163,74,0.08)"
-                label={{ value: 'Post-activation', position: 'insideTopRight', fill: 'rgba(34,197,94,0.5)', fontSize: 10 }}
+                fill="rgba(22,163,74,0.07)"
+                label={{ value: 'Post-activation', position: 'insideTopRight', fill: 'rgba(21,128,61,0.6)', fontSize: 10 }}
               />
             )}
             <ReferenceLine
               yAxisId="left"
               x={cacPaybackOrder}
-              stroke={DARK.accent}
+              stroke={CHART_ACCENT}
               strokeWidth={1.5}
               strokeDasharray="5 3"
               label={{
                 value: 'CAC recovered',
                 position: 'insideTopRight',
-                fill: DARK.accent,
+                fill: CHART_ACCENT,
                 fontSize: 11,
                 fontWeight: 600,
                 dy: cacPaybackOrder <= 2 ? 18 : 0,
@@ -408,17 +245,17 @@ function SurvivalChart({ results }: { results: SubscriptionSurvivalResults }) {
           yAxisId="left"
           type="monotone"
           dataKey="subscribers"
-          stroke={DARK.text}
+          stroke="#475569"
           strokeWidth={2}
-          dot={{ fill: DARK.text, r: 3, strokeWidth: 0 }}
-          activeDot={{ r: 5, fill: DARK.text }}
+          dot={{ fill: '#475569', r: 3, strokeWidth: 0 }}
+          activeDot={{ r: 5, fill: '#475569' }}
           name="subscribers"
         />
         <Line
           yAxisId="right"
           type="monotone"
           dataKey="margin"
-          stroke={DARK.accent}
+          stroke={CHART_ACCENT}
           strokeWidth={2}
           dot={false}
           strokeDasharray="5 3"
@@ -452,40 +289,12 @@ function SensitivityCallout({
   }
 
   return (
-    <div
-      style={{
-        marginTop: 16,
-        padding: '12px 16px',
-        background: 'rgba(245,158,11,0.07)',
-        border: `1px solid rgba(245,158,11,0.2)`,
-        borderRadius: 6,
-      }}
-    >
-      <p style={{ color: 'rgba(240,238,233,0.7)', fontSize: 13, lineHeight: 1.6 }}>
-        <span style={{ color: DARK.accent, fontWeight: 600 }}>Moving O2 churn by 5pp recovers: </span>
+    <div className="border border-slate-200 bg-slate-50 rounded-lg p-4">
+      <p className="text-sm text-slate-700 leading-relaxed">
+        <span className="font-semibold text-slate-900">Moving O2 churn by 5pp recovers: </span>
         {text}
       </p>
     </div>
-  );
-}
-
-// ─── SECTION DIVIDER ──────────────────────────────────────────────────────────
-
-function SectionDivider({ label }: { label: string }) {
-  return (
-    <p
-      style={{
-        color: DARK.textMuted,
-        fontSize: 11,
-        fontWeight: 600,
-        textTransform: 'uppercase',
-        letterSpacing: '0.08em',
-        marginBottom: 12,
-        marginTop: 24,
-      }}
-    >
-      {label}
-    </p>
   );
 }
 
@@ -496,17 +305,6 @@ export function SubscriptionSurvival() {
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
   const [churn, setChurn] = useState<ChurnState>(DEFAULT_CHURN);
   const [errors, setErrors] = useState<string[]>([]);
-
-  useEffect(() => {
-    document.title = 'Subscription Survival Model | Neil Minty';
-    const tag = document.querySelector('meta[name="description"]') as HTMLMetaElement | null;
-    const prev = tag?.content;
-    if (tag) tag.content = 'Model how your subscription cohort decays across orders. See where CAC is recovered and what happens when you adjust churn at each order step.';
-    return () => {
-      document.title = 'Neil Minty — DTC Operator Tools';
-      if (tag && prev !== undefined) tag.content = prev;
-    };
-  }, []);
 
   const set = (key: keyof FormState) => (value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -546,237 +344,158 @@ export function SubscriptionSurvival() {
   };
 
   return (
-    <div style={{ background: DARK.bg, minHeight: 'calc(100vh - 56px)', color: DARK.text }}>
-      <div style={{ maxWidth: 1152, margin: '0 auto', padding: '48px 24px' }}>
+    <ToolLayout
+      title="Subscription Survival Model"
+      description="Enter your unit economics. See where your cohort breaks."
+      metaDescription="Model how your subscription cohort decays across orders. See where CAC is recovered and what happens when you adjust churn at each order step."
+      wide
+    >
+      <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-8">
 
-        {/* Header */}
-        <div style={{ marginBottom: 40, paddingBottom: 32, borderBottom: `1px solid ${DARK.border}` }}>
-          <h1 style={{ fontSize: 24, fontWeight: 600, color: DARK.text, marginBottom: 8, letterSpacing: '-0.01em' }}>
-            Subscription Survival Model
-          </h1>
-          <p style={{ color: DARK.textMuted, lineHeight: 1.6 }}>
-            Enter your unit economics. See where your cohort breaks.
-          </p>
-        </div>
-
-        {/* Two-column layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-8">
-
-          {/* Left: Inputs */}
+        {/* Left: Inputs */}
+        <div className="space-y-8">
           <div>
-            <div
-              style={{
-                background: DARK.surface,
-                border: `1px solid ${DARK.border}`,
-                borderRadius: 10,
-                padding: '24px 20px',
-              }}
-            >
-              <SectionDivider label="Unit economics" />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <DarkInput
-                  label="AOV"
-                  value={form.aov}
-                  onChange={set('aov')}
-                  prefix="£"
-                  placeholder="40"
-                />
-                <DarkInput
-                  label="Gross margin"
-                  value={form.grossMarginPercent}
-                  onChange={set('grossMarginPercent')}
-                  suffix="%"
-                  placeholder="60"
-                />
-                <DarkSelect
-                  label="Subscription frequency"
-                  value={form.frequency}
-                  onChange={(v) => setForm((prev) => ({ ...prev, frequency: v as SubscriptionFrequency }))}
-                  options={FREQ_OPTIONS}
-                />
-                <DarkInput
-                  label="CAC"
-                  value={form.cac}
-                  onChange={set('cac')}
-                  prefix="£"
-                  placeholder="50"
-                  hint="Cost to acquire one subscriber"
-                />
-              </div>
+            <SectionLabel>Unit economics</SectionLabel>
+            <div className="space-y-4">
+              <InputField
+                label="AOV"
+                value={form.aov}
+                onChange={set('aov')}
+                prefix="£"
+                placeholder="40"
+              />
+              <InputField
+                label="Gross margin"
+                value={form.grossMarginPercent}
+                onChange={set('grossMarginPercent')}
+                suffix="%"
+                placeholder="60"
+              />
+              <SelectField
+                label="Subscription frequency"
+                value={form.frequency}
+                onChange={(v) => setForm((prev) => ({ ...prev, frequency: v as SubscriptionFrequency }))}
+                options={FREQ_OPTIONS}
+              />
+              <InputField
+                label="CAC"
+                value={form.cac}
+                onChange={set('cac')}
+                prefix="£"
+                placeholder="50"
+                hint="Cost to acquire one subscriber"
+              />
+            </div>
 
-              {errors.length > 0 && (
-                <div
-                  style={{
-                    marginTop: 16,
-                    padding: '10px 14px',
-                    background: 'rgba(220,38,38,0.1)',
-                    border: '1px solid rgba(220,38,38,0.25)',
-                    borderRadius: 6,
-                  }}
-                >
+            {errors.length > 0 && (
+              <div className="mt-4 border border-red-200 bg-red-50 rounded-lg px-4 py-3">
+                <ul className="space-y-1">
                   {errors.map((e) => (
-                    <p key={e} style={{ color: 'rgba(252,165,165,0.9)', fontSize: 13 }}>{e}</p>
+                    <li key={e} className="text-sm text-red-700">{e}</li>
                   ))}
-                </div>
-              )}
+                </ul>
+              </div>
+            )}
 
+            <div className="mt-5">
               <button
                 onClick={handleRun}
-                style={{
-                  marginTop: 20,
-                  width: '100%',
-                  background: DARK.accent,
-                  color: '#0F0F0F',
-                  border: 'none',
-                  borderRadius: 6,
-                  padding: '10px 16px',
-                  fontSize: 14,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  letterSpacing: '-0.01em',
-                }}
+                className="w-full bg-slate-900 text-white px-6 py-2.5 rounded text-sm font-medium hover:bg-slate-800 transition-colors"
               >
                 {viewState.view === 'live' ? 'Update model' : 'Run model'}
               </button>
-
-              {/* Churn sliders */}
-              <div style={{ marginTop: 28, paddingTop: 24, borderTop: `1px solid ${DARK.borderSubtle}` }}>
-                <SectionDivider label="Churn rates" />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                  <DarkSlider
-                    label="O1 churn — exits after first order"
-                    value={churn.o1}
-                    onChange={(v) => setChurn((prev) => ({ ...prev, o1: v }))}
-                  />
-                  <DarkSlider
-                    label="O2 churn — exits after second order"
-                    value={churn.o2}
-                    onChange={(v) => setChurn((prev) => ({ ...prev, o2: v }))}
-                  />
-                  <DarkSlider
-                    label="O3 churn — exits after third order"
-                    value={churn.o3}
-                    onChange={(v) => setChurn((prev) => ({ ...prev, o3: v }))}
-                    hint={`Long-run rate (O4+): ${(churn.o3 / 2).toFixed(1)}% per billing cycle`}
-                  />
-                </div>
-              </div>
             </div>
           </div>
 
-          {/* Right: Results */}
-          <div>
-            {results === null ? (
-              <div
-                style={{
-                  height: '100%',
-                  minHeight: 320,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: DARK.surface,
-                  border: `1px solid ${DARK.border}`,
-                  borderRadius: 10,
-                  padding: 40,
-                  textAlign: 'center',
-                }}
-              >
-                <div>
-                  <p style={{ color: DARK.textMuted, fontSize: 15 }}>
-                    Enter your unit economics and run the model to see the survival curve.
-                  </p>
-                  <p style={{ color: DARK.textDim, fontSize: 13, marginTop: 8 }}>
-                    Adjust the churn sliders on the left — the chart updates in real time.
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-
-                {/* Headline metrics */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <MetricCard
-                    label="CAC payback order"
-                    value={results.cacPaybackOrder !== null ? `Order ${results.cacPaybackOrder}` : 'Never'}
-                    subtext="within 10 orders"
-                    accent
-                  />
-                  <MetricCard
-                    label="Exit before activation"
-                    value={`${Math.round(results.subscribersBeforeActivation)} of 100`}
-                    subtext="subscribers exit before CAC is recovered"
-                  />
-                  <MetricCard
-                    label="Net loss, early churn"
-                    value={formatCurrency(results.netLossPerHundred)}
-                    subtext="per 100 subscribers acquired"
-                  />
-                </div>
-
-                {/* Chart */}
-                <div
-                  style={{
-                    background: DARK.surface,
-                    border: `1px solid ${DARK.border}`,
-                    borderRadius: 10,
-                    padding: '24px 20px 16px',
-                  }}
-                >
-                  <p
-                    style={{
-                      color: DARK.textMuted,
-                      fontSize: 11,
-                      fontWeight: 600,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.08em',
-                      marginBottom: 16,
-                    }}
-                  >
-                    Cohort survival — orders 1–10
-                  </p>
-                  <SurvivalChart results={results} />
-                  {results.cacPaybackOrder === null && (
-                    <p style={{ color: 'rgba(239,68,68,0.7)', fontSize: 12, marginTop: 8, textAlign: 'center' }}>
-                      CAC not recovered within 10 orders at current inputs
-                    </p>
-                  )}
-                </div>
-
-                {/* Sensitivity callout */}
-                <SensitivityCallout results={results} churnO2={churn.o2} />
-              </div>
-            )}
+          <div className="pt-6 border-t border-slate-200">
+            <SectionLabel>Churn rates</SectionLabel>
+            <div className="space-y-5">
+              <SliderField
+                label="O1 churn — exits after first order"
+                value={churn.o1}
+                onChange={(v) => setChurn((prev) => ({ ...prev, o1: v }))}
+              />
+              <SliderField
+                label="O2 churn — exits after second order"
+                value={churn.o2}
+                onChange={(v) => setChurn((prev) => ({ ...prev, o2: v }))}
+              />
+              <SliderField
+                label="O3 churn — exits after third order"
+                value={churn.o3}
+                onChange={(v) => setChurn((prev) => ({ ...prev, o3: v }))}
+                hint={`Long-run rate (O4+): ${(churn.o3 / 2).toFixed(1)}% per billing cycle`}
+              />
+            </div>
           </div>
         </div>
 
-        {/* Footer CTA */}
-        <div
-          style={{
-            marginTop: 64,
-            paddingTop: 32,
-            borderTop: `1px solid ${DARK.border}`,
-          }}
-        >
-          <p style={{ color: DARK.textMuted, fontSize: 14, lineHeight: 1.7 }}>
-            If you want to run this against your actual order data, that's a different conversation.{' '}
-            <button
-              onClick={() => { window.location.href = 'mail' + 'to:neil@person' + 'aify.io'; }}
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: 0,
-                color: DARK.accent,
-                cursor: 'pointer',
-                fontSize: 14,
-                textDecoration: 'underline',
-              }}
-            >
-              Let's talk.
-            </button>
-          </p>
-        </div>
+        {/* Right: Results */}
+        <div>
+          {results === null ? (
+            <div className="border border-slate-200 rounded-lg p-10 text-center shadow-card">
+              <p className="text-slate-500">
+                Enter your unit economics and run the model to see the survival curve.
+              </p>
+              <p className="text-sm text-slate-400 mt-2">
+                Adjust the churn sliders on the left — the chart updates in real time.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-6">
 
+              {/* Headline metrics */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <ResultCard
+                  label="CAC payback order"
+                  value={results.cacPaybackOrder !== null ? `Order ${results.cacPaybackOrder}` : 'Never'}
+                  subtext="within 10 orders"
+                  variant="neutral"
+                />
+                <ResultCard
+                  label="Exit before activation"
+                  value={`${Math.round(results.subscribersBeforeActivation)} of 100`}
+                  subtext="subscribers exit before CAC is recovered"
+                  variant="neutral"
+                />
+                <ResultCard
+                  label="Net loss, early churn"
+                  value={formatCurrency(results.netLossPerHundred)}
+                  subtext="per 100 subscribers acquired"
+                  variant="neutral"
+                />
+              </div>
+
+              {/* Chart */}
+              <div className="border border-slate-200 rounded-lg shadow-card px-5 pt-5 pb-4">
+                <SectionLabel>Cohort survival — orders 1–10</SectionLabel>
+                <SurvivalChart results={results} />
+                {results.cacPaybackOrder === null && (
+                  <p className="text-sm text-red-600 mt-2 text-center">
+                    CAC not recovered within 10 orders at current inputs
+                  </p>
+                )}
+              </div>
+
+              {/* Sensitivity callout */}
+              <SensitivityCallout results={results} churnO2={churn.o2} />
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+
+      {/* Footer CTA */}
+      <div className="mt-16 pt-10 border-t border-slate-200">
+        <p className="text-sm text-slate-500 leading-relaxed mb-3">
+          If you want to run this against your actual order data, that's a different conversation.
+        </p>
+        <button
+          onClick={() => { window.location.href = 'mail' + 'to:neil@person' + 'aify.io'; }}
+          className="text-sm text-slate-900 underline underline-offset-2 hover:text-slate-600 transition-colors bg-transparent border-none p-0 cursor-pointer"
+        >
+          Let's talk →
+        </button>
+      </div>
+    </ToolLayout>
   );
 }
