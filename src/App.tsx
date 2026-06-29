@@ -14,6 +14,7 @@ import { SupportCostLeakage } from '@/pages/tools/SupportCostLeakage';
 import { TaxonomyBuilder } from '@/pages/tools/TaxonomyBuilder';
 import { GrowthRoomPrivacy } from '@/pages/GrowthRoomPrivacy';
 import { GeoAudit } from '@/pages/tools/GeoAudit';
+import { SubscriptionSurvival } from '@/pages/tools/SubscriptionSurvival';
 import { GrowthRoomTerms } from '@/pages/GrowthRoomTerms';
 
 export default function App() {
@@ -34,6 +35,7 @@ export default function App() {
           <Route path="/tools/support-cost-leakage" element={<SupportCostLeakage />} />
           <Route path="/tools/taxonomy-builder" element={<TaxonomyBuilder />} />
           <Route path="/tools/geo-audit" element={<GeoAudit />} />
+          <Route path="/tools/subscription-survival" element={<SubscriptionSurvival />} />
           <Route path="/growth-room-privacy" element={<GrowthRoomPrivacy />} />
           <Route path="/growth-room-terms" element={<GrowthRoomTerms />} />
         </Routes>

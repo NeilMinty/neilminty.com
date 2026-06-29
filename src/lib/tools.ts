@@ -54,4 +54,10 @@ export const TOOLS: ToolDefinition[] = [
     path: '/tools/geo-audit',
     cta: 'Audit your site →',
   },
+  {
+    name: 'Subscription Survival Model',
+    description: "See how your subscriber cohort decays across orders, where your CAC is recovered, and what moving churn by 5 points actually costs you.",
+    path: '/tools/subscription-survival',
+    cta: 'Model your cohort →',
+  },
 ];
