@@ -76,17 +76,19 @@ export function calculateSubscriptionSurvival(
   }
 
   // Sensitivity: O2 churn reduced by 5pp (clamped at 0)
+  // O2 churn affects survivors[3] and beyond — never survivors[1] or [2].
+  // sensitivityIndex clamps to 3 so the diff is always non-zero when O2 churn has any effect.
   const compareOrder = activationOrder ?? 10;
+  const sensitivityIndex = Math.max(compareOrder, 3);
   const survivorsModified = buildSurvivors(churnO1, Math.max(0, churnO2 - 5), churnO3);
-  const cumulativeMarginModified = buildCumulativeMargin(survivorsModified, marginPerOrder);
 
   const extraSubscribers = Math.max(
     0,
-    survivorsModified[compareOrder] - survivors[compareOrder]
+    survivorsModified[sensitivityIndex] - survivors[sensitivityIndex]
   );
   const extraMargin = Math.max(
     0,
-    (cumulativeMarginModified[compareOrder] - cumulativeMargin[compareOrder]) * 100
+    extraSubscribers * cumulativeMargin[compareOrder]
   );
 
   return {

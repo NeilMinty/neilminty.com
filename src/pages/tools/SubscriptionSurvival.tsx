@@ -445,7 +445,7 @@ export function SubscriptionSurvival() {
             <div className="space-y-6">
 
               {/* Headline metrics */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <ResultCard
                   label="CAC payback order"
                   value={results.cacPaybackOrder !== null ? `Order ${results.cacPaybackOrder}` : 'Never'}
@@ -462,6 +462,12 @@ export function SubscriptionSurvival() {
                   label="Net loss, early churn"
                   value={formatCurrency(results.netLossPerHundred)}
                   subtext="per 100 subscribers acquired"
+                  variant="neutral"
+                />
+                <ResultCard
+                  label="Margin per survivor"
+                  value={`${formatCurrency(viewState.view === 'live' ? viewState.baseInputs.aov * (viewState.baseInputs.grossMarginPercent / 100) : 0)} / order`}
+                  subtext="per subscriber past activation"
                   variant="neutral"
                 />
               </div>

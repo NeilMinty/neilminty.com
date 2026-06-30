@@ -120,10 +120,32 @@ describe('CAC payback', () => {
     // modified: churnO2 = 15%, s3 = 60×(1-0.15) = 51, s4 = 51×(1-0.10) = 45.9
     // extraSubscribers at O4 = 45.9 - 43.2 = 2.7
     expect(r.sensitivityDelta.extraSubscribers).toBeCloseTo(2.7);
-    // cm4 modified: cm3_mod = 24 + 0.6×24 + 0.51×24 = 24 + 14.4 + 12.24 = 50.64
-    //               cm4_mod = 50.64 + 0.459×24 = 50.64 + 11.016 = 61.656
-    // extraMargin = (61.656 - 60.288) × 100 = 136.8
-    expect(r.sensitivityDelta.extraMargin).toBeCloseTo(136.8);
+    // extraMargin = extraSubscribers × cumulativeMargin[compareOrder]
+    //             = 2.7 × 60.288 = 162.78
+    expect(r.sensitivityDelta.extraMargin).toBeCloseTo(162.78);
+  });
+
+  it('sensitivity delta is non-zero when payback is at O2 (regression — O2 churn only affects survivors[3+])', () => {
+    // AOV=50, margin=75% → marginPerOrder=37.50, CAC=48
+    // cm1=37.5, cm2=60 → payback at O2 (compareOrder=2)
+    // sensitivityIndex = max(2,3) = 3
+    // survivors[3]=45, survivorsModified[3](O2=20%)=48 → extraSubscribers=3
+    // extraMargin = 3 × cumulativeMargin[2] = 3 × 60 = 180
+    const r = calculateSubscriptionSurvival(base({ aov: 50, grossMarginPercent: 75, cac: 48, churnO2: 25, churnO3: 15 }));
+    expect(r.cacPaybackOrder).toBe(2);
+    expect(r.sensitivityDelta.extraSubscribers).toBeCloseTo(3);
+    expect(r.sensitivityDelta.extraMargin).toBeCloseTo(180);
+  });
+
+  it('sensitivity delta is non-zero when payback is at O3 (regression)', () => {
+    // AOV=50, margin=70% → marginPerOrder=35, CAC=60
+    // survivors: s3=45, payback at O3 (cm3=71.75)
+    // modified (churnO2=20): s3=48 → extraSubscribers=3
+    // extraMargin = 3 × 71.75 = 215.25
+    const r = calculateSubscriptionSurvival(base({ aov: 50, grossMarginPercent: 70, cac: 60, churnO2: 25, churnO3: 15 }));
+    expect(r.cacPaybackOrder).toBe(3);
+    expect(r.sensitivityDelta.extraSubscribers).toBeCloseTo(3);
+    expect(r.sensitivityDelta.extraMargin).toBeCloseTo(215.25);
   });
 });
 
