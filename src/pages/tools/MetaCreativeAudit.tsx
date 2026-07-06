@@ -1,11 +1,10 @@
 import { useState, useRef } from 'react';
 import Papa from 'papaparse';
-import { Treemap, Tooltip, ResponsiveContainer } from 'recharts';
+import { Treemap, ResponsiveContainer } from 'recharts';
 import { ToolLayout } from '@/components/ToolLayout';
 import { parseMetaExport, analyseCreatives } from '@/logic/metaCreativeLogic';
 import type { DeliveryBucket, ProcessedAd, CreativeAnalysisResult } from '@/logic/metaCreativeTypes';
 import { formatCurrency } from '@/lib/utils';
-import type { TreemapNode } from 'recharts';
 
 // ─── CONSTANTS ─────────────────────────────────────────────────────────────────
 
@@ -24,62 +23,6 @@ const BUCKET_LABELS: Record<DeliveryBucket, string> = {
 };
 
 const ACTIVE_BUCKETS: DeliveryBucket[] = ['stable', 'learning', 'learning_limited'];
-
-// ─── TREEMAP CELL ─────────────────────────────────────────────────────────────
-
-let _cellLogCount = 0;
-
-function TreemapCell(props: TreemapNode) {
-  if (_cellLogCount < 3) {
-    console.log('[TreemapCell props]', JSON.parse(JSON.stringify(props)));
-    _cellLogCount++;
-  }
-  const { x, y, width, height, depth, name } = props;
-  const spend = props.value as number;
-  const fill  = props['fill'] as string ?? '#C9CDC2';
-
-  if (depth === 0 || !width || !height || width < 2 || height < 2) return <g />;
-
-  const showName  = width > 120 && height > 50;
-  const showSpend = width > 70 && height > 35;
-  const label     = name.length > 25 ? name.slice(0, 24) + '…' : name;
-  const midX      = x + width / 2;
-  const midY      = y + height / 2;
-
-  return (
-    <g>
-      <rect
-        x={x} y={y} width={width} height={height}
-        fill={fill} fillOpacity={0.88}
-        stroke="#F7F7F3" strokeWidth={1}
-        style={{ cursor: 'default' }}
-      />
-      {showSpend && (
-        <text
-          fill="#F7F7F3"
-          fontSize={11}
-          fontFamily="ui-sans-serif, system-ui, sans-serif"
-          style={{ pointerEvents: 'none', userSelect: 'none' }}
-        >
-          {showName && (
-            <tspan x={midX} y={midY - 7} textAnchor="middle">
-              {label}
-            </tspan>
-          )}
-          <tspan
-            x={midX}
-            y={showName ? midY + 7 : midY}
-            textAnchor="middle"
-            fontFamily="ui-monospace, monospace"
-            fontSize={10}
-          >
-            {formatCurrency(spend)}
-          </tspan>
-        </text>
-      )}
-    </g>
-  );
-}
 
 // ─── SPEND STATE BAR ──────────────────────────────────────────────────────────
 
@@ -181,6 +124,7 @@ export function MetaCreativeAudit() {
   const [fileName, setFileName]           = useState<string | null>(null);
   const [deliveryMissing, setDeliveryMissing] = useState(false);
   const [analysisDate, setAnalysisDate]   = useState<string>('');
+  const [hoveredAd, setHoveredAd]         = useState<ProcessedAd | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -192,6 +136,7 @@ export function MetaCreativeAudit() {
     setFileName(null);
     setDeliveryMissing(false);
     setAnalysisDate('');
+    setHoveredAd(null);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -221,6 +166,29 @@ export function MetaCreativeAudit() {
     e.target.value = '';
   };
 
+  const renderCell = (props: any) => {
+    const { x, y, width, height, name, fill, spend, spendShare, bucket } = props;
+    if (!width || !height || width < 2 || height < 2) return <g />;
+    const showFull  = width > 120 && height > 50;
+    const showSpend = width > 70 && height > 35;
+    const label = typeof name === 'string' && name.length > 25 ? name.slice(0, 24) + '…' : name;
+    return (
+      <g
+        onMouseEnter={() => setHoveredAd({ adName: name as string, spend: spend as number, spendShare: spendShare as number, bucket: bucket as DeliveryBucket })}
+        onMouseLeave={() => setHoveredAd(null)}
+      >
+        <rect x={x} y={y} width={width} height={height} fill={fill ?? '#C9CDC2'} fillOpacity={0.88} stroke="#ffffff" strokeWidth={1} />
+        {showFull && (<>
+          <text x={x + 8} y={y + 20} fill="#F7F7F3" fontSize={11} style={{ pointerEvents: 'none' }}>{label}</text>
+          <text x={x + 8} y={y + 38} fill="#F7F7F3" fontSize={11} fontFamily="ui-monospace,monospace" style={{ pointerEvents: 'none' }}>{formatCurrency(spend as number)}</text>
+        </>)}
+        {!showFull && showSpend && (
+          <text x={x + 6} y={y + 20} fill="#F7F7F3" fontSize={11} fontFamily="ui-monospace,monospace" style={{ pointerEvents: 'none' }}>{formatCurrency(spend as number)}</text>
+        )}
+      </g>
+    );
+  };
+
   const treemapData = result
     ? result.ads.map((ad: ProcessedAd) => ({
         name:       ad.adName,
@@ -231,50 +199,6 @@ export function MetaCreativeAudit() {
         spend:      ad.spend,
       }))
     : [];
-
-  const tooltipContent = ({ active, payload }: any) => {
-    if (!active || !payload?.[0]?.payload) return null;
-    const node = payload[0].payload;
-    const bucket = node.bucket as DeliveryBucket;
-    return (
-      <div
-        style={{
-          background: '#1A1A18',
-          color: '#F7F7F3',
-          border: '1px solid rgba(255,255,255,0.1)',
-          borderRadius: 6,
-          padding: '10px 12px',
-          maxWidth: 260,
-          fontSize: 12,
-        }}
-      >
-        <p style={{ fontFamily: 'Georgia, serif', fontWeight: 600, marginBottom: 6, lineHeight: 1.3, wordBreak: 'break-word' }}>
-          {node.name}
-        </p>
-        <p style={{ fontFamily: 'ui-monospace, monospace', color: '#F7F7F3', marginBottom: 2 }}>
-          {formatCurrency(node.size)}
-        </p>
-        <p style={{ color: '#A0A09A', marginBottom: 4 }}>
-          {(node.spendShare as number).toFixed(1)}% of total spend
-        </p>
-        {bucket && (
-          <span
-            style={{
-              display: 'inline-block',
-              background: `${BUCKET_COLORS[bucket]}30`,
-              color: BUCKET_COLORS[bucket],
-              padding: '2px 8px',
-              borderRadius: 4,
-              fontSize: 11,
-              fontWeight: 600,
-            }}
-          >
-            {BUCKET_LABELS[bucket]}
-          </span>
-        )}
-      </div>
-    );
-  };
 
   return (
     <ToolLayout
@@ -368,7 +292,7 @@ export function MetaCreativeAudit() {
             </p>
 
             {/* Panel 1 — Treemap */}
-            <div className="border border-slate-200 rounded-lg shadow-card px-5 pt-5 pb-4">
+            <div className="border border-slate-200 rounded-lg shadow-card px-5 pt-5 pb-4" style={{ position: 'relative' }}>
               <p className="text-sm font-semibold text-slate-900 mb-0.5">Spend by creative</p>
               <p className="text-xs text-slate-400 mb-4">
                 {result.activeAds} active ad{result.activeAds !== 1 ? 's' : ''} · {result.totalAds} total in export
@@ -379,12 +303,40 @@ export function MetaCreativeAudit() {
                   dataKey="size"
                   nameKey="name"
                   aspectRatio={4 / 3}
-                  content={TreemapCell as any}
+                  content={renderCell}
                   isAnimationActive={false}
-                >
-                  <Tooltip content={tooltipContent} />
-                </Treemap>
+                />
               </ResponsiveContainer>
+              {hoveredAd && (
+                <div style={{
+                  position: 'absolute',
+                  top: 16,
+                  right: 16,
+                  background: '#1A1A18',
+                  color: '#F7F7F3',
+                  padding: '10px 14px',
+                  borderRadius: 2,
+                  fontSize: 12,
+                  maxWidth: 240,
+                  pointerEvents: 'none',
+                  zIndex: 10,
+                }}>
+                  <p style={{ marginBottom: 4, lineHeight: 1.4, wordBreak: 'break-word' }}>{hoveredAd.adName}</p>
+                  <p style={{ fontFamily: 'ui-monospace,monospace', marginBottom: 2 }}>{formatCurrency(hoveredAd.spend)}</p>
+                  <p style={{ color: '#A0A09A', marginBottom: 6 }}>{hoveredAd.spendShare.toFixed(1)}% of total spend</p>
+                  <span style={{
+                    display: 'inline-block',
+                    background: `${BUCKET_COLORS[hoveredAd.bucket]}30`,
+                    color: BUCKET_COLORS[hoveredAd.bucket],
+                    padding: '2px 8px',
+                    borderRadius: 4,
+                    fontSize: 11,
+                    fontWeight: 600,
+                  }}>
+                    {BUCKET_LABELS[hoveredAd.bucket]}
+                  </span>
+                </div>
+              )}
               <div className="flex flex-wrap gap-3 mt-4 pt-3 border-t border-slate-100">
                 {(['stable', 'learning', 'learning_limited', 'other'] as DeliveryBucket[]).map((b) => (
                   <div key={b} className="flex items-center gap-1.5 text-xs text-slate-500">
