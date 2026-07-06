@@ -55,6 +55,12 @@ export const TOOLS: ToolDefinition[] = [
     cta: 'Audit your site →',
   },
   {
+    name: 'SKU Margin × Velocity Matrix',
+    description: 'Plot every SKU by how its margin compares to your catalogue average and how fast it moves. Four quadrants, one decision per product.',
+    path: '/tools/margin-velocity',
+    cta: 'Map your catalogue →',
+  },
+  {
     name: 'Subscription Survival Model',
     description: "See how your subscriber cohort decays across orders, where your CAC is recovered, and what moving churn by 5 points actually costs you.",
     path: '/tools/subscription-survival',
