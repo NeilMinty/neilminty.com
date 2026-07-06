@@ -55,6 +55,12 @@ export const TOOLS: ToolDefinition[] = [
     cta: 'Audit your site →',
   },
   {
+    name: 'Meta Creative Audit',
+    description: 'See where your Meta budget is actually going. Spend concentration by creative and how much is sitting in the learning phase — from a single CSV export.',
+    path: '/tools/meta-creative-audit',
+    cta: 'Audit your account →',
+  },
+  {
     name: 'SKU Margin × Velocity Matrix',
     description: 'Plot every SKU by how its margin compares to your catalogue average and how fast it moves. Four quadrants, one decision per product.',
     path: '/tools/margin-velocity',

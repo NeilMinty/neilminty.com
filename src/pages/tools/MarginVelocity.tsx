@@ -332,9 +332,23 @@ export function MarginVelocity() {
           </div>
         </div>
 
-        {/* File name / error */}
+        {/* Upload status bar — only shown when a file is loaded */}
         {fileName && !error && (
-          <p className="text-sm text-slate-500">Loaded: <span className="font-medium text-slate-700">{fileName}</span> — {plotted.length} SKUs</p>
+          <div className="flex items-center gap-3 border border-slate-200 bg-slate-50 rounded-lg px-4 py-2.5 text-sm">
+            <span className="w-2 h-2 rounded-full bg-green-600 flex-shrink-0" />
+            <span className="text-slate-700">
+              <span className="font-medium">{plotted.length} SKU{plotted.length !== 1 ? 's' : ''}</span> loaded from{' '}
+              <span className="font-medium">{fileName}</span>
+              {' · '}
+              <span className="font-medium">{weeks}</span>-week period
+            </span>
+            <button
+              onClick={() => { setRawRows(SAMPLE_ROWS); setFileName(null); setError(null); }}
+              className="ml-auto text-slate-400 hover:text-slate-700 transition-colors underline underline-offset-2 text-xs"
+            >
+              Reset to sample data
+            </button>
+          </div>
         )}
         {error && (
           <div className="border border-red-200 bg-red-50 rounded-lg px-4 py-3">
