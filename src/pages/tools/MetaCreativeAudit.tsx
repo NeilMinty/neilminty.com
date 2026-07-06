@@ -27,7 +27,13 @@ const ACTIVE_BUCKETS: DeliveryBucket[] = ['stable', 'learning', 'learning_limite
 
 // ─── TREEMAP CELL ─────────────────────────────────────────────────────────────
 
+let _cellLogCount = 0;
+
 function TreemapCell(props: TreemapNode) {
+  if (_cellLogCount < 3) {
+    console.log('[TreemapCell props]', JSON.parse(JSON.stringify(props)));
+    _cellLogCount++;
+  }
   const { x, y, width, height, depth, name } = props;
   const spend      = props.value as number;
   const spendShare = props['spendShare'] as number ?? 0;
