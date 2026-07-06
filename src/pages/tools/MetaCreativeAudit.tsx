@@ -35,9 +35,8 @@ function TreemapCell(props: TreemapNode) {
     _cellLogCount++;
   }
   const { x, y, width, height, depth, name } = props;
-  const spend      = props.value as number;
-  const spendShare = props['spendShare'] as number ?? 0;
-  const fill       = props['fill'] as string ?? '#C9CDC2';
+  const spend = props.value as number;
+  const fill  = props['fill'] as string ?? '#C9CDC2';
 
   if (depth === 0 || !width || !height || width < 2 || height < 2) return <g />;
 
