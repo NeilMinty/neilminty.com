@@ -169,21 +169,31 @@ export function MetaCreativeAudit() {
   const renderCell = (props: any) => {
     const { x, y, width, height, name, fill, spend, spendShare, bucket } = props;
     if (!width || !height || width < 2 || height < 2) return <g />;
-    const showFull  = width > 120 && height > 50;
-    const showSpend = width > 70 && height > 35;
-    const label = typeof name === 'string' && name.length > 25 ? name.slice(0, 24) + '…' : name;
+    const CHAR_W = 6.5;
+    const PAD = 16;
+    const avail = width - PAD;
+    const spendStr = formatCurrency(spend as number);
+    const spendFits = spendStr.length * CHAR_W <= avail;
+    const fittedChars = Math.floor(avail / CHAR_W);
+    const nameStr = typeof name === 'string' ? name : '';
+    const nameFits = fittedChars >= 6;
+    const nameLabel = nameStr.length > fittedChars
+      ? nameStr.slice(0, fittedChars - 1) + '…'
+      : nameStr;
+    const showTwo   = height > 50;
+    const showOne   = height > 30;
     return (
       <g
         onMouseEnter={() => setHoveredAd({ adName: name as string, spend: spend as number, spendShare: spendShare as number, bucket: bucket as DeliveryBucket })}
         onMouseLeave={() => setHoveredAd(null)}
       >
         <rect x={x} y={y} width={width} height={height} fill={fill ?? '#C9CDC2'} fillOpacity={0.88} stroke="#ffffff" strokeWidth={1} />
-        {showFull && (<>
-          <text x={x + 8} y={y + 20} fill="#F7F7F3" fontSize={11} style={{ pointerEvents: 'none' }}>{label}</text>
-          <text x={x + 8} y={y + 38} fill="#F7F7F3" fontSize={11} fontFamily="ui-monospace,monospace" style={{ pointerEvents: 'none' }}>{formatCurrency(spend as number)}</text>
+        {showTwo && nameFits && spendFits && (<>
+          <text x={x + 8} y={y + 20} fill="#F7F7F3" fontSize={11} style={{ pointerEvents: 'none' }}>{nameLabel}</text>
+          <text x={x + 8} y={y + 38} fill="#F7F7F3" fontSize={11} fontFamily="ui-monospace,monospace" style={{ pointerEvents: 'none' }}>{spendStr}</text>
         </>)}
-        {!showFull && showSpend && (
-          <text x={x + 6} y={y + 20} fill="#F7F7F3" fontSize={11} fontFamily="ui-monospace,monospace" style={{ pointerEvents: 'none' }}>{formatCurrency(spend as number)}</text>
+        {showOne && spendFits && !(showTwo && nameFits && spendFits) && (
+          <text x={x + 8} y={y + 20} fill="#F7F7F3" fontSize={11} fontFamily="ui-monospace,monospace" style={{ pointerEvents: 'none' }}>{spendStr}</text>
         )}
       </g>
     );
