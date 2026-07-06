@@ -35,9 +35,9 @@ function TreemapCell(props: TreemapNode) {
 
   if (depth === 0 || !width || !height || width < 2 || height < 2) return <g />;
 
-  const showName  = spendShare > 5 && width > 60 && height > 36;
-  const showSpend = spendShare >= 1 && width > 40 && height > 20;
-  const label     = name.length > 30 ? name.slice(0, 29) + '…' : name;
+  const showName  = width > 120 && height > 50;
+  const showSpend = width > 70 && height > 35;
+  const label     = name.length > 25 ? name.slice(0, 24) + '…' : name;
   const midX      = x + width / 2;
   const midY      = y + height / 2;
 
