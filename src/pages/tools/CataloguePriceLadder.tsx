@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ToolLayout } from '@/components/ToolLayout';
-import type { CatalogueResult, PriceTier } from '@/logic/cataloguePriceLadderTypes';
+import type { CatalogueResult, CategoryPriceRow, PriceTier } from '@/logic/cataloguePriceLadderTypes';
 
 const FUNCTIONS_URL = `${import.meta.env.VITE_NEILMINTY_SUPABASE_URL as string}/functions/v1`;
 
@@ -52,6 +52,40 @@ function PriceLadderPanel({ priceLadder }: { priceLadder: CatalogueResult['price
           );
         })}
       </div>
+    </div>
+  );
+}
+
+// ─── CATEGORY PRICE TABLE ─────────────────────────────────────────────────────
+
+function CategoryPriceTable({ rows }: { rows: CategoryPriceRow[] }) {
+  if (rows.length === 0) return null;
+  return (
+    <div className="border border-slate-200 rounded-lg shadow-card px-5 pt-5 pb-4">
+      <p className="text-sm font-semibold text-slate-900 mb-1">By category</p>
+      <p className="text-xs text-slate-400 mb-4">Min – max price per category, sorted by product count.</p>
+      <table className="w-full text-xs">
+        <thead>
+          <tr className="text-left text-slate-400 border-b border-slate-100">
+            <th className="pb-2 font-medium">Category</th>
+            <th className="pb-2 font-medium text-right">Products</th>
+            <th className="pb-2 font-medium text-right">Range</th>
+            <th className="pb-2 font-medium text-right">Median</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.type} className="border-b border-slate-50 last:border-0">
+              <td className="py-2 text-slate-700 pr-4 truncate max-w-[180px]">{row.type}</td>
+              <td className="py-2 text-slate-500 text-right tabular-nums">{row.count}</td>
+              <td className="py-2 text-slate-700 text-right font-mono tabular-nums whitespace-nowrap">
+                {fmtPrice(row.min)}{row.max !== row.min ? `–${fmtPrice(row.max)}` : ''}
+              </td>
+              <td className="py-2 text-slate-500 text-right font-mono tabular-nums">{fmtPrice(row.median)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -159,6 +193,9 @@ export function CataloguePriceLadder() {
 
             {/* Price ladder */}
             <PriceLadderPanel priceLadder={state.data.priceLadder} />
+
+            {/* Category price table */}
+            <CategoryPriceTable rows={state.data.categoryPriceLadder} />
 
             {/* Brief */}
             <div className="border border-slate-200 rounded-lg shadow-card px-5 pt-5 pb-4 space-y-5">
