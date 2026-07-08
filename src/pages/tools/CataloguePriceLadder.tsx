@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { ToolLayout } from '@/components/ToolLayout';
 import type { CatalogueResult, PriceTier } from '@/logic/cataloguePriceLadderTypes';
 
+const FUNCTIONS_URL = `${import.meta.env.VITE_NEILMINTY_SUPABASE_URL as string}/functions/v1`;
+
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
 function fmtPrice(n: number): string {
@@ -74,18 +76,18 @@ export function CataloguePriceLadder() {
     setState({ view: 'loading' });
 
     try {
-      const resp = await fetch('/api/catalogue-price-ladder', {
+      const resp = await fetch(`${FUNCTIONS_URL}/catalogue-price-ladder`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: raw }),
       });
-      const json = await resp.json() as CatalogueResult & { error?: string };
-      if (!resp.ok || json.error) {
-        setError(json.error ?? 'Something went wrong. Try again.');
+      const data = await resp.json() as { success: boolean; error?: string } & CatalogueResult;
+      if (!data.success || data.error) {
+        setError(data.error ?? 'Something went wrong. Try again.');
         setState({ view: 'input' });
         return;
       }
-      setState({ view: 'results', data: json });
+      setState({ view: 'results', data });
     } catch {
       setError('Request failed. Check your connection and try again.');
       setState({ view: 'input' });
