@@ -67,6 +67,12 @@ export const TOOLS: ToolDefinition[] = [
     cta: 'Map your catalogue →',
   },
   {
+    name: 'Catalogue Price Ladder',
+    description: 'Paste a competitor\'s Shopify URL and get their price ladder, product mix, and a short strategic brief — pulled live from their public catalogue.',
+    path: '/tools/catalogue-price-ladder',
+    cta: 'Read their catalogue →',
+  },
+  {
     name: 'Subscription Survival Model',
     description: "See how your subscriber cohort decays across orders, where your CAC is recovered, and what moving churn by 5 points actually costs you.",
     path: '/tools/subscription-survival',

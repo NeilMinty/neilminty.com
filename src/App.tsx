@@ -17,6 +17,7 @@ import { GeoAudit } from '@/pages/tools/GeoAudit';
 import { SubscriptionSurvival } from '@/pages/tools/SubscriptionSurvival';
 import { MarginVelocity } from '@/pages/tools/MarginVelocity';
 import { MetaCreativeAudit } from '@/pages/tools/MetaCreativeAudit';
+import { CataloguePriceLadder } from '@/pages/tools/CataloguePriceLadder';
 import { GrowthRoomTerms } from '@/pages/GrowthRoomTerms';
 
 export default function App() {
@@ -40,6 +41,7 @@ export default function App() {
           <Route path="/tools/subscription-survival" element={<SubscriptionSurvival />} />
           <Route path="/tools/margin-velocity" element={<MarginVelocity />} />
           <Route path="/tools/meta-creative-audit" element={<MetaCreativeAudit />} />
+          <Route path="/tools/catalogue-price-ladder" element={<CataloguePriceLadder />} />
           <Route path="/growth-room-privacy" element={<GrowthRoomPrivacy />} />
           <Route path="/growth-room-terms" element={<GrowthRoomTerms />} />
         </Routes>
