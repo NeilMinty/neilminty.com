@@ -305,6 +305,7 @@ Rules: be specific, use the data, no hedging language, no "it appears that", no 
         newArrivals:         s.newArrivals,
         sizeRange:           s.sizeRange,
         topTags:             s.topTags,
+        avgVariants:         s.avgVariants,
         brief:               parsed.sections,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
